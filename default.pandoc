@@ -1,0 +1,13 @@
+standalone:
+smart:
+normalize:
+toc:
+highlight-style: tango
+
+t: latex
+latex-engine: pdflatex
+template: include/report.latex
+V: geometry:margin=2cm
+   documentclass:report
+   classoption:a4paper
+H: include/captions.tex
