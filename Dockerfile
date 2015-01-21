@@ -12,16 +12,21 @@ RUN cabal update && cabal install pandoc
 RUN Rscript -e "biocLite(c('optparse'))"
 
 ## create user
-RUN useradd -m heatshock
+RUN useradd -m heatshock && echo 'heatshock:analysis' | chpasswd && echo "heatshock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers && chown -R heatshock /usr/share/nginx/html
+
+## configure nginx
+RUN echo "if [ \`service nginx status | grep -c \"not\"\` == 1 ]; then sudo service nginx start; echo webserver started; fi" >> /home/heatshock/.bashrc && echo "allow 90.195.50.229; allow 129.67.44.0/22; deny all;" > /etc/nginx/conf.d/access.conf
 
 ## Add the raw data to the image
 COPY data/ /home/heatshock/data/
 
 ## Add R and pandoc files
-COPY heatshock_analysis.* default.pandoc /home/heatshock/
+COPY heatshock_analysis.* default.pandoc start.sh home/heatshock/
 COPY include/ /home/heatshock/include/
 
 RUN chown -R heatshock /home/heatshock && chgrp -R heatshock /home/heatshock
+
 USER heatshock
 
 WORKDIR /home/heatshock/ 
+CMD ./start.sh && /bin/bash
