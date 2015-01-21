@@ -11,3 +11,10 @@ V: geometry:margin=2cm
    documentclass:report
    classoption:a4paper
 H: include/captions.tex
+
+t: html5
+self-contained:
+webtex:
+template: include/report.html5
+c: include/buttondown.css
+
