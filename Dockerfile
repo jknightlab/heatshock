@@ -9,7 +9,7 @@ RUN apt-get update -y && apt-get install -y haskell-platform nginx
 RUN cabal update && cabal install pandoc
 
 ## Install additional R packages
-RUN Rscript -e "biocLite(c('optparse'))"
+#RUN Rscript -e "biocLite(c('optparse'))"
 
 ## create user
 RUN useradd -m heatshock && echo 'heatshock:analysis' | chpasswd && echo "heatshock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers && chown -R heatshock /usr/share/nginx/html
@@ -23,6 +23,7 @@ COPY data/ /home/heatshock/data/
 ## Add R and pandoc files
 COPY heatshock_analysis.* default.pandoc start.sh home/heatshock/
 COPY include/ /home/heatshock/include/
+COPY html/ /home/heatshock/html/
 
 RUN chown -R heatshock /home/heatshock && chgrp -R heatshock /home/heatshock
 
