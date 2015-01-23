@@ -97,7 +97,7 @@ if(length(latexIdx)){
 url <- paste("heatshock_analysis", formats, sep=".")
 ```
 
-<div id="downloads">
+<div id="download">
 <p>
 `r paste0("[", formats, "](", url, ")", collapse=", ")`
 </p>

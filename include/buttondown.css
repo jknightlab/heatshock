@@ -113,12 +113,14 @@ div#TOC, nav#TOC
 
 div#download
 {
-	width: 200px;
+    width: 200px;
     margin-bottom: 0.5em;
     float:right;
+    position:relative;
+    left: 210px;
 }
 
-#download:before
+#download::before
 {
 	content: "download report as";
 	font-weight: bold;
