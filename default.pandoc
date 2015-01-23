@@ -3,6 +3,7 @@ smart:
 normalize:
 toc:
 highlight-style: tango
+bibliography: include/references.bib
 
 t: latex
 latex-engine: pdflatex
