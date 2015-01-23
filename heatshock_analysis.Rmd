@@ -1,0 +1,29 @@
+---
+title: Genome-wide analysis of heat shock response 
+author: 
+  - name: Peter Humburg
+    affiliation: 1
+address:
+  - code: 1
+    address: Wellcome Trust Centre for Human Genetics, University of Oxford, Roosevelt Dr., Oxford, OX3 7BN, UK
+date: `r format(Sys.time(), "%a %d %b %Y")`
+---
+
+# Introduction
+The heat shock response is a highly conserved mechanism responsible for the 
+maintenance of cellular function under stress. Originally identified as part of the 
+response to increased environmental temperatures [@Ritossa62] heat shock proteins (HSPs) 
+have since been implicated  in susceptibility to infection [@Kee08], cancer risk [@Sfar10] 
+and drug response [@Martin04]. Despite its obvious significance many details of the
+heat shock response still remain uncertain.
+
+Here we study the genome-wide changes to gene expression induced by heat shock in
+60 HapMap cell lines from Yoruban individuals [@Gibbs10] to identify genes and pathways
+involved in the human heat shock response. To further elucidate underlying mechanisms
+genetic variants modulating gene expression are mapped across all relevant genes.
+
+
+
+
+
+
