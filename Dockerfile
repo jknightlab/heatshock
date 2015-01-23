@@ -3,13 +3,13 @@ FROM bioconductor/release_microarray:20150119
 MAINTAINER Peter Humburg <peter.humburg@gmail.com>
 
 ## Install additional software packages
-RUN apt-get update -y && apt-get install -y haskell-platform nginx
+RUN apt-get update -y && apt-get install -y haskell-platform nginx lmodern
 
 ## Install pandoc
 RUN cabal update && cabal install pandoc
 
 ## Install additional R packages
-#RUN Rscript -e "biocLite(c('optparse'))"
+RUN Rscript -e "biocLite(c('sparcl'))"
 
 ## create user
 RUN useradd -m heatshock && echo 'heatshock:analysis' | chpasswd && echo "heatshock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers && chown -R heatshock /usr/share/nginx/html
