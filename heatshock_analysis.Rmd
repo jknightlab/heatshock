@@ -9,6 +9,86 @@ address:
 date: `r format(Sys.time(), "%a %d %b %Y")`
 ---
 
+```{r, setup, include=FALSE}
+library(gdata)
+library(affy)
+library(vsn)
+library(limma)
+library(scatterplot3d)
+library(sparcl)
+library(sva)
+
+opts_chunk$set(autodep=TRUE)
+opts_chunk$set(tidy=TRUE)
+opts_chunk$set(echo=FALSE)
+options(figcap.prefix = "Figure", figcap.sep = ":", figcap.prefix.highlight = "**")
+options(tabcap.prefix = "Table", tabcap.sep = ":", tabcap.prefix.highlight = "**")
+```
+
+
+```{r, functions, include=FALSE}
+pcaPlot <- function(data, col, pch, ...){
+        pca <- prcomp(t(data))
+        scores <- as.data.frame(pca$x)
+        plot(scores$PC1, scores$PC2, col=col, pch=pch, ...)
+}
+
+figRef <- local({
+    tag <- numeric()
+    created <- logical()
+    used <- logical()
+    function(label, caption, prefix = options("figcap.prefix"), 
+        sep = options("figcap.sep"), prefix.highlight = options("figcap.prefix.highlight")) {
+        i <- which(names(tag) == label)
+        if (length(i) == 0) {
+            i <- length(tag) + 1
+            tag <<- c(tag, i)
+            names(tag)[length(tag)] <<- label
+            used <<- c(used, FALSE)
+            names(used)[length(used)] <<- label
+            created <<- c(created, FALSE)
+            names(created)[length(created)] <<- label
+        }
+        if (!missing(caption)) {
+            created[label] <<- TRUE
+            paste0(prefix.highlight, prefix, " ", i, sep, prefix.highlight, 
+                " ", caption)
+        } else {
+            used[label] <<- TRUE
+            paste(prefix, tag[label])
+        }
+    }
+})
+
+tabRef <- local({
+    tag <- numeric()
+    created <- logical()
+    used <- logical()
+    function(label, caption, prefix = options("tabcap.prefix"), 
+        sep = options("tabcap.sep"), prefix.highlight = options("tabcap.prefix.highlight")) {
+        i <- which(names(tag) == label)
+        if (length(i) == 0) {
+            i <- length(tag) + 1
+            tag <<- c(tag, i)
+            names(tag)[length(tag)] <<- label
+            used <<- c(used, FALSE)
+            names(used)[length(used)] <<- label
+            created <<- c(created, FALSE)
+            names(created)[length(created)] <<- label
+        }
+        if (!missing(caption)) {
+            created[label] <<- TRUE
+            paste0(prefix.highlight, prefix, " ", i, sep, prefix.highlight, 
+                " ", caption)
+        } else {
+            used[label] <<- TRUE
+            paste(prefix, tag[label])
+        }
+    }
+})
+``` 
+
+
 # Introduction
 The heat shock response is a highly conserved mechanism responsible for the 
 maintenance of cellular function under stress. Originally identified as part of the 
@@ -22,8 +102,63 @@ Here we study the genome-wide changes to gene expression induced by heat shock i
 involved in the human heat shock response. To further elucidate underlying mechanisms
 genetic variants modulating gene expression are mapped across all relevant genes.
 
+# Material and Methods
+
+## Quality Control
+
+```{r, loadExpression, echo=FALSE, cache=TRUE}
+## probe intensities
+rawIntensity <- read.delim("TPS00590_FinalReport_12Oct09.txt", skip=8)
+
+sig.col<-seq(3, 722, 6)
+det.col<-seq(8, 722, 6)
+
+sig.data.raw <- rawIntensity[,sig.col]
+det.data.raw <- rawIntensity[,det.col]
+
+row.names(sig.data.raw) <- rawIntensity$ProbeID
+row.names(det.data.raw) <- rawIntensity$ProbeID
+
+colnames(sig.data.raw) <- gsub(".AVG_Signal", "", colnames(sig.data.raw))
+colnames(det.data.raw) <- gsub(".Detection.Pval", "", colnames(det.data.raw))
+
+## sample information
+n<-read.delim("YRI_sample list file_03NOV09.txt")
+
+## remove empty lines at end of file
+n<-n[1:120,] 
+factors <- which(sapply(n, is.factor))
+for(i in factors){
+	n[[i]] <- factor(as.character(n[[i]]))
+}
+
+
+newNames <- paste(n[["Cell.Line"]], n$Treatment, sep="_")
+names(newNames)<- n$ARRAY.CODE
+
+## typo in sample ID
+names(sig.data.raw)[13]<- "NM_75"
+names(det.data.raw)[13]<- "NM_75"
+
+names(sig.data.raw) <-gsub(".", "_", fixed=TRUE, names(sig.data.raw))
+names(det.data.raw) <-gsub(".", "_", fixed=TRUE, names(det.data.raw)) #differing name format
+names(sig.data.raw) <- newNames[names(sig.data.raw)]
+names(det.data.raw) <- newNames[names(det.data.raw)]
+```
+Probe intensities for resting and stimulated cells were imported into R for further
+processing. 
+
+# Results
+## Quality Control
 
 
 
+# Appendix {-}
+## Custom functions used
+```{r, ref.label="functions", eval=FALSE, echo=TRUE}
+```
 
-
+## Session Info
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```
