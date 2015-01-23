@@ -122,7 +122,7 @@ genetic variants modulating gene expression are mapped across all relevant genes
 
 ```{r, loadExpression, echo=FALSE, cache=TRUE}
 ## probe intensities
-rawIntensity <- read.delim("TPS00590_FinalReport_12Oct09.txt", skip=8)
+rawIntensity <- read.delim("data/TPS00590_FinalReport_12Oct09.txt", skip=8)
 
 sig.col<-seq(3, 722, 6)
 det.col<-seq(8, 722, 6)
@@ -137,7 +137,7 @@ colnames(sig.data.raw) <- gsub(".AVG_Signal", "", colnames(sig.data.raw))
 colnames(det.data.raw) <- gsub(".Detection.Pval", "", colnames(det.data.raw))
 
 ## sample information
-n<-read.delim("YRI_sample list file_03NOV09.txt")
+n<-read.delim("data/YRI_sample_list_file_03NOV09.txt")
 
 ## remove empty lines at end of file
 n<-n[1:120,] 
@@ -176,3 +176,5 @@ processing.
 ```{r sessionInfo, echo=FALSE}
 sessionInfo()
 ```
+
+# References {-}
