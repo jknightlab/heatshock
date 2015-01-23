@@ -111,6 +111,19 @@ div#TOC, nav#TOC
 	padding-bottom: 0.5em;
 	}
 
+div#download
+{
+	width: 200px;
+    margin-bottom: 0.5em;
+    float:right;
+}
+
+#download:before
+{
+	content: "download report as";
+	font-weight: bold;
+}
+
 div#content
 	{
 	width:1042px;

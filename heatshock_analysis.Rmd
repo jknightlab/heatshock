@@ -87,7 +87,21 @@ tabRef <- local({
     }
 })
 ``` 
+```{r, formats, include=FALSE}
+formats <- read.dcf(file="default.pandoc", fields="t")[,1]
+formats <- formats[!is.na(formats) & !grepl("html", formats)]
+latexIdx <- which(formats == "latex")
+if(length(latexIdx)){
+	formats[latexIdx] <- "pdf"
+}
+url <- paste("heatshock_analysis", formats, sep=".")
+```
 
+<div id="downloads">
+<p>
+`r paste0("[", formats, "](", url, ")", collapse=", ")`
+</p>
+</div>
 
 # Introduction
 The heat shock response is a highly conserved mechanism responsible for the 
