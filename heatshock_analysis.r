@@ -4,7 +4,9 @@ library(knitr)
 
 file.copy("html/waiting.html", "/usr/share/nginx/html/index.html", overwrite=TRUE)
 
-file.remove("heatshock_analysis.md", "heatshock_analysis.html", "heatshock_analysis.pdf")
+for(file in c("heatshock_analysis.md", "heatshock_analysis.html", "heatshock_analysis.pdf")){
+	if(file.exists(file)) file.remove(file)
+}
 tryCatch(
 		knit("heatshock_analysis.Rmd"),
 		error=function(e){
