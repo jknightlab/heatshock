@@ -30,5 +30,4 @@ RUN chown -R heatshock /home/heatshock && chgrp -R heatshock /home/heatshock
 USER heatshock
 
 WORKDIR /home/heatshock/ 
-ENV DISPLAY :0
 CMD ./start.sh && /bin/bash
