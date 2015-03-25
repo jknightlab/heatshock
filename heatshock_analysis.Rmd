@@ -158,13 +158,28 @@ names(sig.data.raw) <-gsub(".", "_", fixed=TRUE, names(sig.data.raw))
 names(det.data.raw) <-gsub(".", "_", fixed=TRUE, names(det.data.raw)) #differing name format
 names(sig.data.raw) <- newNames[names(sig.data.raw)]
 names(det.data.raw) <- newNames[names(det.data.raw)]
+
+sig.data.log<-log2(sig.data.raw)
 ```
 Probe intensities for resting and stimulated cells were imported into R for further
-processing. 
+processing.
+
+
 
 # Results
 ## Quality Control
 
+```{r densityPlot, echo=FALSE, cache=TRUE, fig.cap=figRef("densityPlot", "Distribution of probe intensities.")}
+sig.data.long <- reshape2::melt(sig.data.log, value.name="intensity")
+splitLabel <- strsplit(as.character(sig.data.long$variable), "_")
+sig.data.long$variable <- sapply(splitLabel, function(x) paste(x[-length(x)], collapse="_"))
+sig.data.long$treatment <- sapply(splitLabel, function(x) x[length(x)])
+sig.data.long$probe <- rep(rownames(sig.data.log), ncol(sig.data.log))
+names(sig.data.long)[1] <- "sample"
+sig.data.long <- sig.data.long[c("sample", "treatment", "probe", "intensity")]
+
+ggplot(sig.data.long, aes(x=intensity, colour=treatment)) + geom_density() + theme_bw()
+```
 
 
 # Appendix {-}
