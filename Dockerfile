@@ -24,9 +24,10 @@ RUN cat supervisored.conf >> /etc/supervisor/conf.d/supervisord.conf
 COPY data/ /home/heatshock/data/
 
 ## Add R and pandoc files
-COPY heatshock_analysis.* default.pandoc start.sh home/heatshock/
+COPY heatshock_analysis.* default.pandoc home/heatshock/
 COPY include/ /home/heatshock/include/
 COPY html/ /home/heatshock/html/
+COPY message.txt /etc/motd
 
 RUN chown -R heatshock /home/heatshock && chgrp -R heatshock /home/heatshock
 
