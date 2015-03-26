@@ -17,6 +17,9 @@ RUN useradd -m heatshock && echo 'heatshock:analysis' | chpasswd && echo "heatsh
 ## configure nginx
 RUN echo "if [ \`service nginx status | grep -c \"not\"\` == 1 ]; then sudo service nginx start; echo webserver started; fi" >> /home/heatshock/.bashrc && echo "allow 90.195.50.229; allow 129.67.44.0/22; deny all;" > /etc/nginx/conf.d/access.conf
 
+## Add additional programs to run at startup
+RUN cat supervisored.conf >> /etc/supervisor/conf.d/supervisord.conf
+
 ## Add the raw data to the image
 COPY data/ /home/heatshock/data/
 

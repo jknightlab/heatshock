@@ -1,7 +1,5 @@
 #!/bin/sh
 
-sudo nginx -g "daemon off;" &
-Rscript ./heatshock_analysis.r &
 echo
 echo "Welcome to the heat shock analysis."
 echo "Results of the analysis are available as a webpage from this container," 
