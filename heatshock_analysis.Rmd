@@ -179,7 +179,7 @@ sig.data.long$probe <- rep(rownames(sig.data.log), ncol(sig.data.log))
 names(sig.data.long)[1] <- "sample"
 sig.data.long <- sig.data.long[c("sample", "treatment", "probe", "intensity")]
 
-ggplot(sig.data.long, aes(x=intensity, colour=treatment)) + geom_density() + theme_bw()
+ggplot(sig.data.long, aes(x=intensity, colour=sample, linetype=treatment)) + geom_density() + theme_bw()
 ```
 
 

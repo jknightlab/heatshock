@@ -11,27 +11,27 @@ RUN cabal update && cabal install pandoc
 ## Install additional R packages
 RUN Rscript -e "biocLite(c('sparcl'))"
 
-## create user
-RUN useradd -m heatshock && echo 'heatshock:analysis' | chpasswd && echo "heatshock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers && chown -R heatshock /usr/share/nginx/html
+## Add basic instruction to display for interactive containers
+COPY message.txt /etc/motd
+RUN echo "cat /etc/motd" >> /root/.bashrc
+
+## additional user configuration
+RUN echo chown -R '$USER' /usr/share/nginx/html >> /usr/bin/userconf.sh && echo chown -R '$USER' /analysis
 
 ## configure nginx
-RUN echo "if [ \`service nginx status | grep -c \"not\"\` == 1 ]; then sudo service nginx start; echo webserver started; fi" >> /home/heatshock/.bashrc && echo "allow 90.195.50.229; allow 129.67.44.0/22; deny all;" > /etc/nginx/conf.d/access.conf
+RUN echo "allow 90.195.50.229; allow 129.67.44.0/22; deny all;" > /etc/nginx/conf.d/access.conf
 
 ## Add additional programs to run at startup
 COPY supervisored.conf /tmp/
 RUN cat /tmp/supervisored.conf >> /etc/supervisor/conf.d/supervisord.conf
 
 ## Add the raw data to the image
-COPY data/ /home/heatshock/data/
+COPY data/ /analysis/data/
 
 ## Add R and pandoc files
-COPY heatshock_analysis.* default.pandoc home/heatshock/
-COPY include/ /home/heatshock/include/
-COPY html/ /home/heatshock/html/
-COPY message.txt /etc/motd
+COPY heatshock_analysis.* default.pandoc /analysis/
+COPY include/ /analysis/include/
+COPY html/ /analysis/html/
 
-RUN chown -R heatshock /home/heatshock && chgrp -R heatshock /home/heatshock
-
-USER heatshock
-
-WORKDIR /home/heatshock/
+ENV USER=rstudio
+WORKDIR /analysis/
