@@ -13,12 +13,12 @@ RUN Rscript -e "biocLite(c('sparcl'))"
 
 ## Add basic instruction to display for interactive containers
 COPY config/message.txt /etc/motd
-RUN echo "cat /etc/motd" >> /root/.bashrc
+RUN echo "cat /etc/motd" >> /etc/bash.bashrc
 
 ## additional user configuration
 RUN echo chown -R '$USER' /usr/share/nginx/html >> /usr/bin/userconf.sh && echo chown -R '$USER' /analysis
 
-## configure nginx
+## control access to websites
 COPY config/access.conf /etc/nginx/conf.d/access.conf
 COPY config/access.conf /etc/rstudio/ip-rules
 
