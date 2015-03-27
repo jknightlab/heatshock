@@ -18,6 +18,10 @@ RUN echo "cat /etc/motd" >> /etc/bash.bashrc
 ## additional user configuration
 RUN echo chown -R '$USER' /usr/share/nginx/html >> /usr/bin/userconf.sh && echo chown -R '$USER' /analysis
 
+## Configure RStudio server
+COPY config/r.profile /tmp/.Rprofile
+RUN echo 'cp /tmp/.Rprofile /home/$USER/' >> /usr/bin/userconf.sh
+
 ## control access to websites
 COPY config/access.conf /etc/nginx/conf.d/access.conf
 COPY config/access.conf /etc/rstudio/ip-rules
