@@ -18,10 +18,12 @@ library(scatterplot3d)
 library(sparcl)
 library(sva)
 library(ggplot2)
+library(dplyr)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
 opts_chunk$set(echo=FALSE)
+opts_chunk$set(cache=TRUE)
 options(figcap.prefix = "Figure", figcap.sep = ":", figcap.prefix.highlight = "**")
 options(tabcap.prefix = "Table", tabcap.sep = ":", tabcap.prefix.highlight = "**")
 ```
@@ -121,7 +123,7 @@ genetic variants modulating gene expression are mapped across all relevant genes
 
 ## Quality Control
 
-```{r, loadExpression, echo=FALSE, cache=TRUE}
+```{r, loadExpression}
 ## probe intensities
 rawIntensity <- read.delim("data/TPS00590_FinalReport_12Oct09.txt", skip=8)
 
@@ -165,20 +167,46 @@ sig.data.log<-log2(sig.data.raw)
 Probe intensities for resting and stimulated cells were imported into R for further
 processing.
 
+```{r excludeSetup}
+exclude <- list()
+exclude$sample <- character()
+exclude$probe <- character()
+```
 
-
-# Results
-## Quality Control
-
-```{r densityPlot, echo=FALSE, cache=TRUE, fig.cap=figRef("densityPlot", "Distribution of probe intensities.")}
+```{r longData}
 sig.data.long <- reshape2::melt(sig.data.log, value.name="intensity")
 splitLabel <- strsplit(as.character(sig.data.long$variable), "_")
 sig.data.long$variable <- sapply(splitLabel, function(x) paste(x[-length(x)], collapse="_"))
 sig.data.long$treatment <- sapply(splitLabel, function(x) x[length(x)])
 sig.data.long$probe <- rep(rownames(sig.data.log), ncol(sig.data.log))
 names(sig.data.long)[1] <- "sample"
-sig.data.long <- sig.data.long[c("sample", "treatment", "probe", "intensity")]
+sig.data.long <- as.tbl(sig.data.long[c("sample", "treatment", "probe", "intensity")])
 
+det.data.long <- reshape2::melt(det.data.raw, value.name="p.value")
+splitLabel <- strsplit(as.character(det.data.long$variable), "_")
+det.data.long$variable <- sapply(splitLabel, function(x) paste(x[-length(x)], collapse="_"))
+det.data.long$treatment <- sapply(splitLabel, function(x) x[length(x)])
+det.data.long$probe <- rep(rownames(det.data.raw), ncol(det.data.raw))
+names(det.data.long)[1] <- "sample"
+det.data.long <- as.tbl(det.data.long[c("sample", "treatment", "probe", "p.value")])
+```
+
+Probes were required to exhibit significant signal in at least seven samples.
+
+```{r lowDet}
+detected <- tally(group_by(subset(det.data.long, p.value < 0.05), probe))
+exclude$probe <- c(exclude$probe, filter(detected, n < 7)$probe)
+sig.data.long <- filter(sig.data.long, !probe %in% exclude$probe)
+det.data.long <- filter(det.data.long, !probe %in% exclude$probe)
+```
+
+
+
+# Results
+## Quality Control
+
+
+```{r densityPlot, fig.cap=figRef("densityPlot", "Distribution of probe intensities.")}
 ggplot(sig.data.long, aes(x=intensity, colour=sample, linetype=treatment)) + geom_density() + theme_bw()
 ```
 
