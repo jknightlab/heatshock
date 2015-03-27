@@ -19,7 +19,8 @@ RUN echo "cat /etc/motd" >> /root/.bashrc
 RUN echo chown -R '$USER' /usr/share/nginx/html >> /usr/bin/userconf.sh && echo chown -R '$USER' /analysis
 
 ## configure nginx
-RUN echo "allow 90.195.50.229; allow 129.67.44.0/22; deny all;" > /etc/nginx/conf.d/access.conf
+COPY config/access.conf /etc/nginx/conf.d/access.conf
+COPY config/access.conf /etc/rstudio/ip-rules
 
 ## Add additional programs to run at startup
 COPY config/supervisored.conf /tmp/
