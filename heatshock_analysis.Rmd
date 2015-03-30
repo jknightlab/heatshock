@@ -192,24 +192,37 @@ det.data.long <- as.tbl(det.data.long[c("sample", "treatment", "probe", "p.value
 ```
 
 Probes were required to exhibit significant signal (detection p-value < 0.05) 
-in at least seven samples and samples with less than 20% of probes providing
-significant signal were excluded (together with the paired sample).
+in at least seven samples and samples with less than 30% of the remaining probes 
+providing significant signal were excluded (together with the paired sample).
+Samples showing exceptionally low variation in probe intensities (standard deviation
+of the log intensities of all retained probes below 0.7) were also removed.
 
 ```{r lowDetProbe}
 detected <- tally(group_by(subset(det.data.long, p.value < 0.05), probe))
 exclude$probe <- union(exclude$probe, filter(detected, n < 7)$probe)
+```
+
+```{r filterProbe}
 sig.data.long <- filter(sig.data.long, !probe %in% exclude$probe)
 det.data.long <- filter(det.data.long, !probe %in% exclude$probe)
 ```
 
 ```{r lowDetSample}
-detectedSample <- tally(group_by(subset(det.data.long, p.value < 0.05), sample))
-detectedSample$n <- detectedSample$n/nrow(det.data.raw)
-exclude$sample <- union(exclude$sample, filter(detectedSample, n < 0.25)$sample)
+missingSample <- tally(group_by(filter(det.data.long, p.value > 0.05), sample, treatment))
+missingSample$n <- missingSample$n/count(det.data.long, sample, treatment)$n
+exclude$sample <- union(exclude$sample, filter(missingSample, n >= 0.7)$sample)
+```
+
+```{r lowSD}
+sampleSD <- summarise(group_by(filter(sig.data.long, is.finite(intensity)), 
+				sample, treatment), sd(intensity))
+exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < 0.7)$sample)
+```
+
+```{r filterSample}
 sig.data.long <- filter(sig.data.long, !sample %in% exclude$sample)
 det.data.long <- filter(det.data.long, !sample %in% exclude$sample)
 ```
-
 
 
 # Results
@@ -217,7 +230,8 @@ det.data.long <- filter(det.data.long, !sample %in% exclude$sample)
 
 
 ```{r densityPlot, fig.cap=figRef("densityPlot", "Distribution of probe intensities.")}
-ggplot(sig.data.long, aes(x=intensity, colour=sample, linetype=treatment)) + geom_density() + theme_bw()
+ggplot(sig.data.long, aes(x=intensity, colour=sample, linetype=treatment)) + 
+		geom_density() + theme_bw() + guides(colour="none")
 ```
 
 
