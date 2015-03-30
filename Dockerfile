@@ -9,7 +9,7 @@ RUN apt-get update -y && apt-get install -y haskell-platform nginx lmodern plink
 RUN cabal update && cabal install pandoc
 
 ## Install additional R packages
-RUN Rscript -e "biocLite(c('sparcl', 'dplyr'))"
+RUN Rscript -e "biocLite(c('sparcl', 'dplyr', 'illuminaHumanv3.db'))"
 
 ## Add basic instruction to display for interactive containers
 COPY config/message.txt /etc/motd

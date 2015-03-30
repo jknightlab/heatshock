@@ -19,6 +19,7 @@ library(sparcl)
 library(sva)
 library(ggplot2)
 library(dplyr)
+library(illuminaHumanv3.db)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -191,6 +192,20 @@ names(det.data.long)[1] <- "sample"
 det.data.long <- as.tbl(det.data.long[c("sample", "treatment", "probe", "p.value")])
 ```
 
+Annotations for all probes were obtained via the *illuminaHumanv3.db* Bioconductor
+package [@Barbosa10]. Only probes that are considered to are of perfect or good
+quality were considered for analysis. Additionally, all probes mapping to more than
+one genomic location or overlapping with a SNP were excluded.
+
+```{r probeQual}
+annot <- illuminaHumanv3fullReannotation()
+annot <- subset(illuminaHumanv3fullReannotation(), 
+		!grepl("Good|Perfect", ProbeQuality) | !is.na(OverlappingSNP) | 
+		!is.na(SecondMatches) | !is.na(OtherGenomicMatches) | !is.na(RepeatMask))
+exclude$probe <- union(exclude$probe, annot$ArrayAddress)
+```
+
+
 Probes were required to exhibit significant signal (detection p-value < 0.05) 
 in at least seven samples and samples with less than 30% of the remaining probes 
 providing significant signal were excluded (together with the paired sample).
@@ -227,7 +242,9 @@ det.data.long <- filter(det.data.long, !sample %in% exclude$sample)
 
 # Results
 ## Quality Control
-
+After filtering `r length(unique(sig.data.long$probe))` of `r nrow(sig.data.raw)`
+probes (`r format(length(unique(sig.data.long$probe))/nrow(sig.data.raw), digits=2, nsmall=1)`%)
+and `r length(unique(sig.data.long$sample))` samples remain.
 
 ```{r densityPlot, fig.cap=figRef("densityPlot", "Distribution of probe intensities.")}
 ggplot(sig.data.long, aes(x=intensity, colour=sample, linetype=treatment)) + 
