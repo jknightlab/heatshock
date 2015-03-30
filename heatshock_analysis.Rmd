@@ -239,18 +239,19 @@ sig.data.long <- filter(sig.data.long, !sample %in% exclude$sample)
 det.data.long <- filter(det.data.long, !sample %in% exclude$sample)
 ```
 
-
-# Results
-## Quality Control
 After filtering `r length(unique(sig.data.long$probe))` of `r nrow(sig.data.raw)`
 probes (`r format(length(unique(sig.data.long$probe))/nrow(sig.data.raw)*100, digits=2, nsmall=1)`%)
-and `r length(unique(sig.data.long$sample))` samples remain.
+and `r length(unique(sig.data.long$sample))` samples remain. See `r figRef("densityPlot")`
+for the distributions of intensities for the remaining probes in each sample. 
 
 ```{r densityPlot, fig.cap=figRef("densityPlot", "Distribution of probe intensities.")}
 ggplot(sig.data.long, aes(x=intensity, colour=sample, linetype=treatment)) + 
 		geom_density() + theme_bw() + guides(colour="none")
 ```
 
+
+
+# Results
 
 # Appendix {-}
 ## Custom functions used
