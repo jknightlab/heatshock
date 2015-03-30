@@ -12,7 +12,7 @@ tryCatch(
 		error=function(e){
 			cat("# We have a problem!", "R encountered the following issue while trying",
 					"to analise the heat shock data:", e, sep="\n", 
-					file=heatshock_analysis.md)
+					file="heatshock_analysis.md")
 		}
 )
 
