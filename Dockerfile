@@ -9,7 +9,8 @@ RUN apt-get update -y && apt-get install -y haskell-platform nginx lmodern plink
 RUN cabal update && cabal install pandoc
 
 ## Install additional R packages
-RUN Rscript -e "biocLite(c('sparcl', 'dplyr', 'tidyr', 'illuminaHumanv3.db'))"
+RUN Rscript -e "biocLite(c('sparcl', 'dplyr', 'tidyr', 'devtools', 'illuminaHumanv3.db'))"
+RUN Rscript -e "devtools::install_github('hadley/readr')"
 
 ## Add basic instruction to display for interactive containers
 COPY config/message.txt /etc/motd
