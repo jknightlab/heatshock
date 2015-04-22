@@ -19,6 +19,8 @@ library(sparcl)
 library(sva)
 library(ggplot2)
 library(dplyr)
+library(tidyr)
+library(readr)
 library(illuminaHumanv3.db)
 
 opts_chunk$set(autodep=TRUE)
@@ -32,7 +34,7 @@ options(tabcap.prefix = "Table", tabcap.sep = ":", tabcap.prefix.highlight = "**
 
 ```{r, functions, include=FALSE}
 pcaPlot <- function(data, col, pch, ...){
-        pca <- prcomp(t(data))
+        pca <- prcomp(t(data), scale=TRUE)
         scores <- as.data.frame(pca$x)
         plot(scores$PC1, scores$PC2, col=col, pch=pch, ...)
 }
@@ -141,18 +143,18 @@ colnames(sig.data.raw) <- gsub(".AVG_Signal", "", colnames(sig.data.raw))
 colnames(det.data.raw) <- gsub(".Detection.Pval", "", colnames(det.data.raw))
 
 ## sample information
-n<-read.delim("data/YRI_sample_list_file_03NOV09.txt")
+info<-readr::read_tsv("data/YRI_sample_list_file_03NOV09.txt")
 
 ## remove empty lines at end of file
-n<-n[1:120,] 
-factors <- which(sapply(n, is.factor))
+info<-info[1:120,] 
+factors <- which(sapply(info, is.factor))
 for(i in factors){
-	n[[i]] <- factor(as.character(n[[i]]))
+	info[[i]] <- factor(as.character(info[[i]]))
 }
 
 
-newNames <- paste(n[["Cell.Line"]], n$Treatment, sep="_")
-names(newNames)<- n$ARRAY.CODE
+newNames <- paste(info[["Cell Line"]], info$Treatment, sep="_")
+names(newNames)<- info[["ARRAY CODE"]]
 
 ## typo in sample ID
 names(sig.data.raw)[13]<- "NM_75"
@@ -249,7 +251,27 @@ ggplot(sig.data.long, aes(x=intensity, colour=sample, linetype=treatment)) +
 		geom_density() + theme_bw() + guides(colour="none")
 ```
 
+```{r pcaPrepare}
+flt <- filter(sig.data.long, !is.finite(intensity))$probe
+sig.data.filter <- full_join(spread(filter(sig.data.long, 
+					treatment == "Basal" & !probe %in% flt), 
+					sample, intensity)[-1],
+			spread(filter(sig.data.long, treatment == "Stim" & !probe %in% flt), 
+					sample, intensity)[-1],
+			by="probe")
+names(sig.data.filter) <- sub(".x", "_Basal", names(sig.data.filter), fixed=TRUE)
+names(sig.data.filter) <- sub(".y", "_Stim", names(sig.data.filter), fixed=TRUE)
 
+sig.pca <- prcomp(t(sig.data.filter[-1]), scale=TRUE)
+sig.pc <- as.data.frame(sig.pca$x)
+sig.pc$sample <- rownames(sig.pc)
+sig.pc <- select(as.tbl(sig.pc), sample, PC1, PC2)
+sig.pc <- melt(sig.pc)
+```
+
+```{r pcaPlot, fig.cap=figRef("pcaPlot", "PCA plot of samples")}
+
+```
 
 # Results
 
