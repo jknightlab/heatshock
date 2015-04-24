@@ -127,7 +127,6 @@ genetic variants modulating gene expression are mapped across all relevant genes
 ## Quality Control
 
 ```{r, loadExpression}
-## probe intensities
 rawIntensity <- read.delim("data/TPS00590_FinalReport_12Oct09.txt", skip=8)
 
 sig.col<-seq(3, 722, 6)
@@ -142,7 +141,6 @@ row.names(det.data.raw) <- rawIntensity$ProbeID
 colnames(sig.data.raw) <- gsub(".AVG_Signal", "", colnames(sig.data.raw))
 colnames(det.data.raw) <- gsub(".Detection.Pval", "", colnames(det.data.raw))
 
-## sample information
 info<-readr::read_tsv("data/YRI_sample_list_file_03NOV09.txt")
 
 ## remove empty lines at end of file
@@ -168,7 +166,7 @@ names(det.data.raw) <- newNames[names(det.data.raw)]
 sig.data.log<-log2(sig.data.raw)
 ```
 Probe intensities for resting and stimulated cells were imported into R for further
-processing.
+processing together with associated meta data.
 
 ```{r excludeSetup}
 exclude <- list()
@@ -197,7 +195,7 @@ det.data.long <- as.tbl(det.data.long[c("sample", "treatment", "probe", "p.value
 Annotations for all probes were obtained via the *illuminaHumanv3.db* Bioconductor
 package [@Barbosa10]. Only probes that are considered to are of perfect or good
 quality were considered for analysis. Additionally, all probes mapping to more than
-one genomic location or overlapping with a SNP were excluded.
+one genomic location or to a location that contains a known SNP were excluded.
 
 ```{r probeQual}
 annot <- illuminaHumanv3fullReannotation()
