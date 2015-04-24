@@ -276,8 +276,8 @@ ggplot(sig.pc, aes(x=PC1, y=PC2, colour=as.character(Sentrix_ID), shape=`Date cR
 ```
 
 A principle component analysis of the gene expression for the remaining samples indicates 
-a clustering of samples from two RNA amplification batches in October 2009. This batch
-effect is noted for later correction during the analysis.
+a clustering of samples from two RNA amplification batches in October 2009
+(`r figRef("pcaPlot")`). This batch effect is noted for later correction during the analysis.
 
 # Results
 
