@@ -277,6 +277,20 @@ A principle component analysis of the gene expression for the remaining samples 
 a clustering of samples from two RNA amplification batches in October 2009
 (`r figRef("pcaPlot")`). This batch effect is noted for later correction during the analysis.
 
+```{r sampleList}
+samples <- sub("_.", "", sub("GM", "NA", unique(sig.data.long$sample)))
+cat(samples, sep="\n", file="data/sample.lst")
+```
+
+Genotype data provided by the HapMap project [@Gibbs10] was processed with Plink [@Purcell07]
+to restrict the data to autosomes and remove SNPs with low genotyping rate and 
+and those with a minor allele frequency of less than 10% in the sample.
+
+
+```{r plinkSNPs, engine="bash"}
+plink --vcf data/hapmap_3.3.b37.vcf.gz --keep data/sample.lst --maf 0.1 --geno 0.1 --split-x b37 no-fail --autosome-xy -make-bed
+```
+
 # Results
 
 # Appendix {-}
