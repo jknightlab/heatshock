@@ -2,7 +2,8 @@
 
 library(knitr)
 
-file.copy("html/waiting.html", "/usr/share/nginx/html/index.html", overwrite=TRUE)
+htmlRoot <- "/var/www/html"
+file.copy("html/waiting.html", file.path(htmlRoot, "index.html"), overwrite=TRUE)
 
 for(file in c("heatshock_analysis.md", "heatshock_analysis.html", "heatshock_analysis.pdf")){
 	if(file.exists(file)) file.remove(file)
@@ -27,11 +28,11 @@ tryCatch(
 					"</body>","</html>", sep="\n", file="heatshock_analysis.html")
 		},
 		finally={
-			file.copy("heatshock_analysis.html", "/usr/share/nginx/html/index.html",
+			file.copy("heatshock_analysis.html", file.path(htmlRoot, "index.html"),
 					overwrite=TRUE)
 			if(file.exists("heatshock_analysis.pdf")){
 				file.copy("heatshock_analysis.pdf", 
-						"/usr/share/nginx/html/heatshock_analysis.pdf",
+						file.path(htmlRoot, "heatshock_analysis.pdf"),
 						overwrite=TRUE)
 			}
 		}
