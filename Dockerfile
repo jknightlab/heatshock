@@ -3,10 +3,13 @@ FROM bioconductor/release_microarray:20150119
 MAINTAINER Peter Humburg <peter.humburg@gmail.com>
 
 ## Install additional software packages
-RUN apt-get update -y && apt-get install -y haskell-platform nginx lmodern plink
+RUN apt-get update -y && apt-get install -y haskell-platform nginx lmodern
 
 ## Install pandoc
 RUN cabal update && cabal install pandoc
+
+## Install plink
+RUN wget https://www.cog-genomics.org/static/bin/plink150418/plink_linux_x86_64.zip && unzip plink_linux_x86_64.zip && cp plink /usr/local/bin/ 
 
 ## Install additional R packages
 RUN Rscript -e "biocLite(c('sparcl', 'dplyr', 'tidyr', 'devtools', 'illuminaHumanv3.db'))"
