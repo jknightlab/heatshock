@@ -19,9 +19,6 @@ RUN Rscript -e "devtools::install_github('hadley/readr')"
 COPY config/message.txt /etc/motd
 RUN echo "cat /etc/motd" >> /etc/bash.bashrc
 
-## additional user configuration
-RUN echo chown -R '$USER' /usr/share/nginx/html >> /usr/bin/userconf.sh && echo chown -R '$USER' /analysis
-
 ## Configure RStudio server
 COPY config/r.profile /tmp/.Rprofile
 RUN echo 'cp /tmp/.Rprofile /home/$USER/' >> /usr/bin/userconf.sh
@@ -42,5 +39,8 @@ COPY heatshock_analysis.* default.pandoc /analysis/
 COPY include/ /analysis/include/
 COPY html/ /analysis/html/
 
+## additional user configuration
 ENV USER=rstudio
+RUN echo chown -R '$USER' /usr/share/nginx/html >> /usr/bin/userconf.sh && echo chown -R '$USER' /analysis
+
 WORKDIR /analysis/
