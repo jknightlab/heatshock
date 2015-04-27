@@ -41,6 +41,6 @@ COPY html/ /analysis/html/
 
 ## additional user configuration
 ENV USER=rstudio
-RUN echo chown -R '$USER' /usr/share/nginx/html >> /usr/bin/userconf.sh && echo chown -R '$USER' /analysis
+RUN echo chown -R '$USER' /usr/share/nginx/html >> /usr/bin/userconf.sh && echo chown -R '$USER' /analysis >> /usr/bin/userconf.sh
 
 WORKDIR /analysis/
