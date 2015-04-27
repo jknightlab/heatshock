@@ -3,7 +3,7 @@ FROM bioconductor/release_microarray:latest
 MAINTAINER Peter Humburg <peter.humburg@gmail.com>
 
 ## Install additional software packages
-RUN apt-get update -y && apt-get install -y haskell-platform nginx lmodern
+RUN apt-get update -y && apt-get install -y haskell-platform nginx lmodern texlive
 
 ## Install pandoc
 RUN cabal update && cabal install pandoc
