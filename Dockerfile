@@ -39,6 +39,9 @@ COPY heatshock_analysis.* default.pandoc /analysis/
 COPY include/ /analysis/include/
 COPY html/ /analysis/html/
 
+## Create directory for temporary files
+RUN mkdir /analysis/tmp
+
 ## additional user configuration
 ENV USER=rstudio
 RUN echo chown -R '$USER' /usr/share/nginx/html >> /usr/bin/userconf.sh && echo chown -R '$USER' /analysis >> /usr/bin/userconf.sh
