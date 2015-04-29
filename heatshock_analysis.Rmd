@@ -288,7 +288,7 @@ and those with a minor allele frequency of less than 10% in the sample.
 
 
 ```{r plinkSNPs, engine="bash"}
-plink --vcf data/hapmap_3.3.b37.vcf.gz --keep data/sample.lst --maf 0.1 --geno 0.1 --split-x b37 no-fail --autosome-xy -make-bed
+plink --bfile data/hapmap_YRI_r23a_filtered --out hapmap_yri --keep data/sample.lst --maf 0.1 --geno 0.1 --split-x b37 no-fail --autosome-xy --make-bed
 ```
 
 # Results
