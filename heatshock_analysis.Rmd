@@ -280,17 +280,17 @@ a clustering of samples from two RNA amplification batches in October 2009
 samples <- sub("_.", "", sub("GM", "NA", unique(sig.data.long$sample)))
 sampleInfo <- readr::read_delim("data/hapmap_YRI_r23a_filtered.fam", delim=" ", 
 		col_names=c("Family", "Individual", "Father", "Mother", "Sex", "Phenotype"))
-keepSamples <- filter(select(sampleInfo, Family, Individual), Individual %in% samples)
+keepSamples <- dplyr::filter(dplyr::select(sampleInfo, Family, Individual), Individual %in% samples)
 write.table(keepSamples, file="tmp/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
 ```
 
 ```{r plinkSNPs, engine="bash", cache.extra=list(file.info("data/hapmap_YRI_r23a_filtered.bed")$mtime, file.info("tmp/sample.lst")$mtime)}
-plink --bfile data/hapmap_YRI_r23a_filtered --out tmp/hapmap_yri.snp_flt --keep tmp/sample.lst --maf 0.1 --geno 0.1 --hwe 1e-4 --split-x b36 no-fail --autosome-xy --make-bed --silent
+plink --bfile data/hapmap_YRI_r23a_filtered --out tmp/hapmap_yri.snp_flt --keep tmp/sample.lst --maf 0.1 --geno 0.1 --hwe 1e-4 --autosome --make-bed --silent
 ```
 
 ```{r snpFilter, cache.extra=list(file.info("data/hapmap_YRI_r23a_filtered.bim")$mtime, file.info("tmp/hapmap_yri.bim")$mtime)}
 totalSNPs <- R.utils::countLines("data/hapmap_YRI_r23a_filtered.bim")
-remainSNPs <- R.utils::countLines("tmp/hapmap_yri.bim")
+remainSNPs <- R.utils::countLines("tmp/hapmap_yri.snp_flt.bim")
 ```
 
 Genotype data provided by the HapMap project [@Gibbs10] was processed with Plink [@Chang15]
