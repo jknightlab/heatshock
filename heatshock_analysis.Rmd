@@ -289,7 +289,7 @@ write.table(keepSamples, file="data/sample.lst", quote=FALSE, col.names=FALSE, r
 ```
 
 ```{r plinkSNPs, engine="bash"}
-plink --bfile data/hapmap_YRI_r23a_filtered --out hapmap_yri --keep data/sample.lst --maf 0.1 --geno 0.1 --split-x b37 no-fail --autosome-xy --make-bed --silent
+plink --bfile data/hapmap_YRI_r23a_filtered --out hapmap_yri --keep data/sample.lst --maf 0.1 --geno 0.1 --hwe 1e-4 --split-x b36 no-fail --autosome-xy --make-bed --silent
 ```
 
 ```{r snpFilter}
