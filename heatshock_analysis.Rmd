@@ -282,7 +282,10 @@ a clustering of samples from two RNA amplification batches in October 2009
 
 ```{r sampleList}
 samples <- sub("_.", "", sub("GM", "NA", unique(sig.data.long$sample)))
-cat(samples, sep="\n", file="data/sample.lst")
+sampleInfo <- readr::read_delim("data/hapmap_YRI_r23a_filtered.fam", delim=" ", 
+		col_names=c("Family", "Individual", "Father", "Mother", "Sex", "Phenotype"))
+keepSamples <- filter(select(sampleInfo, Family, Individual), Individual %in% samples)
+write.table(keepSamples, file="data/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
 ```
 
 Genotype data provided by the HapMap project [@Gibbs10] was processed with Plink [@Purcell07]
