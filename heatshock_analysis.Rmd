@@ -40,6 +40,15 @@ pcaPlot <- function(data, col, pch, ...){
         plot(scores$PC1, scores$PC2, col=col, pch=pch, ...)
 }
 
+reshapeData <- function(data, value){
+	ans <- reshape2::melt(data, id.vars="probe",
+		value.name=value, variable.name="sample")
+	splitLabel <- strsplit(as.character(ans$sample), "_", fixed=TRUE)
+	ans$sample <- sapply(splitLabel, "[", 1)
+	ans$treatment <- sapply(splitLabel, function(x) x[length(x)])
+	as.tbl(ans[c("sample", "treatment", "probe", value)])
+}
+
 figRef <- local({
     tag <- numeric()
     created <- logical()
@@ -136,9 +145,6 @@ det.col<-seq(8, 722, 6)
 sig.data.raw <- rawIntensity[,sig.col]
 det.data.raw <- rawIntensity[,det.col]
 
-row.names(sig.data.raw) <- rawIntensity$ProbeID
-row.names(det.data.raw) <- rawIntensity$ProbeID
-
 names(sig.data.raw) <- gsub(":AVG_Signal", "", names(sig.data.raw))
 names(det.data.raw) <- gsub(":Detection Pval", "", names(det.data.raw))
 
@@ -166,7 +172,10 @@ names(det.data.raw) <-gsub("-", "_", fixed=TRUE, names(det.data.raw)) #differing
 names(sig.data.raw) <- newNames[names(sig.data.raw)]
 names(det.data.raw) <- newNames[names(det.data.raw)]
 
-sig.data.log<-log2(sig.data.raw)
+sig.data.raw <- cbind(probe=rawIntensity$ProbeID, sig.data.raw)
+det.data.raw <- cbind(probe=rawIntensity$ProbeID, det.data.raw)
+
+sig.data.log<- cbind(probe=rawIntensity$ProbeID, log2(sig.data.raw[-1]))
 ```
 Probe intensities for resting and stimulated cells were imported into R for further
 processing together with associated meta data.
@@ -178,21 +187,8 @@ exclude$probe <- character()
 ```
 
 ```{r longData}
-sig.data.long <- reshape2::melt(sig.data.log, value.name="intensity")
-splitLabel <- strsplit(as.character(sig.data.long$variable), "_")
-sig.data.long$variable <- sapply(splitLabel, function(x) paste(x[-length(x)], collapse="_"))
-sig.data.long$treatment <- sapply(splitLabel, function(x) x[length(x)])
-sig.data.long$probe <- rep(rownames(sig.data.log), ncol(sig.data.log))
-names(sig.data.long)[1] <- "sample"
-sig.data.long <- as.tbl(sig.data.long[c("sample", "treatment", "probe", "intensity")])
-
-det.data.long <- reshape2::melt(det.data.raw, value.name="p.value")
-splitLabel <- strsplit(as.character(det.data.long$variable), "_")
-det.data.long$variable <- sapply(splitLabel, function(x) paste(x[-length(x)], collapse="_"))
-det.data.long$treatment <- sapply(splitLabel, function(x) x[length(x)])
-det.data.long$probe <- rep(rownames(det.data.raw), ncol(det.data.raw))
-names(det.data.long)[1] <- "sample"
-det.data.long <- as.tbl(det.data.long[c("sample", "treatment", "probe", "p.value")])
+sig.data.long <- reshapeData(sig.data.log, "intensity")
+det.data.long <- reshapeData(det.data.raw, "p.value")
 ```
 
 Annotations for all probes were obtained via the *illuminaHumanv3.db* Bioconductor
