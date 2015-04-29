@@ -262,14 +262,14 @@ names(sig.data.filter) <- sub(".y", "_Stim", names(sig.data.filter), fixed=TRUE)
 sig.pca <- prcomp(t(sig.data.filter[-1]), scale=TRUE)
 sig.pc <- as.data.frame(sig.pca$x)
 sig.pc$sample <- rownames(sig.pc)
-sig.pc <- select(as.tbl(sig.pc), sample, PC1, PC2)
+sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2)
+info <- mutate(info, sample=paste(`Cell Line`, `Treatment`, sep="_"))
 sig.pc <- inner_join(sig.pc, info, by="sample")
 ```
 
 ```{r pcaPlot, fig.cap=figRef("pcaPlot", "PCA plot of samples. Colours correspond to different BeadChips while shapes indicate different amplification dates. Samples from the two amplifications in October 2009 are clustered together.")}
 ggplot(sig.pc, aes(x=PC1, y=PC2, colour=as.character(Sentrix_ID), shape=`Date cRNA Amplified`)) + 
 	geom_point(size=3) + theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("RNA Amplification")
-
 ```
 
 A principle component analysis of the gene expression for the remaining samples indicates 
