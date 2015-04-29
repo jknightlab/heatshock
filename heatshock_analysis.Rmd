@@ -288,7 +288,7 @@ keepSamples <- filter(select(sampleInfo, Family, Individual), Individual %in% sa
 write.table(keepSamples, file="data/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
 ```
 
-Genotype data provided by the HapMap project [@Gibbs10] was processed with Plink [@Purcell07]
+Genotype data provided by the HapMap project [@Gibbs10] was processed with Plink [@Chang15]
 to restrict the data to autosomes and remove SNPs with low genotyping rate and 
 and those with a minor allele frequency of less than 10% in the sample.
 
@@ -296,6 +296,7 @@ and those with a minor allele frequency of less than 10% in the sample.
 ```{r plinkSNPs, engine="bash"}
 plink --bfile data/hapmap_YRI_r23a_filtered --out hapmap_yri --keep data/sample.lst --maf 0.1 --geno 0.1 --split-x b37 no-fail --autosome-xy --make-bed --silent
 ```
+
 
 # Results
 
