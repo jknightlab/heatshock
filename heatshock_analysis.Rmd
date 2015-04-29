@@ -22,6 +22,7 @@ library(dplyr)
 library(tidyr)
 library(readr)
 library(illuminaHumanv3.db)
+library(knitr)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
