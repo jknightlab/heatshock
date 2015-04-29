@@ -139,8 +139,8 @@ det.data.raw <- rawIntensity[,det.col]
 row.names(sig.data.raw) <- rawIntensity$ProbeID
 row.names(det.data.raw) <- rawIntensity$ProbeID
 
-colnames(sig.data.raw) <- gsub(".AVG_Signal", "", colnames(sig.data.raw))
-colnames(det.data.raw) <- gsub(".Detection.Pval", "", colnames(det.data.raw))
+colnames(sig.data.raw) <- gsub(":AVG_Signal", "", colnames(sig.data.raw))
+colnames(det.data.raw) <- gsub(":Detection Pval", "", colnames(det.data.raw))
 
 info<-readr::read_tsv("data/YRI_sample_list_file_03NOV09.txt", 
 		col_types=list("Date of Harvest"=col_date("%d.%m.%y"), 
@@ -158,11 +158,11 @@ newNames <- paste(info[["Cell Line"]], info$Treatment, sep="_")
 names(newNames)<- info[["ARRAY CODE"]]
 
 ## typo in sample ID
-names(sig.data.raw)[13]<- "NM_75"
-names(det.data.raw)[13]<- "NM_75"
+names(sig.data.raw)[13]<- "NM-75"
+names(det.data.raw)[13]<- "NM-75"
 
-names(sig.data.raw) <-gsub(".", "_", fixed=TRUE, names(sig.data.raw))
-names(det.data.raw) <-gsub(".", "_", fixed=TRUE, names(det.data.raw)) #differing name format
+names(sig.data.raw) <-gsub("-", "_", fixed=TRUE, names(sig.data.raw))
+names(det.data.raw) <-gsub("-", "_", fixed=TRUE, names(det.data.raw)) #differing name format
 names(sig.data.raw) <- newNames[names(sig.data.raw)]
 names(det.data.raw) <- newNames[names(det.data.raw)]
 
