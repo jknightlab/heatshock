@@ -128,7 +128,7 @@ genetic variants modulating gene expression are mapped across all relevant genes
 ## Quality Control
 
 ```{r, loadExpression}
-rawIntensity <- readr::read_tsv("data/TPS00590_FinalReport_12Oct09.txt", skip=8)
+rawIntensity <- readr::read_tsv("data/TPS00590_FinalReport_12Oct09.txt", skip=8, progress=FALSE)
 
 sig.col<-seq(3, 722, 6)
 det.col<-seq(8, 722, 6)
