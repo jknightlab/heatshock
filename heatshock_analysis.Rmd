@@ -142,7 +142,9 @@ row.names(det.data.raw) <- rawIntensity$ProbeID
 colnames(sig.data.raw) <- gsub(".AVG_Signal", "", colnames(sig.data.raw))
 colnames(det.data.raw) <- gsub(".Detection.Pval", "", colnames(det.data.raw))
 
-info<-readr::read_tsv("data/YRI_sample_list_file_03NOV09.txt")
+info<-readr::read_tsv("data/YRI_sample_list_file_03NOV09.txt", 
+		col_types=list("Date of Harvest"=col_date("%d.%m.%y"), 
+				"Date of RNA extraction"=col_date("%d.%m.%y")))
 
 ## remove empty lines at end of file
 info<-info[1:120,] 
