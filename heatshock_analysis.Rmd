@@ -288,14 +288,20 @@ keepSamples <- filter(select(sampleInfo, Family, Individual), Individual %in% sa
 write.table(keepSamples, file="data/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
 ```
 
-Genotype data provided by the HapMap project [@Gibbs10] was processed with Plink [@Chang15]
-to restrict the data to autosomes and remove SNPs with low genotyping rate and 
-and those with a minor allele frequency of less than 10% in the sample.
-
-
 ```{r plinkSNPs, engine="bash"}
 plink --bfile data/hapmap_YRI_r23a_filtered --out hapmap_yri --keep data/sample.lst --maf 0.1 --geno 0.1 --split-x b37 no-fail --autosome-xy --make-bed --silent
 ```
+
+```{r snpFilter}
+totalSNPs <- R.utils::countLines("data/hapmap_YRI_r23a_filtered.bim")
+remainSNPs <- R.utils::countLines("hapmap_yri.bim")
+```
+
+Genotype data provided by the HapMap project [@Gibbs10] was processed with Plink [@Chang15]
+to restrict the data to autosomes and remove SNPs with low genotyping rate and 
+and those with a minor allele frequency of less than 10% in the sample. This results
+in the exclusion of `r totalSNPs - remainSNPs` of 
+`r totalSNPs` (`r format((totalSNPs - remainSNPs)/totalSNPs*100, nsmall=2, digits=2)`%);
 
 
 # Results
