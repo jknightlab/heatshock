@@ -313,7 +313,8 @@ The IBS nearest neighbour caculation shows that the majority of samples are quit
 similar with regard to the extend of genetic differences between them while a few
 show markedly increased sharing of alleles (see `r figRef("nnIBS")` and `r tabRef("nnIBS")`). 
 This is consistent with a population of largely unrelated individuals including a few 
-individuals that are more closely related than expected. 
+individuals that are more closely related than expected. One individual (NA18913) also shows
+evidence of reduced similarity with the second and third nearest neighbour.
 
 ```{r nnIBSplot, fig.cap=figRef("nnIBS", "Similarity between individuals. For each individual the similarity, in terms of IBS, to all other individuals is determined and individuals are ranked acording to this measure. From this a Z-score is computed for for each of the three closest neighbours (see the Plink [documentation](http://pngu.mgh.harvard.edu/~purcell/plink/strat.shtml#outlier) for details). Note the spikes corresponding to individuals with positive Z-scores indicating increased similarity of their genomes compared to the rest of the cohort.")}
 ggplot(nnIBS, aes(x=Z, colour=as.factor(NN))) + geom_density(aes(group=NN)) + theme_bw()
@@ -324,7 +325,7 @@ offset <- mean(filter(nnIBS, Z < 0 & NN == 1)$Z)
 nnSuspect <- filter(nnIBS, (abs(Z - offset) > 2 & NN == 1) | abs(Z) > 2)
 nnSuspect <- nnSuspect[order(abs(nnSuspect$Z), decreasing=TRUE), ]
 set.caption(tabRef("nnIBS", 
-		"Pairs of Yoruban HapMap samples with evidence of increased genetic similarity (IBS-based nearest neighbour Z-score > 0)."))
+		"Pairs of Yoruban HapMap samples with evidence of decreased or increased genetic similarity (absolute IBS-based nearest neighbour Z-score > 2)."))
 pander(nnSuspect)
 ```
 
