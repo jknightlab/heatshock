@@ -6,7 +6,7 @@ highlight-style: tango
 bibliography: include/references.bib
 
 t: latex
-latex-engine: pdflatex
+latex-engine: xelatex
 template: include/report.latex
 V: geometry:margin=2cm
    documentclass:report
