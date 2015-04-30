@@ -315,7 +315,7 @@ show markedly increased sharing of alleles (see `r figRef("nnIBS")` and `r tabRe
 This is consistent with a population of largely unrelated individuals including a few 
 individuals that are more closely related than expected. 
 
-```{r nnIBSplot, fig.cap=figRef("nnIBS", "Similarity between individuals. For each individual the similarity, in terms of IBS, to all other individuals is determined and individuals are ranked acording to this measure. From this a Z-score is computed for for each of the three closest neighbours^[See the Plink [documentation](http://pngu.mgh.harvard.edu/~purcell/plink/strat.shtml#outlier) for details]. Note the spikes corresponding to individuals with positive Z-scores indicating increased similarity of their genomes compared to the rest of the cohort.")}
+```{r nnIBSplot, fig.cap=figRef("nnIBS", "Similarity between individuals. For each individual the similarity, in terms of IBS, to all other individuals is determined and individuals are ranked acording to this measure. From this a Z-score is computed for for each of the three closest neighbours (see the Plink [documentation](http://pngu.mgh.harvard.edu/~purcell/plink/strat.shtml#outlier) for details). Note the spikes corresponding to individuals with positive Z-scores indicating increased similarity of their genomes compared to the rest of the cohort.")}
 ggplot(nnIBS, aes(x=Z, colour=as.factor(NN))) + geom_density(aes(group=NN)) + theme_bw()
 ```
 
