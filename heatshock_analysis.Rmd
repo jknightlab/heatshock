@@ -23,11 +23,13 @@ library(tidyr)
 library(readr)
 library(illuminaHumanv3.db)
 library(knitr)
+library(pander)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
 opts_chunk$set(echo=FALSE)
 opts_chunk$set(cache=TRUE)
+panderOptions("digits", 3)
 options(figcap.prefix = "Figure", figcap.sep = ":", figcap.prefix.highlight = "**")
 options(tabcap.prefix = "Table", tabcap.sep = ":", tabcap.prefix.highlight = "**")
 ```
@@ -301,6 +303,29 @@ in the exclusion of `r totalSNPs - remainSNPs` of
 
 ```{r plinkSample, engine="bash", cache.extra=list(file.info("tmp/hapmap_yri.snp_flt.bed")$mtime)}
 plink --bfile tmp/hapmap_yri.snp_flt --out tmp/hapmap_yri.smpl_flt --mind 0.1 --neighbour 1 3 --make-bed
+```
+
+```{r nnIBS}
+nnIBS <- readr::read_table("tmp/hapmap_yri.smpl_flt.nearest")
+```
+
+The IBS nearest neighbour caculation shows that the majority of samples are quite
+similar with regard to the extend of genetic differences between them while a few
+show markedly increased sharing of alleles (see `r figRef("nnIBS")` and `r tabRef("nnIBS")`). 
+This is consistent with a population of largely unrelated individuals including a few 
+individuals that are more closely related than expected. 
+
+```{r nnIBSplot, fig.cap=figRef("nnIBS", "Similarity between individuals. For each individual the similarity, in terms of IBS, to all other individuals is determined and individuals are ranked acording to this measure. From this a Z-score is computed for for each of the three closest neighbours^[See the Plink [documentation](http://pngu.mgh.harvard.edu/~purcell/plink/strat.shtml#outlier) for details]. Note the spikes corresponding to individuals with positive Z-scores indicating increased similarity of their genomes compared to the rest of the cohort.")}
+ggplot(nnIBS, aes(x=Z, colour=as.factor(NN))) + geom_density(aes(group=NN)) + theme_bw()
+```
+
+```{r nnIBStable}
+offset <- mean(filter(nnIBS, Z < 0 & NN == 1)$Z)
+nnSuspect <- filter(nnIBS, (abs(Z - offset) > 2 & NN == 1) | abs(Z) > 2)
+nnSuspect <- nnSuspect[order(abs(nnSuspect$Z), decreasing=TRUE), ]
+set.caption(tabRef("nnIBS", 
+		"Pairs of Yoruban HapMap samples with evidence of increased genetic similarity (IBS-based nearest neighbour Z-score > 0)."))
+pander(nnSuspect)
 ```
 
 # Results
