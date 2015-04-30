@@ -245,7 +245,7 @@ probes (`r format(length(unique(sig.data.long$probe))/nrow(sig.data.raw)*100, di
 and `r length(unique(sig.data.long$sample))` samples remain. See `r figRef("densityPlot")`
 for the distributions of intensities for the remaining probes in each sample. 
 
-```{r densityPlot, fig.cap=figRef("densityPlot", "Distribution of probe intensities.")}
+```{r densityPlot, cache=FALSE, fig.cap=figRef("densityPlot", "Distribution of probe intensities.")}
 ggplot(sig.data.long, aes(x=intensity, colour=sample, linetype=treatment)) + 
 		geom_density() + theme_bw() + guides(colour="none")
 ```
@@ -269,7 +269,7 @@ info <- mutate(info, sample=paste(`Cell Line`, `Treatment`, sep="_"))
 sig.pc <- inner_join(sig.pc, info, by="sample")
 ```
 
-```{r pcaPlot, fig.cap=figRef("pcaPlot", "PCA plot of samples. Colours correspond to different BeadChips while shapes indicate different amplification dates. Samples from the two amplifications in October 2009 are clustered together.")}
+```{r pcaPlot, cache=FALSE, fig.cap=figRef("pcaPlot", "PCA plot of samples. Colours correspond to different BeadChips while shapes indicate different amplification dates. Samples from the two amplifications in October 2009 are clustered together.")}
 ggplot(sig.pc, aes(x=PC1, y=PC2, colour=as.character(Sentrix_ID), shape=`Date cRNA Amplified`)) + 
 	geom_point(size=3) + theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("RNA Amplification")
 ```
@@ -305,7 +305,7 @@ in the exclusion of `r totalSNPs - remainSNPs` of
 plink --bfile tmp/hapmap_yri.snp_flt --out tmp/hapmap_yri.smpl_flt --mind 0.1 --neighbour 1 3 --genome gz nudge --make-bed --silent
 ```
 
-```{r nnIBS}
+```{r nnIBS, cache=FALSE}
 nnIBS <- readr::read_table("tmp/hapmap_yri.smpl_flt.nearest")
 ```
 
@@ -316,11 +316,11 @@ This is consistent with a population of largely unrelated individuals including 
 individuals that are more closely related than expected. One individual (NA18913) also shows
 evidence of reduced similarity with the second and third nearest neighbour.
 
-```{r nnIBSplot, fig.cap=figRef("nnIBS", "Similarity between individuals. For each individual the similarity, in terms of IBS, to all other individuals is determined and individuals are ranked acording to this measure. From this a Z-score is computed for for each of the three closest neighbours (see the Plink [documentation](http://pngu.mgh.harvard.edu/~purcell/plink/strat.shtml#outlier) for details). Note the spikes corresponding to individuals with positive Z-scores indicating increased similarity of their genomes compared to the rest of the cohort.")}
+```{r nnIBSplot, cache=FALSE, fig.cap=figRef("nnIBS", "Similarity between individuals. For each individual the similarity, in terms of IBS, to all other individuals is determined and individuals are ranked acording to this measure. From this a Z-score is computed for for each of the three closest neighbours (see the Plink [documentation](http://pngu.mgh.harvard.edu/~purcell/plink/strat.shtml#outlier) for details). Note the spikes corresponding to individuals with positive Z-scores indicating increased similarity of their genomes compared to the rest of the cohort.")}
 ggplot(nnIBS, aes(x=Z, colour=as.factor(NN))) + geom_density(aes(group=NN)) + theme_bw()
 ```
 
-```{r nnIBStable}
+```{r nnIBStable, cache=FALSE}
 offset <- mean(filter(nnIBS, Z < 0 & NN == 1)$Z)
 nnSuspect <- filter(nnIBS, (abs(Z - offset) > 2 & NN == 1) | abs(Z) > 2)
 nnSuspect <- nnSuspect[order(abs(nnSuspect$Z), decreasing=TRUE), ]
