@@ -278,7 +278,7 @@ A principle component analysis of the gene expression for the remaining samples 
 a clustering of samples from two RNA amplification batches in October 2009
 (`r figRef("pcaPlot")`). This batch effect is noted for later correction during the analysis.
 
-```{r sampleList}
+```{r sampleList, cache=FALSE}
 samples <- sub("_.", "", sub("GM", "NA", unique(sig.data.long$sample)))
 sampleInfo <- readr::read_delim("data/hapmap_YRI_r23a_filtered.fam", delim=" ", 
 		col_names=c("Family", "Individual", "Father", "Mother", "Sex", "Phenotype"))
