@@ -286,7 +286,7 @@ keepSamples <- dplyr::filter(dplyr::select(sampleInfo, Family, Individual), Indi
 write.table(keepSamples, file="tmp/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
 ```
 
-```{r plinkSNPs, engine="bash", cache.extra=list(file.info("data/hapmap_YRI_r23a_filtered.bed")$mtime, file.info("tmp/sample.lst")$mtime)}
+```{r plinkSNPs, engine="bash", cache=FALSE}
 plink --bfile data/hapmap_YRI_r23a_filtered --out tmp/hapmap_yri.snp_flt --keep tmp/sample.lst --maf 0.1 --geno 0.1 --hwe 1e-4 --autosome --make-bed --silent
 ```
 
@@ -301,7 +301,7 @@ and those with a minor allele frequency of less than 10% in the sample. This res
 in the exclusion of `r totalSNPs - remainSNPs` of 
 `r totalSNPs` (`r format((totalSNPs - remainSNPs)/totalSNPs*100, nsmall=2, digits=2)`%);
 
-```{r plinkSample, engine="bash", cache.extra=list(file.info("tmp/hapmap_yri.snp_flt.bed")$mtime)}
+```{r plinkSample, engine="bash", cache=FALSE}
 plink --bfile tmp/hapmap_yri.snp_flt --out tmp/hapmap_yri.smpl_flt --mind 0.1 --neighbour 1 3 --genome gz nudge --make-bed --silent
 ```
 
