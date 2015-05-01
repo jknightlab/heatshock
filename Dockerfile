@@ -40,7 +40,7 @@ COPY include/ /analysis/include/
 COPY html/ /analysis/html/
 
 ## Create directories for temporary and log files
-RUN mkdir /analysis/tmp && /analysis/log
+RUN mkdir /analysis/tmp && mkdir /analysis/log
 
 ## additional user configuration
 ENV USER=rstudio
