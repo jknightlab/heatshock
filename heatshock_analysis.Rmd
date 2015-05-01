@@ -115,20 +115,20 @@ if(length(latexIdx)){
 url <- paste("heatshock_analysis", formats, sep=".")
 ```
 
-<div class="extra">
+<aside class="download">
 
-# download
-## report
+# Downloads
+## Report
 `r paste0("[", formats, "](", url, ")", collapse=", ")`
 
-## log files
+## Log files
 
 ```{r linkLogs, cache=FALSE, results="asis"}
 logFiles <- sapply(logs, linkLog, "markdown")
 desc <- sapply(logs, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse=",\n"))
 ```
-</div>
+</aside>
 
 
 # Introduction

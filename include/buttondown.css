@@ -111,21 +111,23 @@ div#TOC, nav#TOC
 	padding-bottom: 0.5em;
 	}
 
-div.extra
+aside
 {
     width: 200px;
     margin-bottom: 0.5em;
-    float:right;
-    position:relative;
-    left: 210px;
+    float: right;
+    position: relative;
+    background-color: lavender;
+    pading-left: 20px;
+    padding-bottom: 0.5em;
 }
 
-.extra h1 {
+aside h1 {
 	font-size: 1.5em;
-	font-weight: bold;
+	font-weight: normal;
 }
 
-.extra h2 {
+aside h2 {
 	font-size: 1.25em;
 	font-weight: bold;
 }
