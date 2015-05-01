@@ -133,7 +133,7 @@ cat(paste(logFiles, collapse="\n"))
 The heat shock response is a highly conserved mechanism responsible for the 
 maintenance of cellular function under stress. Originally identified as part of the 
 response to increased environmental temperatures [@Ritossa62] heat shock proteins (HSPs) 
-have since been implicated  in susceptibility to infection [@Kee08], cancer risk [@Sfar10] 
+have since been implicated  in susceptability to infection [@Kee08], cancer risk [@Sfar10] 
 and drug response [@Martin04]. Despite its obvious significance many details of the
 heat shock response still remain uncertain.
 
