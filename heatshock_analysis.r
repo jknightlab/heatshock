@@ -31,7 +31,7 @@ linkLog <- function(log,format=c("markdown", "html")){
 
 includeLogs <- function(logs, format=c("markdown", "html")){
 	format <- match.arg(format)
-	logs <- logs[sapply(logs, function(x) file.exists(file.path(htmlRoot, "log", x$file)))]
+	logs <- logs[sapply(logs, function(x) file.exists(file.path(x$dir, x$file)))]
 	df <- data.frame(log=sapply(logs, linkLog, format), 
 			description=sapply(logs, "[[", "desc"))
 	kable(df, format=format)
@@ -43,7 +43,6 @@ for(file in c("heatshock_analysis.md", "heatshock_analysis.html", "heatshock_ana
 tryCatch(
 		knit("heatshock_analysis.Rmd"),
 		error=function(e){
-			copyLogs(logs, file.path(htmlRoot, "log"))
 			cat("# We have a problem!", "R encountered the following issue while trying",
 					"to analise the heat shock data:", "<p class=\"errorMessage\">",
 					e$message, "</p>", "## Log files", includeLogs(logs, "markdown"), 
@@ -67,6 +66,7 @@ tryCatch(
 		finally={
 			file.copy("heatshock_analysis.html", file.path(htmlRoot, "index.html"),
 					overwrite=TRUE)
+			copyLogs(logs, file.path(htmlRoot, "log"))
 			if(file.exists("heatshock_analysis.pdf")){
 				file.copy("heatshock_analysis.pdf", 
 						file.path(htmlRoot, "heatshock_analysis.pdf"),
