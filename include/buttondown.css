@@ -111,7 +111,7 @@ div#TOC, nav#TOC
 	padding-bottom: 0.5em;
 	}
 
-div#download
+div.extra
 {
     width: 200px;
     margin-bottom: 0.5em;
@@ -123,6 +123,12 @@ div#download
 #download::before
 {
 	content: "download report as";
+	font-weight: bold;
+}
+
+#logs::before
+{
+	content: "log files";
 	font-weight: bold;
 }
 
