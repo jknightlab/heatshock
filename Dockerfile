@@ -39,8 +39,8 @@ COPY heatshock_analysis.* default.pandoc /analysis/
 COPY include/ /analysis/include/
 COPY html/ /analysis/html/
 
-## Create directory for temporary files
-RUN mkdir /analysis/tmp
+## Create directories for temporary and log files
+RUN mkdir /analysis/tmp && /analysis/log
 
 ## additional user configuration
 ENV USER=rstudio
