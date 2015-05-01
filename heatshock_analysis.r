@@ -5,11 +5,11 @@ library(knitr)
 htmlRoot <- "/var/www/html"
 file.copy("html/waiting.html", file.path(htmlRoot, "index.html"), overwrite=TRUE)
 
-logs <- list(knitr=c(dir="/analysis/log", file="analysis.log", 
+logs <- list(knitr=list(dir="/analysis/log", file="analysis.log", 
 				desc="Main log file with knitr output", name="knitr"),
-		snp=c(dir="/analysis/log", file="hapmap_yri.snp_flt.log",
+		snp=list(dir="/analysis/log", file="hapmap_yri.snp_flt.log",
 				desc="PLINK log file for SNP QC", name="SNP QC"),
-		sample=c(dir="/analysis/log", file="hapmap_yri.smpl_flt.log",
+		sample=list(dir="/analysis/log", file="hapmap_yri.smpl_flt.log",
 				desc="PLINK log file for sample genotype QC", name="sample QC"))
 
 copyLogs <- function(logs, dest){
