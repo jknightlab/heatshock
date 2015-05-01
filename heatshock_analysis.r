@@ -33,7 +33,7 @@ includeLogs <- function(logs, format=c("markdown", "html")){
 	format <- match.arg(format)
 	logs <- logs[sapply(logs, function(x) file.exists(file.path(htmlRoot, "log", x$file)))]
 	df <- data.frame(log=sapply(logs, linkLog, format), 
-			description=sapply(log, "[[", "desc"))
+			description=sapply(logs, "[[", "desc"))
 	kable(df, format=format)
 }
 
