@@ -22,7 +22,7 @@ copyLogs <- function(logs, dest){
 }
 
 linkLog <- function(log,format=c("markdown", "html")){
-	format <- match.args(format)
+	format <- match.arg(format)
 	if(format == "markdown")
 		paste0("[", log$name, "](log/", log$file, ")")
 	else if(format == "html")
@@ -30,7 +30,7 @@ linkLog <- function(log,format=c("markdown", "html")){
 }
 
 includeLogs <- function(logs, format=c("markdown", "html")){
-	format <- match.args(format)
+	format <- match.arg(format)
 	logs <- logs[sapply(logs, function(x) file.exists(file.path(htmlRoot, "log", x$file)))]
 	df <- data.frame(log=sapply(logs, linkLog, format), 
 			description=sapply(log, "[[", "desc"))
