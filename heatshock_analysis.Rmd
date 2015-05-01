@@ -115,19 +115,19 @@ if(length(latexIdx)){
 url <- paste("heatshock_analysis", formats, sep=".")
 ```
 
-<div class="extra" id="download">
-<p>
+<div class="extra">
+<p id="download">
 `r paste0("[", formats, "](", url, ")", collapse=", ")`
 </p>
-</div>
+<p id="logs">
 
-<div class="extra" id="logs">
-
-```{r linkLogs}
+```{r linkLogs, cache=FALSE, results="asis"}
 logFiles <- sapply(logs, linkLog, "markdown")
 cat(paste(logFiles, collapse="\n"))
 ```
+</p>
 </div>
+
 
 # Introduction
 The heat shock response is a highly conserved mechanism responsible for the 
