@@ -34,7 +34,7 @@ includeLogs <- function(logs, format=c("markdown", "html")){
 	logs <- logs[sapply(logs, function(x) file.exists(file.path(x$dir, x$file)))]
 	df <- data.frame(log=sapply(logs, linkLog, format), 
 			description=sapply(logs, "[[", "desc"))
-	kable(df, format=format)
+	kable(df, format=format, row.names=FALSE)
 }
 
 for(file in c("heatshock_analysis.md", "heatshock_analysis.html", "heatshock_analysis.pdf")){
