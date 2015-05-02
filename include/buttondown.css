@@ -130,7 +130,8 @@ aside h1 {
 
 aside h2 {
 	font-size: 1.25em;
-	font-weight: bold;
+	font-weight: normal;
+	margin-bottom: 0.25em;
 }
 
 div#content
