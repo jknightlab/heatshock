@@ -119,7 +119,7 @@ url <- paste("heatshock_analysis", formats, sep=".")
 
 # Downloads
 ## Report
-`r paste0("[", formats, "](", url, ")", collapse=", ")`
+`r paste0("<span title=\"Download report as ", formats, "\">[", formats, "](", url, ")</span>", collapse=", ")`
 
 ## Log files
 
