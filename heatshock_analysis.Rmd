@@ -277,12 +277,16 @@ sig.pc$sample <- rownames(sig.pc)
 sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2)
 info <- mutate(info, sample=paste(`Cell Line`, `Treatment`, sep="_"))
 sig.pc <- inner_join(sig.pc, info, by="sample")
+
+cluster <- dplyr::filter(sig.pc, `Date cRNA Amplified` != "CE_29Sep09")
+clusterBound <- chull(cluster$PC1, cluster$PC2) 
 ```
 
-```{r pcaPlot, cache=FALSE, fig.cap=figRef("pcaPlot", "PCA plot of samples. Colours correspond to different BeadChips while shapes indicate different amplification dates. Samples from the two amplifications in October 2009 are clustered together.")}
-ggplot(sig.pc, aes(x=PC1, y=PC2, colour=as.character(Sentrix_ID), shape=`Date cRNA Amplified`)) + 
-	geom_point(size=3) + theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("RNA Amplification")
-```
+```{r pcaPlot, cache=FALSE, fig.cap=figRef("pcaPlot", "PCA plot of samples. Colours correspond to different BeadChips while shapes indicate different amplification dates. Samples from the two amplifications in October 2009 are clustered together (highlighted by the grey area).")}
+ggplot(sig.pc, aes(x=PC1, y=PC2)) + 
+     geom_polygon(data=cluster[clusterBound, ], fill="lightgrey", colour="grey") + 
+     geom_point(aes( colour=as.character(Sentrix_ID), shape=`Date cRNA Amplified`), size=3) + 
+     theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("RNA Amplification")```
 
 A principle component analysis of the gene expression for the remaining samples indicates 
 a clustering of samples from two RNA amplification batches in October 2009
