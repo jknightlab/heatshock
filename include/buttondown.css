@@ -58,7 +58,7 @@ div#header, header
     text-align: center;
     font-size: 100%;
     }
-.author::after {
+.author_name::after {
 	content: attr(data-affiliation);
 	font-size: 0.5em;
 	vertical-align: super;
