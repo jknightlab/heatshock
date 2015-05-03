@@ -58,6 +58,11 @@ div#header, header
     text-align: center;
     font-size: 100%;
     }
+.author::after {
+	content: attr(data-affiliation);
+	font-size: 0.5em;
+	vertical-align: super;
+}
 
 .date 
     {
