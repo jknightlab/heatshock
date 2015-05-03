@@ -286,7 +286,8 @@ clusterBound <- chull(cluster$PC1, cluster$PC2)
 ggplot(sig.pc, aes(x=PC1, y=PC2)) + 
      geom_polygon(data=cluster[clusterBound, ], fill="lightgrey", colour="grey") + 
      geom_point(aes( colour=as.character(Sentrix_ID), shape=`Date cRNA Amplified`), size=3) + 
-     theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("RNA Amplification")```
+     theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("RNA Amplification")
+```
 
 A principle component analysis of the gene expression for the remaining samples indicates 
 a clustering of samples from two RNA amplification batches in October 2009
