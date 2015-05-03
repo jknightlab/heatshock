@@ -313,7 +313,7 @@ Genotype data provided by the HapMap project [@Gibbs10] was processed with Plink
 to restrict the data to autosomes and remove SNPs with low genotyping rate and 
 and those with a minor allele frequency of less than 10% in the sample. This results
 in the exclusion of `r totalSNPs - remainSNPs` of 
-`r totalSNPs` (`r format((totalSNPs - remainSNPs)/totalSNPs*100, nsmall=2, digits=2)`%);
+`r totalSNPs` SNPs (`r format((totalSNPs - remainSNPs)/totalSNPs*100, nsmall=2, digits=2)`%);
 
 ```{r plinkSample, engine="bash", cache=FALSE}
 plink --bfile tmp/hapmap_yri.snp_flt --out tmp/hapmap_yri.smpl_flt --mind 0.1 --neighbour 1 3 --genome gz nudge --make-bed > log/hapmap_yri.smpl_flt.log
