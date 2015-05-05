@@ -51,6 +51,21 @@ reshapeData <- function(data, value){
 	as.tbl(ans[c("sample", "treatment", "probe", value)])
 }
 
+ibsClust <- function(genome, ...){
+	dst <- spread(dplyr::select(genome, IID1, IID2, DST), IID2, DST)
+	size <- nrow(dst) + 1
+	labels <- c(as.character(dst$IID1[1]), names(dst)[-1])
+	dst <- t(1 - as.matrix(dst[-1]))
+	dst <- dst[!is.na(dst)]
+	attr(dst, "Size") <- size
+	attr(dst, "Labels") <- labels
+	attr(dst, "Diag") <- FALSE
+	attr(dst, "Upper") <- FALSE
+	class(dst) <- "dist"
+	
+	hclust(dst, ...)
+}
+
 figRef <- local({
     tag <- numeric()
     created <- logical()
@@ -317,7 +332,7 @@ in the exclusion of `r totalSNPs - remainSNPs` of
 `r totalSNPs` SNPs (`r format((totalSNPs - remainSNPs)/totalSNPs*100, nsmall=2, digits=2)`%);
 
 ```{r plinkSample, engine="bash", cache=FALSE}
-plink --bfile tmp/hapmap_yri.snp_flt --out tmp/hapmap_yri.smpl_flt --mind 0.1 --neighbour 1 3 --genome gz nudge --cluster --make-bed > log/hapmap_yri.smpl_flt.log
+plink --bfile tmp/hapmap_yri.snp_flt --out tmp/hapmap_yri.smpl_flt --mind 0.1 --neighbour 1 3 --genome gz nudge --make-bed > log/hapmap_yri.smpl_flt.log
 ```
 
 ```{r nnIBS, cache=FALSE}
@@ -344,6 +359,25 @@ set.caption(tabRef("nnIBS",
 pander(nnSuspect)
 ```
 
+```{r loadIBD}
+ibdReport <- read.table("tmp/hapmap_yri.smpl_flt.genome.gz", header=TRUE)
+ibdSD <- sd(ibdReport$PI_HAT)
+ibdHigh <- dplyr::filter(ibdReport, PI_HAT > 2*ibdSD)
+```
+
+A similar picture emerges if we consider the estimated proportion of IBD for all
+sample pairs with `r nrow(ibdHigh)` pairs showing evidence of higher than expected
+relatedness (see `r tabRef("ibdHigh")` and `r figRef("ibsDendro")` for details).
+
+```{r ibdHighTab}
+set.caption(tabRef("ibdHigh", paste("Sample pairs with estimated proportion of IBD exceeding",
+		format(2*ipdSD, nsmall=2, digits=2))))
+pander(ibdHigh)
+```
+
+```{r ibsDendroPlot, cache=FALSE, fig.cap=figRef("ibsDendro", "Dendrogram of individuals included in study. Distances are based on identity by state. Three pairs show clear indications of increased relatedness.")}
+plot(ibsClust(ibdReport), main="", xlab="IBS", sub="")
+```
 # Results
 
 # Appendix {-}
