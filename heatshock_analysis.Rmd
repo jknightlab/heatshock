@@ -374,10 +374,10 @@ relatedness (see `r tabRef("ibdHigh")` and `r figRef("ibsDendro")` for details).
 pairs <- rbind(as.matrix(dplyr::select(ibdHigh, IID1, IID2)), 
 		as.matrix(dplyr::select(nnSuspect, IID, IID2)))
 exSample <- character()
-while(nrow(pairs)){
+while(length(pairs)){
 	ids <- sort(table(pairs), decreasing=TRUE)
 	exSample <- c(exSample, names(ids[1]))
-	pairs <- pairs[!apply(pairs, 1, `%in%`, x=names(ids)[1]), ]
+	pairs <- pairs[!apply(pairs, 1, `%in%`, x=names(ids)[1]), , drop=FALSE]
 }
 exclude$sample <- union(exclude$sample, exSample)
 ```
