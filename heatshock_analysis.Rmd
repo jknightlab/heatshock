@@ -370,6 +370,19 @@ A similar picture emerges if we consider the estimated proportion of IBD for all
 sample pairs with `r nrow(ibdHigh)` pairs showing evidence of higher than expected
 relatedness (see `r tabRef("ibdHigh")` and `r figRef("ibsDendro")` for details).
 
+```{r selectExlusions}
+pairs <- rbind(as.matrix(select(ibdHigh, IID1, IID2)), 
+		as.matrix(select(nnSuspect, IID, IID2)))
+while(nrow(pairs)){
+	ids <- sort(table(pairs))
+	exSample <- c(exSample, names(ids[1]))
+	pairs <- pairs[!apply(pairs, 1, `%in%`, x=names(ids)[1]), ]
+}
+exclude$sample <- union(exclude$sample, exSample)
+```
+
+To ensure that at most one sample of each suspect pair are included in the analysis
+the samples `r pander(exSample)` are excluded.
 
 ```{r ibdHighTab}
 set.caption(tabRef("ibdHigh", paste("Sample pairs with estimated proportion of IBD exceeding",
