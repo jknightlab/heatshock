@@ -375,7 +375,7 @@ pairs <- rbind(as.matrix(dplyr::select(ibdHigh, IID1, IID2)),
 		as.matrix(dplyr::select(nnSuspect, IID, IID2)))
 exSample <- character()
 while(nrow(pairs)){
-	ids <- sort(table(pairs))
+	ids <- sort(table(pairs), decreasing=TRUE)
 	exSample <- c(exSample, names(ids[1]))
 	pairs <- pairs[!apply(pairs, 1, `%in%`, x=names(ids)[1]), ]
 }
