@@ -9,7 +9,7 @@ address:
 date: `r format(Sys.time(), "%a %d %b %Y")`
 ---
 
-```{r, setup, include=FALSE}
+```{r, setup, include=FALSE, cache=FALSE}
 library(gdata)
 library(affy)
 library(vsn)
