@@ -388,7 +388,7 @@ the samples `r pander(exSample)` are excluded.
 ```{r ibdHighTab}
 set.caption(tabRef("ibdHigh", paste("Sample pairs with estimated proportion of IBD exceeding",
 		format(2*ibdSD, nsmall=2, digits=2))))
-pander(dplyr::select(ibdHigh, IID1, IID2, Z0, Z1, Z2, PI_HAT, DST, RATIO))
+pander(dplyr::select(ibdHigh, IID1, IID2, PI_HAT, DST, RATIO))
 ```
 
 ```{r ibsDendroPlot, cache=FALSE, fig.cap=figRef("ibsDendro", "Dendrogram of individuals included in study. Distances are based on identity by state. Three pairs show clear indications of increased relatedness.")}
