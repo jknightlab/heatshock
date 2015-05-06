@@ -378,6 +378,7 @@ pander(ibdHigh)
 ```{r ibsDendroPlot, cache=FALSE, fig.cap=figRef("ibsDendro", "Dendrogram of individuals included in study. Distances are based on identity by state. Three pairs show clear indications of increased relatedness.")}
 plot(ibsClust(ibdReport), main="", xlab="IBS", sub="")
 ```
+
 # Results
 
 # Appendix {-}
