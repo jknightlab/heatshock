@@ -401,7 +401,7 @@ plot(ibsClust(ibdReport), main="", xlab="IBS", sub="")
 ```{r sampleList2, ref.label="sampleList"}
 ```
 
-```{r plinkMdsPlot}
+```{r plinkMdsPlot, cache=FALSE, engine="bash"}
 plink --bfile tmp/hapmap_yri.smpl_flt --out tmp/hapmap_yri.smpl_flt2 --keep tmp/sample.lst --cluster --mds-plot 4 --make-bed > log/hapmap_yri.smpl_flt.log
 ```
 
