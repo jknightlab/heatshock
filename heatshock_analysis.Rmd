@@ -371,8 +371,8 @@ sample pairs with `r nrow(ibdHigh)` pairs showing evidence of higher than expect
 relatedness (see `r tabRef("ibdHigh")` and `r figRef("ibsDendro")` for details).
 
 ```{r selectExlusions}
-pairs <- rbind(as.matrix(select(ibdHigh, IID1, IID2)), 
-		as.matrix(select(nnSuspect, IID, IID2)))
+pairs <- rbind(as.matrix(dplyr::select(ibdHigh, IID1, IID2)), 
+		as.matrix(dplyr::select(nnSuspect, IID, IID2)))
 while(nrow(pairs)){
 	ids <- sort(table(pairs))
 	exSample <- c(exSample, names(ids[1]))
