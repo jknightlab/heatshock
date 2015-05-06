@@ -371,7 +371,7 @@ relatedness (see `r tabRef("ibdHigh")` and `r figRef("ibsDendro")` for details).
 
 ```{r ibdHighTab}
 set.caption(tabRef("ibdHigh", paste("Sample pairs with estimated proportion of IBD exceeding",
-		format(2*ipdSD, nsmall=2, digits=2))))
+		format(2*ibdSD, nsmall=2, digits=2))))
 pander(ibdHigh)
 ```
 
