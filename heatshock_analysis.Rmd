@@ -30,6 +30,7 @@ opts_chunk$set(tidy=TRUE)
 opts_chunk$set(echo=FALSE)
 opts_chunk$set(cache=TRUE)
 panderOptions("digits", 3)
+panderOptions("table.split.table", 120)
 options(figcap.prefix = "Figure", figcap.sep = ":", figcap.prefix.highlight = "**")
 options(tabcap.prefix = "Table", tabcap.sep = ":", tabcap.prefix.highlight = "**")
 ```
@@ -368,6 +369,7 @@ ibdHigh <- dplyr::filter(ibdReport, PI_HAT > 2*ibdSD)
 A similar picture emerges if we consider the estimated proportion of IBD for all
 sample pairs with `r nrow(ibdHigh)` pairs showing evidence of higher than expected
 relatedness (see `r tabRef("ibdHigh")` and `r figRef("ibsDendro")` for details).
+
 
 ```{r ibdHighTab}
 set.caption(tabRef("ibdHigh", paste("Sample pairs with estimated proportion of IBD exceeding",
