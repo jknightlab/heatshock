@@ -398,7 +398,7 @@ plot(ibsClust(ibdReport), main="", xlab="IBS", sub="")
 ```{r filterSample2, ref.label="filterSample"}
 ```
 
-```{r sampleList2, ref.label="sampleList"}
+```{r sampleList2, ref.label="sampleList", cache=FALSE}
 ```
 
 ```{r plinkMdsPlot, cache=FALSE, engine="bash"}
