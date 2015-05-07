@@ -15,21 +15,35 @@ logs <- list(knitr=list(dir="/analysis/log", file="analysis.log",
 				desc="PLINK log file for exclusion of samples and MDS plot",
 				name="MDS"))
 
-copyLogs <- function(logs, dest){
+data <- list(exprRaw=list(dir="/analysis/tmp", file="heatshock_expr_raw.tab.gz",
+				desc="Probe intensities for all samples and probes that pass QC",
+				name="probe intensities"),
+		expr=list(dir="/analysis/tmp", file="heatshock_expr_norm.tab.gz",
+				desc="Normalised gene expression estimates for all samples and probes that pass QC",
+				name="gene expression"),
+		geno=list(dir="/analysis/tmp", file="yri_geno.tar.gz",
+				desc="Genotypes for all samples and SNPs that pass QC",
+				name="genotypes (PLINK)"))
+
+copyFiles <- function(files, dest){
 	if(!file.exists(dest)) dir.create(dest)
-	for(i in 1:length(logs)){
-		source <- file.path(logs[[i]]$dir, logs[[i]]$file)
+	for(i in 1:length(files)){
+		source <- file.path(files[[i]]$dir, files[[i]]$file)
 		if(file.exists(source))
-			file.copy(source, file.path(dest, logs[[i]]$file))
+			file.copy(source, file.path(dest, files[[i]]$file))
 	}
 }
 
 linkLog <- function(log,format=c("markdown", "html")){
+	linkFile(log, "log", format)
+}
+
+linkFile <- function(file, dest, format=c("markdown", "html")){
 	format <- match.arg(format)
 	if(format == "markdown")
-		paste0("[", log$name, "](log/", log$file, ")")
+		paste0("[", file$name, "](", dest, "/", file$file, ")")
 	else if(format == "html")
-		paste0("<a href=log/", log$file, ">", log$name, "</a>")
+		paste0("<a href=", dest, "/", file$file, ">", file$name, "</a>")
 }
 
 includeLogs <- function(logs, format=c("markdown", "html")){
@@ -69,7 +83,8 @@ tryCatch(
 		finally={
 			file.copy("heatshock_analysis.html", file.path(htmlRoot, "index.html"),
 					overwrite=TRUE)
-			copyLogs(logs, file.path(htmlRoot, "log"))
+			copyFiles(logs, file.path(htmlRoot, "log"))
+			copyFiles(data, file.path(htmlRoot, "data"))
 			if(file.exists("heatshock_analysis.pdf")){
 				file.copy("heatshock_analysis.pdf", 
 						file.path(htmlRoot, "heatshock_analysis.pdf"),

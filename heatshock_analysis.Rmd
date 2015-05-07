@@ -137,6 +137,14 @@ url <- paste("heatshock_analysis", formats, sep=".")
 ## Report
 `r paste0("<span title=\"Download report as ", formats, "\">[", formats, "](", url, ")</span>", collapse=", ")`
 
+## Data
+
+```{r linkData, cache=FALSE, result="asis"}
+dataFiles <- sapply(data, linkFile, "data", "markdown")
+desc <- sapply(data, "[[", "desc")
+cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse=",\n"))
+```
+
 ## Log files
 
 ```{r linkLogs, cache=FALSE, results="asis"}
@@ -413,6 +421,17 @@ ggplot(mds, aes(x=C1, y=C2)) + geom_point(size=3) + theme_bw()
 
 Plotting the first two MDS components of the remaining `r nrow(keepSamples)` samples
 shows no further evidence for outliers (`r figRef("mds")`).
+
+
+
+```{r writeExpr}
+
+```
+
+```{r copyData, cache=FALSE}
+system("tar -czf tmp/yri_geno.tar.gz tmp/hapmap_yri.smpl_flt2.bed tmp/hapmap_yri.smpl_flt2.bim tmp/hapmap_yri.smpl_flt2.fam")
+file.copy("tmp/yri_geno.tar.gz", file.path("htmlRoot", "data", "yri_geno.tar.gz", overwrite=TRUE))
+```
 
 # Results
 
