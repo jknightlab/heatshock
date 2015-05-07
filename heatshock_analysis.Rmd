@@ -428,9 +428,8 @@ shows no further evidence for outliers (`r figRef("mds")`).
 
 ```
 
-```{r copyData, cache=FALSE}
+```{r compressData, cache=FALSE}
 system("tar -czf tmp/yri_geno.tar.gz tmp/hapmap_yri.smpl_flt2.bed tmp/hapmap_yri.smpl_flt2.bim tmp/hapmap_yri.smpl_flt2.fam")
-file.copy("tmp/yri_geno.tar.gz", file.path(htmlRoot, "data", "yri_geno.tar.gz"), overwrite=TRUE)
 ```
 
 # Results
