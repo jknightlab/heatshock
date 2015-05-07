@@ -189,6 +189,7 @@ for(i in factors){
 
 
 newNames <- paste(info[["Cell Line"]], info$Treatment, sep="_")
+newNames <- sub("^GM", "NA", newNames)
 names(newNames)<- info[["ARRAY CODE"]]
 
 ## typo in sample ID
@@ -310,7 +311,7 @@ a clustering of samples from two RNA amplification batches in October 2009
 (`r figRef("pcaPlot")`). This batch effect is noted for later correction during the analysis.
 
 ```{r sampleList, cache=FALSE}
-samples <- sub("_.", "", sub("GM", "NA", unique(sig.data.long$sample)))
+samples <- sub("_.", "", unique(sig.data.long$sample))
 sampleInfo <- readr::read_delim("data/hapmap_YRI_r23a_filtered.fam", delim=" ", 
 		col_names=c("Family", "Individual", "Father", "Mother", "Sex", "Phenotype"))
 keepSamples <- dplyr::filter(dplyr::select(sampleInfo, Family, Individual), Individual %in% samples)
