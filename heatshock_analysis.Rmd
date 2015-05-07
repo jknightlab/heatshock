@@ -186,10 +186,10 @@ factors <- which(sapply(info, is.factor))
 for(i in factors){
 	info[[i]] <- factor(as.character(info[[i]]))
 }
+info[["Cell Line"]] <- sub("^GM", "NA", info[["Cell Line"]])
 
 
 newNames <- paste(info[["Cell Line"]], info$Treatment, sep="_")
-newNames <- sub("^GM", "NA", newNames)
 names(newNames)<- info[["ARRAY CODE"]]
 
 ## typo in sample ID
