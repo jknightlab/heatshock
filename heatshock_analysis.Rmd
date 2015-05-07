@@ -139,7 +139,7 @@ url <- paste("heatshock_analysis", formats, sep=".")
 
 ## Data
 
-```{r linkData, cache=FALSE, result="asis"}
+```{r linkData, cache=FALSE, results="asis"}
 dataFiles <- sapply(data, linkFile, "data", "markdown")
 desc <- sapply(data, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse=",\n"))
