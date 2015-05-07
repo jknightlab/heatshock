@@ -10,7 +10,10 @@ logs <- list(knitr=list(dir="/analysis/log", file="analysis.log",
 		snp=list(dir="/analysis/log", file="hapmap_yri.snp_flt.log",
 				desc="PLINK log file for SNP QC", name="SNP QC"),
 		sample=list(dir="/analysis/log", file="hapmap_yri.smpl_flt.log",
-				desc="PLINK log file for sample genotype QC", name="sample QC"))
+				desc="PLINK log file for sample genotype QC", name="sample QC"),
+		mds=list(dir="/analysis/log", file="hapmap_yri.smpl_flt2.log",
+				desc="PLINK log file for exclusion of samples and MDS plot",
+				name="MDS"))
 
 copyLogs <- function(logs, dest){
 	if(!file.exists(dest)) dir.create(dest)
