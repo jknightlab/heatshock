@@ -406,13 +406,13 @@ plot(ibsClust(ibdReport), main="", xlab="IBS", sub="")
 plink --bfile tmp/hapmap_yri.smpl_flt --out tmp/hapmap_yri.smpl_flt2 --keep tmp/sample.lst --cluster --mds-plot 4 --make-bed > log/hapmap_yri.smpl_flt.log
 ```
 
-```{r mdsPlot, cache=FALSE, fig.cap=refFig("mds", "MDS plot of samples remaining after genotype QC.")}
+```{r mdsPlot, cache=FALSE, fig.cap=figRef("mds", "MDS plot of samples remaining after genotype QC.")}
 mds <- read.table("tmp/hapmap_yri.smpl_flt2.mds", header=TRUE)
 ggplot(mds, aes(x=C1, y=C2)) + geom_point(size=3) + theme_bw()
 ```
 
 Plotting the first two MDS components of the remaining `r nrow(keepSamples)` samples
-shows no further evidence for outliers (`r refFig("mds")`).
+shows no further evidence for outliers (`r figRef("mds")`).
 
 # Results
 
