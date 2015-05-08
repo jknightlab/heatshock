@@ -24,6 +24,7 @@ library(readr)
 library(illuminaHumanv3.db)
 library(knitr)
 library(pander)
+library(reshape2)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -170,7 +171,9 @@ genetic variants modulating gene expression are mapped across all relevant genes
 
 # Material and Methods
 
-## Quality Control
+## Pre-processing and Quality Control
+
+### Raw gene expression QC
 
 ```{r loadExpression, results="hide"}
 rawIntensity <- readr::read_tsv("data/TPS00590_FinalReport_12Oct09.txt", skip=8, progress=FALSE)
@@ -225,6 +228,7 @@ exclude$probe <- character()
 
 ```{r longData}
 sig.data.long <- reshapeData(sig.data.log, "intensity")
+sig.data.raw <- reshapeData(sig.data.raw, "intensity")
 det.data.long <- reshapeData(det.data.raw, "p.value")
 ```
 
@@ -255,6 +259,7 @@ exclude$probe <- union(exclude$probe, filter(detected, n < 7)$probe)
 
 ```{r filterProbe}
 sig.data.long <- filter(sig.data.long, !probe %in% exclude$probe)
+sig.data.raw <- filter(sig.data.raw, !probe %in% exclude$probe)
 det.data.long <- filter(det.data.long, !probe %in% exclude$probe)
 ```
 
@@ -272,6 +277,7 @@ exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < 0.7)$
 
 ```{r filterSample}
 sig.data.long <- filter(sig.data.long, !sample %in% exclude$sample)
+sig.data.raw <- filter(sig.data.raw, !sample %in% exclude$sample)
 det.data.long <- filter(det.data.long, !sample %in% exclude$sample)
 ```
 
@@ -317,6 +323,8 @@ ggplot(sig.pc, aes(x=PC1, y=PC2)) +
 A principle component analysis of the gene expression for the remaining samples indicates 
 a clustering of samples from two RNA amplification batches in October 2009
 (`r figRef("pcaPlot")`). This batch effect is noted for later correction during the analysis.
+
+### Genotype QC
 
 ```{r sampleList, cache=FALSE}
 samples <- sub("_.", "", unique(sig.data.long$sample))
@@ -422,6 +430,15 @@ ggplot(mds, aes(x=C1, y=C2)) + geom_point(size=3) + theme_bw()
 Plotting the first two MDS components of the remaining `r nrow(keepSamples)` samples
 shows no further evidence for outliers (`r figRef("mds")`).
 
+### Normalising gene expression estimates
+
+Probe intensities were normalised with VSN [@Huber02], followed by ComBat [@Johnson07;@SVA] 
+to account for any remaining batch effects.
+
+```{r vsn}
+sig.data.norm <- justvsn(acast(sig.data.raw, formula=probe ~ sample + treatment, 
+		value.var="intensity"))
+```
 
 
 ```{r writeExpr}
