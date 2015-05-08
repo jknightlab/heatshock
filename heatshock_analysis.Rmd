@@ -313,7 +313,7 @@ cluster <- dplyr::filter(sig.pc, `Date cRNA Amplified` != "CE_29Sep09")
 clusterBound <- chull(cluster$PC1, cluster$PC2) 
 ```
 
-```{r pcaPlot, cache=FALSE, fig.cap=figRef("pcaPlot", "PCA plot of samples. Colours correspond to different BeadChips while shapes indicate different amplification dates. Samples from the two amplifications in October 2009 are clustered together (highlighted by the grey area).")}
+```{r pcaPlot, cache=FALSE, fig.cap=figRef("pcaPlot", "PCA plot of probe intensities by sample. Colours correspond to different BeadChips while shapes indicate different amplification dates. Samples from the two amplifications in October 2009 are clustered together (highlighted by the grey area).")}
 ggplot(sig.pc, aes(x=PC1, y=PC2)) + 
      geom_polygon(data=cluster[clusterBound, ], fill="lightgrey", colour="grey") + 
      geom_point(aes( colour=as.character(Sentrix_ID), shape=`Date cRNA Amplified`), size=3) + 
@@ -440,6 +440,51 @@ sig.data.norm <- justvsn(acast(sig.data.raw, formula=probe ~ sample + treatment,
 		value.var="intensity"))
 ```
 
+```{r vsnPCA}
+sig.pca <- prcomp(t(sig.data.norm), scale=TRUE)
+sig.pc <- as.data.frame(sig.pca$x)
+sig.pc$sample <- rownames(sig.pc)
+sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
+info <- mutate(info, sample=paste(`Cell Line`, `Treatment`, sep="_"))
+sig.pc <- inner_join(sig.pc, info, by="sample")
+
+clusterOp<- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786720, 526786721))
+clusterOpBound_1_2 <- chull(clusterOp$PC1, clusterOp$PC2)
+clusterOpBound_2_3 <- chull(clusterOp$PC2, clusterOp$PC3)
+clusterOpBound_1_3 <- chull(clusterOp$PC1, clusterOp$PC3) 
+
+clusterChip1 <- dplyr::filter(sig.pc, Sentrix_ID == 536403752)
+clusterChip1Bound_1_2 <- chull(clusterChip1$PC1, clusterChip1$PC2)
+clusterChip1Bound_1_3 <- chull(clusterChip1$PC1, clusterChip1$PC3)
+clusterChip1Bound_2_3 <- chull(clusterChip1$PC2, clusterChip1$PC3)
+
+clusterChip2 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(536403729, 536403730))
+clusterChip2Bound_1_2 <- chull(clusterChip2$PC1, clusterChip2$PC2)
+clusterChip2Bound_1_3 <- chull(clusterChip2$PC1, clusterChip2$PC3)
+clusterChip2Bound_2_3 <- chull(clusterChip2$PC2, clusterChip2$PC3)
+
+clusterChip3 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786722, 526786736, 
+				526786743, 526786749))
+clusterChip3Bound_1_2 <- chull(clusterChip3$PC1, clusterChip3$PC2)
+clusterChip3Bound_1_3 <- chull(clusterChip3$PC1, clusterChip3$PC3)
+clusterChip3Bound_2_3 <- chull(clusterChip3$PC2, clusterChip3$PC3)
+
+clusterChip4 <- dplyr::filter(sig.pc, Sentrix_ID == 536403760)
+clusterChip4Bound_1_2 <- chull(clusterChip4$PC1, clusterChip4$PC2)
+clusterChip4Bound_1_3 <- chull(clusterChip4$PC1, clusterChip4$PC3)
+clusterChip4Bound_2_3 <- chull(clusterChip4$PC2, clusterChip4$PC3)
+```
+
+```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample.")}
+ggplot(sig.pc, aes(x=PC1, y=PC3)) +  
+	 geom_polygon(data=clusterOp[clusterOpBound_1_3, ], fill="lightgrey", colour="grey") +
+	 geom_polygon(data=clusterChip1[clusterChip1Bound_1_3, ], alpha=0.8, fill="yellow", colour="orange") +
+	 geom_polygon(data=clusterChip2[clusterChip2Bound_1_3, ], alpha=0.8, fill="lightblue", colour="blue") +
+	 geom_polygon(data=clusterChip3[clusterChip3Bound_1_3, ], alpha=0.8, fill="lightgreen", colour="green") +
+	 geom_polygon(data=clusterChip4[clusterChip4Bound_1_3, ], alpha=0.8, fill="lightpink", colour="red") +
+     geom_point(aes( colour=as.character(Sentrix_ID), shape=`Operator initial cRNA`), size=3) + 
+     theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("RNA amplified by")
+```
 
 ```{r writeExpr}
 
