@@ -432,7 +432,7 @@ shows no further evidence for outliers (`r figRef("mds")`).
 
 ### Normalising gene expression estimates
 
-Probe intensities were normalised with VSN [@Huber02], followed by ComBat [@Johnson07;@SVA] 
+Probe intensities were normalised with VSN [@Huber02], followed by ComBat [@Johnson07;@SVA15] 
 to account for any remaining batch effects.
 
 ```{r vsn}
