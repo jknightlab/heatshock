@@ -25,6 +25,7 @@ library(illuminaHumanv3.db)
 library(knitr)
 library(pander)
 library(reshape2)
+library(ggdendro)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -502,6 +503,30 @@ ggplot(sig.pc, aes(x=PC1, y=PC3)) +
 ```{r vsn2, ref.label="vsn"}
 ```
 
+```{r exprClust}
+exprDist <- dist(t(sig.data.norm))
+exprClust <- hclust(exprDist)
+```
+
+```{r clustPlot}
+dendroData <- dendro_data(exprClust)
+labels <- strsplit(as.character(dendroData$labels$label), "_")
+dendroData$labels$label <- sapply(labels, "[[", 1)
+dendroData$labels$treatment <- sapply(labels, "[[", 2)
+dendroData$segments <- merge(dendroData$segments, dendroData$labels, by.x=c("xend", "yend"), by.y=c("x", "y"), all.x=TRUE)
+dendroData$segments[is.na(dendroData$segments$treatment), "treatment"] <- "internal"
+dendroData$segments <- merge(dendroData$segments, info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID")], by.x="label", by.y="Cell Line", all.x=TRUE)
+dendroData$segments <- mutate(dendroData$segments, cluster=ifelse(Sentrix_ID %in% c(526786720, 526786721), "1", ifelse(Sentrix_ID == 536403752, "2", 
+        ifelse(Sentrix_ID %in% c(536403729, 536403730), "3", ifelse(Sentrix_ID %in% c(526786722, 526786736, 
+				526786743, 526786749), "4", "5")))))
+dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
+ 
+ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, linetype=treatment, colour=cluster)) + 
+        scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
+        scale_linetype_manual(values=c(Basal="solid", Stim="dashed", internal="solid")) +
+        scale_colour_manual(values=c("1"="grey", "2"="orange", "3"="blue", "4"="green", "5"="red", "internal"="black")) +
+        theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
+```
 
 ```{r writeExpr}
 
