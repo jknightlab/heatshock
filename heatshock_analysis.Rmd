@@ -502,8 +502,6 @@ ggplot(sig.pc, aes(x=PC1, y=PC3)) +
 ```{r vsn2, ref.label="vsn"}
 ```
 
-```{r vsnPCA2, ref.label="vsnPCA"}
-```
 
 ```{r writeExpr}
 
