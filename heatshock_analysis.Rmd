@@ -447,8 +447,14 @@ sig.pc$sample <- rownames(sig.pc)
 sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
 info <- mutate(info, sample=paste(`Cell Line`, `Treatment`, sep="_"))
 sig.pc <- inner_join(sig.pc, info, by="sample")
-sig.pc <- mutate(sig.pc, outlier= sample %in% c("NA18508_Basal", "NA19201_Stim"))
+```
 
+```{r vsnOutliers}
+sig.pc <- mutate(sig.pc, outlier= sample %in% c("NA18508_Basal", "NA19201_Stim"))
+exclude$sample <- union(exclude$sample, c("NA18508", "NA19201"))
+```
+
+```{r vsnPCAcluster}
 clusterOp<- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786720, 526786721) & !outlier)
 clusterOpBound_1_2 <- chull(clusterOp$PC1, clusterOp$PC2)
 clusterOpBound_2_3 <- chull(clusterOp$PC2, clusterOp$PC3)
@@ -486,6 +492,13 @@ ggplot(sig.pc, aes(x=PC1, y=PC3)) +
      geom_point(aes( colour=as.character(Sentrix_ID), shape=outlier), size=3) + 
      theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("Outlier")
 ```
+
+```{r excludeOutliers, ref.label="filterSample"}
+```
+
+```{r exclOutlGeno, ref.label="sampleList", cache=FALSE}
+```
+
 
 ```{r writeExpr}
 
