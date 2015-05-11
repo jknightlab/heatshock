@@ -199,7 +199,7 @@ for(i in factors){
 	info[[i]] <- factor(as.character(info[[i]]))
 }
 info[["Cell Line"]] <- sub("^GM", "NA", info[["Cell Line"]])
-
+info <- mutate(info, sample=paste(`Cell Line`, `Treatment`, sep="_"))
 
 newNames <- paste(info[["Cell Line"]], info$Treatment, sep="_")
 names(newNames)<- info[["ARRAY CODE"]]
@@ -307,7 +307,6 @@ sig.pca <- prcomp(t(sig.data.filter[-1]), scale=TRUE)
 sig.pc <- as.data.frame(sig.pca$x)
 sig.pc$sample <- rownames(sig.pc)
 sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2)
-info <- mutate(info, sample=paste(`Cell Line`, `Treatment`, sep="_"))
 sig.pc <- inner_join(sig.pc, info, by="sample")
 
 cluster <- dplyr::filter(sig.pc, `Date cRNA Amplified` != "CE_29Sep09")
@@ -448,7 +447,6 @@ sig.pca <- prcomp(t(sig.data.norm), scale=TRUE)
 sig.pc <- as.data.frame(sig.pca$x)
 sig.pc$sample <- rownames(sig.pc)
 sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
-info <- mutate(info, sample=paste(`Cell Line`, `Treatment`, sep="_"))
 sig.pc <- inner_join(sig.pc, info, by="sample")
 ```
 
