@@ -506,7 +506,7 @@ ggplot(sig.pc, aes(x=PC1, y=PC3)) +
 ```
 
 Considering a hierarchical clustering of the remaining samples a similar grouping
-of samples by BeadChip is apparent (`r figRef(exprDendro)`). This clustering suggests 
+of samples by BeadChip is apparent (`r figRef("exprDendro")`). This clustering suggests 
 a further outlier from the chip with Sentrix ID 536403760 (the red cluster), which was 
 also removed. The dendrogram also suggests that the red and green clusters should be 
 merged, producing a final grouping into four clusters (`r figRef("vsnPCA2")` and 
