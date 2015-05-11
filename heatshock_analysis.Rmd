@@ -505,7 +505,7 @@ ggplot(sig.pc, aes(x=PC1, y=PC3)) +
 
 ```{r exprClust}
 exprDist <- dist(t(sig.data.norm))
-exprClust <- hclust(exprDist)
+exprClust <- hclust(exprDist, method="ward.D2")
 ```
 
 ```{r clustPlot}
