@@ -508,7 +508,7 @@ exprDist <- dist(t(sig.data.norm))
 exprClust <- hclust(exprDist, method="ward.D2")
 ```
 
-```{r clustPlot}
+```{r clustPlot, cache=FALSE, fig.cap=figRef("exprDendro", paste("Dendrogram of gene expression samples. Colours of leaves correspond to clusters in", figRef("vsnPCA")))}
 dendroData <- dendro_data(exprClust)
 labels <- strsplit(as.character(dendroData$labels$label), "_")
 dendroData$labels$label <- sapply(labels, "[[", 1)
@@ -529,6 +529,55 @@ ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, l
         scale_colour_manual(values=c("1"="grey", "2"="orange", "3"="blue", "4"="green", "5"="red", "internal"="black")) +
         theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
+
+```{r clusterExclude}
+exclude$sample <- union(exclude$sample, "NA19209")
+```
+```{r excludeOutliers2, ref.label="filterSample"}
+```
+
+```{r exclOutlGeno2, ref.label="sampleList", cache=FALSE}
+```
+
+```{r vsn3, ref.label="vsn"}
+```
+
+```{r vsnPCA2, ref.label="vsnPCA"}
+```
+
+```{r vsnPCAcluster2}
+clusterChip4<- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786720, 526786721))
+clusterChip4Bound_1_2 <- chull(clusterChip4$PC1, clusterChip4$PC2)
+clusterChip4Bound_2_3 <- chull(clusterChip4$PC2, clusterChip4$PC3)
+clusterChip4Bound_1_3 <- chull(clusterChip4$PC1, clusterChip4$PC3) 
+
+clusterChip1 <- dplyr::filter(sig.pc, Sentrix_ID == 536403752)
+clusterChip1Bound_1_2 <- chull(clusterChip1$PC1, clusterChip1$PC2)
+clusterChip1Bound_1_3 <- chull(clusterChip1$PC1, clusterChip1$PC3)
+clusterChip1Bound_2_3 <- chull(clusterChip1$PC2, clusterChip1$PC3)
+
+clusterChip2 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(536403729, 536403730))
+clusterChip2Bound_1_2 <- chull(clusterChip2$PC1, clusterChip2$PC2)
+clusterChip2Bound_1_3 <- chull(clusterChip2$PC1, clusterChip2$PC3)
+clusterChip2Bound_2_3 <- chull(clusterChip2$PC2, clusterChip2$PC3)
+
+clusterChip3 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786722, 526786736, 
+				526786743, 526786749, 536403760))
+clusterChip3Bound_1_2 <- chull(clusterChip3$PC1, clusterChip3$PC2)
+clusterChip3Bound_1_3 <- chull(clusterChip3$PC1, clusterChip3$PC3)
+clusterChip3Bound_2_3 <- chull(clusterChip3$PC2, clusterChip3$PC3)
+```
+
+```{r vsnPCAplot2, cache=FALSE, fig.cap=figRef("vsnPCA2", "PCA plot of normalised gene expression estimates by sample. Final groupings used for batch correction are highlighted.")}
+ggplot(sig.pc, aes(x=PC1, y=PC3)) +  
+	 geom_polygon(data=clusterChip1[clusterChip1Bound_1_3, ], alpha=0.8, fill="yellow", colour="orange") +
+	 geom_polygon(data=clusterChip2[clusterChip2Bound_1_3, ], alpha=0.8, fill="lightblue", colour="blue") +
+	 geom_polygon(data=clusterChip3[clusterChip3Bound_1_3, ], alpha=0.8, fill="lightgreen", colour="green") +
+	 geom_polygon(data=clusterChip4[clusterChip4Bound_1_3, ], alpha=0.8, fill="lightgrey", colour="grey") +
+     geom_point(aes( colour=as.character(Sentrix_ID)), size=3) + 
+     theme_bw() + scale_colour_discrete("BeadChip")
+```
+
 
 ```{r writeExpr}
 
