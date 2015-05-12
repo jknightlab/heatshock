@@ -556,8 +556,8 @@ clusterChip1Bound_1_3 <- chull(clusterChip1$PC1, clusterChip1$PC3)
 
 clusterChip2 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786722, 526786736, 
 				526786743, 526786749, 536403760, 536403729, 536403730))
-clusterChip2Bound_1_2 <- chull(clusterChip2$PC1, clusterChip3$PC2)
-clusterChip2Bound_1_3 <- chull(clusterChip2$PC1, clusterChip3$PC3)
+clusterChip2Bound_1_2 <- chull(clusterChip2$PC1, clusterChip2$PC2)
+clusterChip2Bound_1_3 <- chull(clusterChip2$PC1, clusterChip2$PC3)
 ```
 
 ```{r vsnPCAplot2, cache=FALSE, fig.cap=figRef("vsnPCA2", "PCA plot of normalised gene expression estimates by sample. Final groupings used for batch correction are highlighted.")}
