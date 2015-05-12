@@ -547,8 +547,8 @@ exclude$sample <- union(exclude$sample, "NA19209")
 
 ```{r vsnPCAcluster2}
 clusterChip3<- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786720, 526786721))
-clusterChip3Bound_1_2 <- chull(clusterChip4$PC1, clusterChip4$PC2) 
-clusterChip3Bound_1_3 <- chull(clusterChip4$PC1, clusterChip4$PC3) 
+clusterChip3Bound_1_2 <- chull(clusterChip3$PC1, clusterChip4$PC2) 
+clusterChip3Bound_1_3 <- chull(clusterChip3$PC1, clusterChip4$PC3) 
 
 clusterChip1 <- dplyr::filter(sig.pc, Sentrix_ID == 536403752)
 clusterChip1Bound_1_2 <- chull(clusterChip1$PC1, clusterChip1$PC2)
