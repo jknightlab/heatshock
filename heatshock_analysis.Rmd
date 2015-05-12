@@ -643,7 +643,7 @@ sig.data.norm <- ComBat(sig.data.norm, batch=batch$cluster,
 ```{r vsnPCA3, ref.label="vsnPCA"}
 ```
 
-```{combatPCAplot, cache=FALSE, fig.cap=figRef("combatPCA", "PCA plot of ComBat corrected gene expression.")}
+```{r combatPCAplot, cache=FALSE, fig.cap=figRef("combatPCA", "PCA plot of ComBat corrected gene expression.")}
 ggplot(sig.pc, aes(x=PC1, y=PC2)) +  
      geom_point(aes( colour=as.character(Sentrix_ID)), size=3) + 
      theme_bw() + scale_colour_discrete("BeadChip")
