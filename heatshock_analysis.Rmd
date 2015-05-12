@@ -585,7 +585,7 @@ clusterChip1Bound_1_3 <- chull(clusterChip1$PC1, clusterChip1$PC3)
 clusterChip1Bound_2_3 <- chull(clusterChip1$PC2, clusterChip1$PC3)
 
 clusterChip2 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786722, 526786736, 
-				526786743, 526786749, 536403729) & !outlier)
+				526786743, 526786749, 536403729))
 clusterChip2Bound_1_2 <- chull(clusterChip2$PC1, clusterChip2$PC2)
 clusterChip2Bound_1_3 <- chull(clusterChip2$PC1, clusterChip2$PC3)
 clusterChip2Bound_2_3 <- chull(clusterChip2$PC2, clusterChip2$PC3)
