@@ -589,7 +589,7 @@ dendroData$segments <- merge(dendroData$segments,
 				by.x="label", by.y="Cell Line", all.x=TRUE)
 dendroData$segments <- mutate(dendroData$segments, 
 		cluster=ifelse(Sentrix_ID %in% c(526786720, 526786721), "1", 
-		ifelse(Sentrix_ID == 536403752, "2", 3)))
+		ifelse(Sentrix_ID == 536403752, "2", "3")))
 dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
 dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
  
