@@ -562,9 +562,12 @@ clusterChip2Bound_1_3 <- chull(clusterChip2$PC1, clusterChip3$PC3)
 
 ```{r vsnPCAplot2, cache=FALSE, fig.cap=figRef("vsnPCA2", "PCA plot of normalised gene expression estimates by sample. Final groupings used for batch correction are highlighted.")}
 ggplot(sig.pc, aes(x=PC1, y=PC2)) +  
-	 geom_polygon(data=clusterChip1[clusterChip1Bound_1_2, ], alpha=0.8, fill="yellow", colour="orange") +
-	 geom_polygon(data=clusterChip2[clusterChip2Bound_1_2, ], alpha=0.8, fill="lightblue", colour="blue") +
-	 geom_polygon(data=clusterChip3[clusterChip3Bound_1_2, ], alpha=0.8, fill="lightgrey", colour="grey") +
+	 geom_polygon(data=clusterChip1[clusterChip1Bound_1_2, ], 
+	 		alpha=0.8, fill="yellow", colour="orange") +
+	 geom_polygon(data=clusterChip2[clusterChip2Bound_1_2, ], 
+	 		alpha=0.8, fill="lightblue", colour="blue") +
+	 geom_polygon(data=clusterChip3[clusterChip3Bound_1_2, ], 
+	 		alpha=0.8, fill="lightgrey", colour="grey") +
      geom_point(aes( colour=as.character(Sentrix_ID)), size=3) + 
      theme_bw() + scale_colour_discrete("BeadChip")
 ```
@@ -577,17 +580,21 @@ dendroData <- dendro_data(exprClust)
 labels <- strsplit(as.character(dendroData$labels$label), "_")
 dendroData$labels$label <- sapply(labels, "[[", 1)
 dendroData$labels$treatment <- sapply(labels, "[[", 2)
-dendroData$segments <- merge(dendroData$segments, dendroData$labels, by.x=c("xend", "yend"), by.y=c("x", "y"), all.x=TRUE)
+dendroData$segments <- merge(dendroData$segments, dendroData$labels, 
+		by.x=c("xend", "yend"), by.y=c("x", "y"), all.x=TRUE)
 dendroData$segments[is.na(dendroData$segments$treatment), "treatment"] <- "internal"
 info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
-dendroData$segments <- merge(dendroData$segments, info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID")], by.x="label", by.y="Cell Line", all.x=TRUE)
+dendroData$segments <- merge(dendroData$segments, 
+		info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID")], 
+				by.x="label", by.y="Cell Line", all.x=TRUE)
 dendroData$segments <- mutate(dendroData$segments, 
 		cluster=ifelse(Sentrix_ID %in% c(526786720, 526786721), "1", 
 		ifelse(Sentrix_ID == 536403752, "2", 3)))
 dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
 dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
  
-ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, linetype=treatment, colour=cluster)) + 
+ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, 
+			linetype=treatment, colour=cluster)) + 
         scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
         scale_linetype_manual(values=c(Basal="solid", Stim="dashed", internal="solid")) +
         scale_colour_manual(values=c("1"="grey", "2"="orange", "3"="blue", "internal"="black")) +
