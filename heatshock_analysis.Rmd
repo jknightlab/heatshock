@@ -607,18 +607,27 @@ corrected with ComBat [@Johnson07;@SVA15], preserving differences due to heat sh
 stimulation.
 
 ```{r vsnBatch}
-batch <- filter(select(dendroData$segments, sample, cluster), cluster != "internal" & 
-			sample %in% colnames(sig.data.norm))
+batch <- filter(dplyr::select(dendroData$segments, label, cluster), cluster != "internal")
 batch$cluster <- as.integer(batch$cluster)
 sig.raw <- acast(sig.data.raw, formula=probe ~ sample + treatment, 
 		value.var="intensity")
-sig.raw <- sig.raw[, as.character(dendroData$segments$sample)]
-vsnFit <- vsn2(sig.raw, strata=batch$cluster)
-sig.data.norm <- predict(vsnFit, newdata=sig.raw, useDataInFit = TRUE)
+sig.raw <- with(filter(dendroData$segments, !is.na(label)), 
+		sig.raw[, paste(label, treatment, sep="_")])
+
+vsnFit <- vector(mode="list", max(batch$cluster))
+sig.data.norm <- vector(mode="list", max(batch$cluster))
+for(i in 1:max(batch$cluster)){
+	vsnFit[[i]] <- vsn2(sig.raw[, batch$cluster==i])
+	sig.data.norm[[i]] <- predict(vsnFit[[i]], newdata=sig.raw[, batch$cluster==i], 
+			useDataInFit = TRUE)
+}
+sig.data.norm <- do.call(cbind, sig.data.norm)
 ```
 
-```{r vsnBatchFit, cache=FALSE, fig.cap=figRef("vsnBatchFit", "VSN fit to stratified dataset.")}
-meanSdPlot(vsnFit)
+```{r vsnBatchFit, cache=FALSE, results="hide", fig.cap=figRef("vsnBatchFit", "VSN fits to grouped dataset.")}
+par(mfrow=c(2,2))
+lapply(vsnFit, meanSdPlot)
+par(mfrow=c(1,1))
 ```
 
 ```{r writeExpr}
