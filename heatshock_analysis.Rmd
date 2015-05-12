@@ -535,15 +535,19 @@ dendroData$segments <- merge(dendroData$segments,
 		info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID")], 
 		by.x="label", by.y="Cell Line", all.x=TRUE)
 dendroData$segments <- mutate(dendroData$segments, 
-		cluster=ifelse(Sentrix_ID %in% c(526786720, 526786721), "1", 
-		ifelse(Sentrix_ID == 536403752, "2", "3")))
+		cluster=ifelse(Sentrix_ID == 526786720, "1",
+		ifelse(Sentrix_ID == 526786721, "2",
+		ifelse(Sentrix_ID == 536403752, "3",
+		ifelse(Sentrix_ID %in% c(526786722, 526786736, 
+				526786743, 526786749, 536403729), "4", "5")))))
 dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
 dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
  
 ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, linetype=treatment, colour=cluster)) + 
         scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
         scale_linetype_manual(values=c(Basal="solid", Stim="dashed", internal="solid")) +
-        scale_colour_manual(values=c("1"="grey", "2"="orange", "3"="blue", "internal"="black")) +
+        scale_colour_manual(values=c("1"="grey", "2"="red", "3"="orange", "4"="green",
+        "5"="blue", "internal"="black")) +
         theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
 
