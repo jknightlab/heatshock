@@ -636,6 +636,7 @@ dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
 dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
  
 ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, linetype=treatment, colour=cluster)) + 
+        geom_hline(yintercept=79, colour="darkgrey") + 
         scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
         scale_linetype_manual(values=c(Basal="solid", Stim="dashed", internal="solid")) +
         scale_colour_manual(values=c("1"="grey", "2"="red", "3"="orange", "4"="green",
@@ -648,12 +649,11 @@ corrected with ComBat [@Johnson07;@SVA15], preserving differences due to heat sh
 stimulation.
 
 ```{r vsnBatch}
-batch <- filter(dplyr::select(dendroData$segments, label, treatment, cluster), cluster != "internal")
-batch$cluster <- as.integer(batch$cluster)
+ct <- cutree(exprClust, h=79)
+batch <- data.frame(sample=names(ct), cluster=ct, stringsAsFactors=FALSE)
 sig.raw <- acast(sig.data.raw, formula=probe ~ sample + treatment, 
 		value.var="intensity")
-sig.raw <- with(filter(dendroData$segments, !is.na(label)), 
-		sig.raw[, paste(label, treatment, sep="_")])
+sig.raw <- sig.raw[, batch$sample]
 
 vsnFit <- vector(mode="list", max(batch$cluster))
 sig.data.norm <- vector(mode="list", max(batch$cluster))
