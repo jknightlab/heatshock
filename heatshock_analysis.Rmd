@@ -71,7 +71,7 @@ ibsClust <- function(genome, ...){
 
 pcaClusterPlot <- function(data, i, j, fillColour, legend=TRUE){
     data <- data[, c("sample", paste0("PC", i), paste0("PC", j), "Sentrix_ID", "Cluster")]
-    names(data) <- c("sample", "x", "y", "Sentrix_ID", "Cluster")
+    names(data) <- c("sample", "x", "y", "Sentrix_ID", "cluster")
     clusters <- by(data, data$cluster, function(x) x)
     fig <- ggplot(data, aes(x=x, y=y))
     for(cl in clusters){
