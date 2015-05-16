@@ -69,6 +69,69 @@ ibsClust <- function(genome, ...){
 	hclust(dst, ...)
 }
 
+pcaClusterPlot <- function(data, i, j, fillColour, legend=TRUE){
+    data <- data[, c("sample", paste0("PC", i), paste0("PC", j), "Sentrix_ID", "Cluster")]
+    names(data) <- c("sample", "x", "y", "Sentrix_ID", "Cluster")
+    clusters <- by(data, data$Cluster, function(x) x)
+    fig <- ggplot(data, aes(x=x, y=y))
+    for(cl in clusters){
+        ch <- chull(cl$x, cl$y)
+        fig <- fig + geom_polygon(data=cl[ch,], fill=fillColour[cl$Cluster[1]], alpha=0.7)
+    }
+    fig <- addClusterOutline(fig, clusters, i, j, fillColour)
+    fig <- fig + geom_point(aes(colour=as.character(Sentrix_ID)), size=3) +
+            theme_bw() + scale_colour_discrete("BeadChip") + xlab(paste0("PC", i)) + ylab(paste0("PC", j))
+    if(!legend) fig <- fig + theme(legend.position="none")
+    fig
+}
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+# author: Winston Chang ()
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
 figRef <- local({
     tag <- numeric()
     created <- logical()
@@ -438,8 +501,7 @@ shows no further evidence for outliers (`r figRef("mds")`).
 
 Probe intensities were normalised with VSN [@Huber02]. A PCA plot of the initial 
 VSN normalised data (`r figRef("vsnPCAcluster")`) shows clear evidence of samples
-clustering by BeadChip, as well as two obvious outliers. Both samples for the 
-individuals corresponding to these outliers were removed.
+clustering by BeadChip, as well as three obvious outliers, which were removed.
 
 ```{r vsn}
 sig.data.norm <- justvsn(acast(sig.data.raw, formula=probe ~ sample + treatment, 
@@ -515,12 +577,10 @@ ggplot(sig.pc, aes(x=PC1, y=PC2)) +
 ```
 
 Considering a hierarchical clustering of the remaining samples a similar grouping
-of samples by BeadChip is apparent (`r figRef("exprDendro")`). This clustering suggests 
-a further outlier from the chip with Sentrix ID 536403760 (the red cluster), which was 
-also removed. The dendrogram also suggests that the red and green clusters should be 
-merged, producing a final grouping into four clusters (`r figRef("vsnPCA2")` and 
-`r figRef("exprDendro2")`).
-
+of samples by BeadChip is apparent (`r figRef("exprDendro")`). However, the substantial
+overlap between some of the BeadChips suggests that a more nuanced clustering may be
+appropriate. To achieve this, a hierarhical clustering of samples, averaged across conditions,
+is performed^[This ensures that both samples from the same individual are clustered together.].
 
 ```{r exprClust}
 exprDist <- dist(t(sig.data.norm))
@@ -555,104 +615,60 @@ ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, l
         theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
 
-```{r excludeOutliers2, ref.label="filterSample"}
+```{r meanClust}
+sig.data.mean <- matrix(nrow=nrow(sig.data.norm), ncol=ncol(sig.data.norm)/2)
+colnames(sig.data.mean) <- sapply(strsplit(colnames(sig.data.norm)[seq(1, ncol(sig.data.norm),by=2)], "_"),"[[", 1)
+for(i in 0:(ncol(sig.data.mean)-1)){
+    sig.data.mean[, i+1] <- rowMeans(sig.data.norm[, c(i*2, i*2+1)+1])
+}
+exprDist <- dist(t(sig.data.mean))
+exprClust <- hclust(exprDist, method="ward.D")
+cluster <- cutree(exprClust, k=6)
 ```
 
-```{r exclOutlGeno2, ref.label="sampleList", cache=FALSE}
-```
-
-```{r vsn3, ref.label="vsn"}
-```
-
-```{r vsnPCA2, ref.label="vsnPCA"}
-```
-
-```{r vsnPCAcluster2}
-clusterOp1<- dplyr::filter(sig.pc, Sentrix_ID == 526786720)
-clusterOp1Bound_1_2 <- chull(clusterOp1$PC1, clusterOp1$PC2)
-clusterOp1Bound_2_3 <- chull(clusterOp1$PC2, clusterOp1$PC3)
-clusterOp1Bound_1_3 <- chull(clusterOp1$PC1, clusterOp1$PC3)
-
-clusterOp2<- dplyr::filter(sig.pc, Sentrix_ID == 526786721)
-clusterOp2Bound_1_2 <- chull(clusterOp2$PC1, clusterOp2$PC2)
-clusterOp2Bound_2_3 <- chull(clusterOp2$PC2, clusterOp2$PC3)
-clusterOp2Bound_1_3 <- chull(clusterOp2$PC1, clusterOp2$PC3)
- 
-
-clusterChip1 <- dplyr::filter(sig.pc, Sentrix_ID == 536403752)
-clusterChip1Bound_1_2 <- chull(clusterChip1$PC1, clusterChip1$PC2)
-clusterChip1Bound_1_3 <- chull(clusterChip1$PC1, clusterChip1$PC3)
-clusterChip1Bound_2_3 <- chull(clusterChip1$PC2, clusterChip1$PC3)
-
-clusterChip2 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786722, 526786736, 
-				526786743, 526786749, 536403729))
-clusterChip2Bound_1_2 <- chull(clusterChip2$PC1, clusterChip2$PC2)
-clusterChip2Bound_1_3 <- chull(clusterChip2$PC1, clusterChip2$PC3)
-clusterChip2Bound_2_3 <- chull(clusterChip2$PC2, clusterChip2$PC3)
-
-clusterChip3 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(536403760, 536403730))
-clusterChip3Bound_1_2 <- chull(clusterChip3$PC1, clusterChip3$PC2)
-clusterChip3Bound_1_3 <- chull(clusterChip3$PC1, clusterChip3$PC3)
-clusterChip3Bound_2_3 <- chull(clusterChip3$PC2, clusterChip3$PC3)
-```
-
-```{r vsnPCAplot2, cache=FALSE, fig.cap=figRef("vsnPCA2", "PCA plot of normalised gene expression estimates by sample. Final groupings used for batch correction are highlighted.")}
-ggplot(sig.pc, aes(x=PC1, y=PC2)) +  
-	  geom_polygon(data=clusterOp1[clusterOp1Bound_1_2, ], alpha=0.7, 
-	 		fill="lightgrey", colour="grey") +
-	 geom_polygon(data=clusterOp2[clusterOp2Bound_1_2, ], alpha=0.7, 
-	 		fill="pink", colour="red") +
-	 geom_polygon(data=clusterChip1[clusterChip1Bound_1_2, ], alpha=0.7, 
-	 		fill="yellow", colour="orange") +
-	 geom_polygon(data=clusterChip2[clusterChip2Bound_1_2, ], alpha=0.7, 
-	 		fill="lightgreen", colour="green") +
-	 geom_polygon(data=clusterChip3[clusterChip3Bound_1_2, ], alpha=0.7, 
-	 		fill="lightblue", colour="blue") +
-     geom_point(aes( colour=as.character(Sentrix_ID)), size=3) + 
-     theme_bw() + scale_colour_discrete("BeadChip")
-```
-
-```{r exprClust2, ref.label="exprClust"}
-```
-
-```{r clustPlot2, cache=FALSE, fig.cap=figRef("exprDendro", paste("Dendrogram of gene expression samples. Colours of leaves correspond to clusters in", figRef("vsnPCA2")))}
+```{r clustPlot2, cache=FALSE, fig.cap=figRef("exprDendro2", "Dendrogram of averaged gene expression samples.")}
 dendroData <- dendro_data(exprClust)
-labels <- strsplit(as.character(dendroData$labels$label), "_")
-dendroData$labels$label <- sapply(labels, "[[", 1)
-dendroData$labels$treatment <- sapply(labels, "[[", 2)
 dendroData$segments <- merge(dendroData$segments, dendroData$labels, by.x=c("xend", "yend"), by.y=c("x", "y"), all.x=TRUE)
-dendroData$segments[is.na(dendroData$segments$treatment), "treatment"] <- "internal"
 info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
+info$cluster <- cluster[info[["Cell Line"]]]
 dendroData$segments <- merge(dendroData$segments, 
-		info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID")], 
-		by.x="label", by.y="Cell Line", all.x=TRUE)
-dendroData$segments <- mutate(dendroData$segments, 
-		cluster=ifelse(Sentrix_ID == 526786720, "1",
-		ifelse(Sentrix_ID == 526786721, "2",
-		ifelse(Sentrix_ID == 536403752, "3",
-		ifelse(Sentrix_ID %in% c(526786722, 526786736, 
-				526786743, 526786749, 536403729), "4", "5")))))
+        info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID", "cluster")], 
+        by.x="label", by.y="Cell Line", all.x=TRUE)
 dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
 dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
  
-ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, linetype=treatment, colour=cluster)) + 
-        geom_hline(yintercept=79, colour="darkgrey") + 
+ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, colour=cluster)) + 
         scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
-        scale_linetype_manual(values=c(Basal="solid", Stim="dashed", internal="solid")) +
         scale_colour_manual(values=c("1"="grey", "2"="red", "3"="orange", "4"="green",
-        "5"="blue", "internal"="black")) +
+        "5"="blue", "6"="purple", "internal"="black")) +
         theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
 
-The samples were then normalised separately for each group and observed batch effects
+```{r meanPCA}
+sig.pca <- prcomp(t(sig.data.mean), scale=TRUE)
+sig.pc <- as.data.frame(sig.pca$x)
+sig.pc$sample <- rownames(sig.pc)
+sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
+sig.pc <- inner_join(sig.pc, info, by=c("sample" = "Cell Line"))
+```
+
+```{r meanPCAplot, cache=FALSE, fig.cap=figRef("meanPCA", "Plot of first few principle components showing clusters for averaged samples as determined by hierarchical clustering.")}
+fillColour <- c("grey", "red", "orange", "green", "blue", "purple")
+fig <- mapply(pcaClusterPlot, i=c(1,1,2,2), j=c(2,3,3,4), 
+        MoreArgs=list(data=sig.pc, fillColour=fillColour), SIMPLIFY=FALSE)
+multiplot(plotlist=fig, cols=2)
+```
+The resulting dendrogram was cut to produce six clusters (`r figRef("exprDendro2")` and `r figRef("meanPCA")`).
+The samples were then normalised separately for each cluster and differences between groups
 corrected with ComBat [@Johnson07;@SVA15], preserving differences due to heat shock
 stimulation.
 
 ```{r vsnBatch}
-ct <- cutree(exprClust, h=79)
-batch <- data.frame(sample=names(ct), cluster=ct, stringsAsFactors=FALSE)
+batch <- data.frame(sample=paste(rep(names(cluster), each=2), c("Basal", "Stim"), sep="_"), 
+        cluster=rep(cluster, each=2), treatment=c("Basal", "Stim"), stringsAsFactors=FALSE)
 sig.raw <- acast(sig.data.raw, formula=probe ~ sample + treatment, 
 		value.var="intensity")
+colnames(sig.raw) <- sub("_._", "_", colnames(sig.raw))
 sig.raw <- sig.raw[, batch$sample]
 
 vsnFit <- vector(mode="list", max(batch$cluster))
@@ -666,8 +682,8 @@ sig.data.norm <- do.call(cbind, sig.data.norm)
 ```
 
 ```{r vsnBatchFit, cache=FALSE, results="hide", fig.cap=figRef("vsnBatchFit", "VSN fits to grouped dataset.")}
-par(mfrow=c(2,2))
-lapply(vsnFit, meanSdPlot)
+par(mfrow=c(2,3))
+mapply(meanSdPlot, vsnFit, main=paste("Cluster", 1:max(batch$cluster)), MoreArgs=list(ylim=c(0,3)))
 par(mfrow=c(1,1))
 ```
 
