@@ -72,11 +72,11 @@ ibsClust <- function(genome, ...){
 pcaClusterPlot <- function(data, i, j, fillColour, legend=TRUE){
     data <- data[, c("sample", paste0("PC", i), paste0("PC", j), "Sentrix_ID", "Cluster")]
     names(data) <- c("sample", "x", "y", "Sentrix_ID", "Cluster")
-    clusters <- by(data, data$Cluster, function(x) x)
+    clusters <- by(data, data$cluster, function(x) x)
     fig <- ggplot(data, aes(x=x, y=y))
     for(cl in clusters){
         ch <- chull(cl$x, cl$y)
-        fig <- fig + geom_polygon(data=cl[ch,], fill=fillColour[cl$Cluster[1]], alpha=0.7)
+        fig <- fig + geom_polygon(data=cl[ch,], fill=fillColour[cl$cluster[1]], alpha=0.7)
     }
     fig <- addClusterOutline(fig, clusters, i, j, fillColour)
     fig <- fig + geom_point(aes(colour=as.character(Sentrix_ID)), size=3) +
