@@ -70,7 +70,7 @@ ibsClust <- function(genome, ...){
 }
 
 pcaClusterPlot <- function(data, i, j, fillColour, legend=TRUE){
-    data <- data[, c("sample", paste0("PC", i), paste0("PC", j), "Sentrix_ID", "Cluster")]
+    data <- data[, c("sample", paste0("PC", i), paste0("PC", j), "Sentrix_ID", "cluster")]
     names(data) <- c("sample", "x", "y", "Sentrix_ID", "cluster")
     clusters <- by(data, data$cluster, function(x) x)
     fig <- ggplot(data, aes(x=x, y=y))
@@ -623,7 +623,7 @@ for(i in 0:(ncol(sig.data.mean)-1)){
 }
 exprDist <- dist(t(sig.data.mean))
 exprClust <- hclust(exprDist, method="ward.D")
-cluster <- cutree(exprClust, k=6)
+cluster <- 
 ```
 
 ```{r clustPlot2, cache=FALSE, fig.cap=figRef("exprDendro2", "Dendrogram of averaged gene expression samples.")}
