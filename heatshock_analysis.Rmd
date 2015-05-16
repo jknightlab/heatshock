@@ -623,7 +623,7 @@ for(i in 0:(ncol(sig.data.mean)-1)){
 }
 exprDist <- dist(t(sig.data.mean))
 exprClust <- hclust(exprDist, method="ward.D")
-cluster <- 
+cluster <- cutree(exprClust, k=6)
 ```
 
 ```{r clustPlot2, cache=FALSE, fig.cap=figRef("exprDendro2", "Dendrogram of averaged gene expression samples.")}
