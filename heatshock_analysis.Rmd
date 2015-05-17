@@ -654,9 +654,10 @@ sig.pc <- inner_join(sig.pc, info, by=c("sample" = "Cell Line"))
 ```{r meanPCAplot, cache=FALSE, fig.cap=figRef("meanPCA", "Plot of first few principle components showing clusters for averaged samples as determined by hierarchical clustering.")}
 fillColour <- c("grey", "red", "orange", "green", "blue", "purple")
 fig <- mapply(pcaClusterPlot, i=c(1,1,2,2), j=c(2,3,3,4), 
-        MoreArgs=list(data=sig.pc, fillColour=fillColour), SIMPLIFY=FALSE)
+        MoreArgs=list(data=sig.pc, fillColour=fillColour, legend=FALSE), SIMPLIFY=FALSE)
 multiplot(plotlist=fig, cols=2)
 ```
+
 The resulting dendrogram was cut to produce six clusters (`r figRef("exprDendro2")` and `r figRef("meanPCA")`).
 The samples were then normalised separately for each cluster and differences between groups
 corrected with ComBat [@Johnson07;@SVA15], preserving differences due to heat shock
