@@ -78,7 +78,6 @@ pcaClusterPlot <- function(data, i, j, fillColour, legend=TRUE){
         ch <- chull(cl$x, cl$y)
         fig <- fig + geom_polygon(data=cl[ch,], fill=fillColour[cl$cluster[1]], alpha=0.7)
     }
-    fig <- addClusterOutline(fig, clusters, i, j, fillColour)
     fig <- fig + geom_point(aes(colour=as.character(Sentrix_ID)), size=3) +
             theme_bw() + scale_colour_discrete("BeadChip") + xlab(paste0("PC", i)) + ylab(paste0("PC", j))
     if(!legend) fig <- fig + theme(legend.position="none")
