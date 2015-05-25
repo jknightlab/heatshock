@@ -44,7 +44,7 @@ linkFile <- function(file, dest, format=c("markdown", "html")){
 	if(format == "markdown")
 		paste0("[", file$name, "](", dest, "/", file$file, ")")
 	else if(format == "html")
-		paste0("<a href=", dest, "/", file$file, ">", file$name, "</a>")
+		paste0("<a href=\"", dest, "/", file$file, "\">", file$name, "</a>")
 }
 
 includeLogs <- function(logs, format=c("markdown", "html")){
