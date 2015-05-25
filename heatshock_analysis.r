@@ -81,20 +81,20 @@ pandocBootstrap <- function(input, format, config = getOption('config.pandoc'), 
   		} else {
 			headerCol <- as.character(rep(NA, nrow(bootParam)))
 			headerCol[bootIdx] <- header
-  			bootParam <- cbind(bootParam, H=header)	
+  			bootParam <- cbind(bootParam, H=headerCol)	
   		}
-  		config <- config[which(config[,"t"] == "bootstrap"), , drop=FALSE]
+  		config <- config[which(config[,"t"] != "bootstrap"), , drop=FALSE]
   	}
   	
-  	if(nrow(config)){
-  		configCon <- character()
-  		write.dcf(config, file=textConnection(configCon, open="w"))
-  		knitr::pandoc(input, format, config=configCon, ext=ext, encoding=encoding)
+  	if(missing(format) || is.null(format) || format != "html5" && (nrow(config) && any(!is.na(config[, "t"])))){
+  		configFile <- tempfile("pandocCfg")
+  		write.dcf(config, file=configFile)
+  		knitr::pandoc(input, format, config=configFile, ext=ext, encoding=encoding)
   	}
   	if(nrow(bootParam)){
-  		boostCon <- character()
-  		write.dcf(config, file=textConnection(boostCon, open="w"))
-  		knitr::pandoc(input, format, config=boostCon, ext=ext, encoding=encoding)
+  		bootFile <- tempfile("bootCfg")
+  		write.dcf(bootParam, file=bootFile)
+  		knitr::pandoc(input, format, config=bootFile, ext=ext, encoding=encoding)
   	}
   }
 }
