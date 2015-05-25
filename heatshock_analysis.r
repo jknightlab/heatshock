@@ -88,12 +88,12 @@ pandocBootstrap <- function(input, format, config = getOption('config.pandoc'), 
   	
   	if(nrow(config)){
   		configCon <- character()
-  		write.dcf(config, file=textConnection(configCon))
+  		write.dcf(config, file=textConnection(configCon, open="w"))
   		knitr::pandoc(input, format, config=configCon, ext=ext, encoding=encoding)
   	}
   	if(nrow(bootParam)){
   		boostCon <- character()
-  		write.dcf(config, file=textConnection(boostCon))
+  		write.dcf(config, file=textConnection(boostCon, open="w"))
   		knitr::pandoc(input, format, config=boostCon, ext=ext, encoding=encoding)
   	}
   }
