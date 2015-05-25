@@ -69,12 +69,12 @@ pandocBootstrap <- function(input, format, config = getOption('config.pandoc'), 
     	colnames(config)[parNames == 'format'] <-'t'
   	}
   	if("t" %in% parNames && "bootstrap" %in% config[,"t"]){
-  		bootParam <- config[which(config[,"t"] == "bootstrap"), , drop=FALSE]
-  		bootParam <- bootParam[, !is.na(bootParam[1,]), drop=FALSE]
-  		bootParam[1, "t"] <- "html5"
+  		bootParam <- config[which(config[,"t"] %in% c("bootstrap", "") | is.na(config[,"t"])), , drop=FALSE]
+  		bootIdx <- which(config[, "t"] == "bootstrap")
+  		bootParam[bootIdx, "t"] <- "html5"
   		header <- knitrBootstrap:::create_header()
   		if("H" %in% colnames(bootParam)){
-  			bootParam[1,"H"] <- paste(bootParam[,"H"], header, sep="\\n")
+  			bootParam[bootIdx,"H"] <- paste(bootParam[,"H"], header, sep="\\n")
   		} else {
   			bootParam <- cbind(bootParam, H=header)	
   		}
