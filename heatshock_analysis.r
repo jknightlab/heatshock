@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(knitr)
+library(knitrBootstrap)
 
 htmlRoot <- "/var/www/html"
 file.copy("html/waiting.html", file.path(htmlRoot, "index.html"), overwrite=TRUE)
@@ -54,6 +55,45 @@ includeLogs <- function(logs, format=c("markdown", "html")){
 	kable(df, format=format, row.names=FALSE)
 }
 
+pandocBootstrap <- function(input, format, config = getOption('config.pandoc'), ext = NA,
+                  encoding = getOption('encoding')) {
+  if(!is.null(config)){
+  	if(file.exists(config)){
+  		config <- read.dcf(config)
+  	} else{
+  		config <- read.dcf(textConnection(config))
+  	}
+  	parNames <- colnames(config)
+  	if (length(parNames) && 'format' %in% parNames) {
+    	warning("Field 'format' in configuration renamed to 't'")
+    	colnames(config)[parNames == 'format'] <-'t'
+  	}
+  	if("t" %in% parNames && "bootstrap" %in% config[,"t"]){
+  		bootParam <- config[which(config[,"t"] == "bootstrap"), , drop=FALSE]
+  		bootParam <- bootParam[, !is.na(bootParam[1,]), drop=FALSE]
+  		bootParam[1, "t"] <- "html5"
+  		header <- knitrBootstrap:::create_header()
+  		if("H" %in% colnames(bootParam)){
+  			bootParam[1,"H"] <- paste(bootParam[,"H"], header, sep="\\n")
+  		} else {
+  			bootParam <- cbind(bootParam, H=header)	
+  		}
+  		config <- config[which(config[,"t"] == "bootstrap"), , drop=FALSE]
+  	}
+  	
+  	if(nrow(config)){
+  		configCon <- character()
+  		write.dcf(config, file=textConnection(configCon))
+  		knitr::pandoc(input, format, config=configCon, ext=ext, encoding=encoding)
+  	}
+  	if(nrow(bootParam)){
+  		boostCon <- character()
+  		write.dcf(config, file=textConnection(boostCon))
+  		knitr::pandoc(input, format, config=boostCon, ext=ext, encoding=encoding)
+  	}
+  }
+}
+
 for(file in c("heatshock_analysis.md", "heatshock_analysis.html", "heatshock_analysis.pdf")){
 	if(file.exists(file)) file.remove(file)
 }
@@ -69,7 +109,7 @@ tryCatch(
 )
 
 tryCatch(
-		pandoc("heatshock_analysis.md", config="default.pandoc"),
+		pandoc_bootstrap("heatshock_analysis.md", config="default.pandoc"),
 		error=function(e){
 			cat("<!DOCTYPE html>", "<html>", "<head>", '<meta charset="UTF-8">',
 					"<title>Pandoc error</title>","</head>", "<body>", 
