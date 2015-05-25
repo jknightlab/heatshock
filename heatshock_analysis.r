@@ -109,7 +109,7 @@ tryCatch(
 )
 
 tryCatch(
-		pandoc_bootstrap("heatshock_analysis.md", config="default.pandoc"),
+		pandocBootstrap("heatshock_analysis.md", config="default.pandoc"),
 		error=function(e){
 			cat("<!DOCTYPE html>", "<html>", "<head>", '<meta charset="UTF-8">',
 					"<title>Pandoc error</title>","</head>", "<body>", 
