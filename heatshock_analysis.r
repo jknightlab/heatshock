@@ -117,7 +117,8 @@ pandocBootstrap <- function(input, format, config = getOption('config.pandoc'), 
   	if(nrow(bootParam)){
   		bootFile <- tempfile("bootCfg")
   		writeConfig(bootParam, file=bootFile)
-  		knitr::pandoc(input, format, config=bootFile, ext=ext, encoding=encoding)
+		knitrBootstrap::render_bootstrap()
+  		knitr::pandoc(input, format="html5", config=bootFile, ext=ext, encoding=encoding)
   	}
   }
 }
