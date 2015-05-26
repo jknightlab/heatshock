@@ -67,7 +67,9 @@ formatConfigSection <- function(config){
 
 ## Create apandoc config file for use with knitr
 writeConfig <- function(config, file){
-	out <- apply(config, 1, formatConfigSection)
+	configList <- split(config, row(config))
+	configList <- lapply(configList, `names<-`, colnames(config))
+	out <- lapply(config, formatConfigSection)
 	con <- file(file, open="w")
 	on.exit(close(con))
 	for(block in out){
