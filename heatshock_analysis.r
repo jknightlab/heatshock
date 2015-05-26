@@ -69,7 +69,7 @@ formatConfigSection <- function(config){
 writeConfig <- function(config, file){
 	configList <- split(config, row(config))
 	configList <- lapply(configList, `names<-`, colnames(config))
-	out <- lapply(config, formatConfigSection)
+	out <- lapply(configList, formatConfigSection)
 	con <- file(file, open="w")
 	on.exit(close(con))
 	for(block in out){
