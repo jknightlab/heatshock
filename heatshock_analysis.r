@@ -55,6 +55,27 @@ includeLogs <- function(logs, format=c("markdown", "html")){
 	kable(df, format=format, row.names=FALSE)
 }
 
+## create config entry for one format block
+formatConfigSection <- function(config){
+	out <- character()
+	config <- config[!is.na(config)]
+	out <- paste(names(config), config, sep=":")
+	out <- gsub("\n", "\n  ", out)
+	out <- unlist(strsplit(out, "\n"))
+	out
+}
+
+## Create apandoc config file for use with knitr
+writeConfig <- function(config, file){
+	out <- apply(config, 1, formatConfigSection)
+	con <- file(file, open="w")
+	on.exit(close(con))
+	for(block in out){
+		writeLines(block, con=con)
+		cat("\n", file=con)
+	}
+}
+
 pandocBootstrap <- function(input, format, config = getOption('config.pandoc'), ext = NA,
                   encoding = getOption('encoding')) {
   if(!is.null(config)){
@@ -88,12 +109,12 @@ pandocBootstrap <- function(input, format, config = getOption('config.pandoc'), 
   	
   	if(missing(format) || is.null(format) || format != "html5" && (nrow(config) && any(!is.na(config[, "t"])))){
   		configFile <- tempfile("pandocCfg")
-  		write.dcf(config, file=configFile)
+  		writeConfig(config, file=configFile)
   		knitr::pandoc(input, format, config=configFile, ext=ext, encoding=encoding)
   	}
   	if(nrow(bootParam)){
   		bootFile <- tempfile("bootCfg")
-  		write.dcf(bootParam, file=bootFile)
+  		writeConfig(bootParam, file=bootFile)
   		knitr::pandoc(input, format, config=bootFile, ext=ext, encoding=encoding)
   	}
   }
