@@ -118,7 +118,8 @@ pandocBootstrap <- function(input, format, config = getOption('config.pandoc'), 
   		bootFile <- tempfile("bootCfg")
   		writeConfig(bootParam, file=bootFile)
 		knitrBootstrap::render_bootstrap()
-  		knitr::pandoc(input, format="html5", config=bootFile, ext=ext, encoding=encoding)
+		knit("heatshock_analysis.Rmd", "heatshock_analysis_boot.md")
+  		knitr::pandoc("heatshock_analysis_boot.md", format=format, config=bootFile, ext=ext, encoding=encoding)
   	}
   }
 }
