@@ -703,7 +703,8 @@ ggplot(sig.pc, aes(x=PC1, y=PC2)) +
 ```
 
 ```{r writeExpr}
-
+exprOut <- gzfile("/analysis/tmp/heatshock_expr_norm.tab.gz", open="w")
+write.table(sig.data.norm, file=exprOut, quote=FALSE)
 ```
 
 ```{r compressData, cache=FALSE}
