@@ -711,7 +711,29 @@ write.table(sig.data.norm, file=exprOut, quote=FALSE)
 system("tar -czf tmp/yri_geno.tar.gz tmp/hapmap_yri.smpl_flt2.bed tmp/hapmap_yri.smpl_flt2.bim tmp/hapmap_yri.smpl_flt2.fam")
 ```
 
+# Differential expression analysis
+
+All remaining samples were analysed for differences in gene expression between the basal
+stimulated states, pairing samples from the same individual.
+
+```{r limma}
+labels <- strsplit(colnames(sig.data.norm), "_")
+sample <- factor(sapply(labels, "[[", 1))
+state <- factor(sapply(labels, "[[", 2), levels=c("Basal", "Stim"))
+design <- model.matrix(~sample+state)
+fit <- lmFit(sig.data.norm, design)
+fit <- contrasts.fit(fit, coefficients="stateStim")
+fit <- eBayes(fit)
+```
+
 # Results
+## Differential expression analysis
+
+```{r limmaResult}
+limmaTable <- topTable(fit, n=length(fit$coefficients))
+set.caption(tabRef("topTable", "Top 20 differentially expressed probes."))
+pander(head(limmaTable, 20))
+```
 
 # Appendix {-}
 ## Custom functions used
