@@ -711,7 +711,7 @@ write.table(sig.data.norm, file=exprOut, quote=FALSE)
 system("tar -czf tmp/yri_geno.tar.gz tmp/hapmap_yri.smpl_flt2.bed tmp/hapmap_yri.smpl_flt2.bim tmp/hapmap_yri.smpl_flt2.fam")
 ```
 
-# Differential expression analysis
+## Differential expression analysis
 
 All remaining samples were analysed for differences in gene expression between the basal
 stimulated states, pairing samples from the same individual, using the *limma* 
@@ -741,9 +741,41 @@ limmaTable <- limmaTable[order(limmaTable$P.Value),]
 # Results
 ## Differential expression analysis
 
+In total `r nrow(filter(limmaTable, adj.P.Val < 0.01))` probes are identified
+as differentially expressed at a p-value threshold of 0.01 (see `r tabRef("topTable")`
+for the top 20 results). `r figRef("volcano")` rows a smoothed volcano plot with probes of
+particular interest highlighted. 
+
 ```{r limmaResult, cache=FALSE}
 set.caption(tabRef("topTable", "Top 20 differentially expressed probes."))
 pander(head(limmaTable, 20))
+```
+
+```{r limmaPlot, cache=FALSE, fig.cap=figRef("volcano", "Volcano plot of differential expression results. Probes with an adjusted p-value below 0.01 and a log fold cange of at least 0.5 are shown as yellow and red dots. Probes showing particularly strong evidence of gene expression through a combination of p-value and fold change are labelled with the corresponding gene symbol.")}
+fcScale <- max(-log10(limmaTable$adj.P.Val))/max(abs(limmaTable$logFC))
+limmaExtreme <- subset(limmaTable, abs(logFC) > 0.5 & adj.P.Val < 0.01)
+limmaExtreme <- mutate(limmaExtreme, distance=(fcScale*logFC)^2 + log10(adj.P.Val)^2)
+limmaExtreme <- limmaExtreme[order(limmaExtreme$distance, decreasing=TRUE), ]
+ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) + 
+		stat_density2d(geom="tile", aes(fill=..density..^0.1), contour=FALSE) + 
+		geom_point(data=limmaExtreme, size=1.5, aes(colour=distance)) +
+		geom_text(data=subset(limmaExtreme, abs(logFC) > 0.5 & distance > 350), 
+				aes(label=SymbolReannotated), vjust=0, hjust=0, angle=30) +
+		stat_function(fun=function(x, scale, limit, pvalLimit, fcLimit){
+					y <- ifelse(!(x >= 0 & x < fcLimit) & !(x <= 0 & x > -fcLimit), 
+						(limit - (scale*x)^2)^0.5, 
+						Inf)
+					y <- ifelse(y < -log10(pvalLimit), Inf, y)
+					y <- ifelse(is.na(y), -log10(pvalLimit), y)
+				}, 
+				args=list(limit=350, scale=fcScale, pvalLimit=0.01, fcLimit=0.5), linetype="dashed") +
+		geom_line(data=data.frame(x=c(-Inf, -0.5), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
+		geom_line(data=data.frame(x=c(0.5, Inf), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
+		geom_line(data=data.frame(x=c(0.5, 0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
+		geom_line(data=data.frame(x=c(-0.5, -0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
+		scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256), breaks=NULL) +
+		scale_colour_gradientn(colours = colorRampPalette(c("yellow", "red"))(256), guide="none") +
+		theme_bw() + xlab("log(fold change)") + ylab("-log(p-value)")
 ```
 
 # Appendix {-}
