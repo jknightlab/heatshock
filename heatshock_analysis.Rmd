@@ -733,14 +733,15 @@ annotations provided by the *illuminaHumanv3.db* Bioconductor package [@Barbosa1
 
 ```{r annotateTable}
 limmaTable <- cbind(ArrayAddress=rownames(limmaTable), limmaTable)
-limmaTable <- inner_join(select(annot, ArrayAddress, NuID, SymbolReannotated),
+limmaTable <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, GenomicLocation),
 		limmaTable)
+limmaTable <- limmaTable[order(limmaTable$P.Value),]
 ```
 
 # Results
 ## Differential expression analysis
 
-```{r limmaResult}
+```{r limmaResult, cache=FALSE}
 set.caption(tabRef("topTable", "Top 20 differentially expressed probes."))
 pander(head(limmaTable, 20))
 ```
