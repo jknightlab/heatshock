@@ -12,7 +12,7 @@ RUN cabal update && cabal install pandoc
 RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150507/plink_linux_x86_64.zip && unzip plink_linux_x86_64.zip && cp plink /usr/local/bin/ 
 
 ## Install additional R packages
-RUN Rscript -e "biocLite(c('sparcl', 'dplyr', 'tidyr', 'devtools', 'illuminaHumanv4.db', 'pander', 'ggdendro'))"
+RUN Rscript -e "biocLite(c('sparcl', 'dplyr', 'tidyr', 'devtools', 'illuminaHumanv3.db', 'pander', 'ggdendro'))"
 RUN Rscript -e "devtools::install_github('hadley/readr')"
 
 ## Add basic instruction to display for interactive containers
