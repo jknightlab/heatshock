@@ -21,7 +21,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(readr)
-library(illuminaHumanv4.db)
+library(illuminaHumanv3.db)
 library(knitr)
 library(pander)
 library(reshape2)
@@ -295,17 +295,17 @@ sig.data.raw <- reshapeData(sig.data.raw, "intensity")
 det.data.long <- reshapeData(det.data.raw, "p.value")
 ```
 
-Annotations for all probes were obtained via the *illuminaHumanv4.db* Bioconductor
+Annotations for all probes were obtained via the *illuminaHumanv3.db* Bioconductor
 package [@Barbosa10]. Only probes that are considered to be of perfect or good
 quality were taken forward for analysis. Additionally, all probes mapping to more than
 one genomic location or to a location that contains a known SNP were excluded.
 
 ```{r probeQual}
-annot <- illuminaHumanv4fullReannotation()
-annot <- subset(annot, 
+annot <- illuminaHumanv3fullReannotation() 
+exclude$probe <- union(exclude$probe, subset(annot, 
 		!grepl("Good|Perfect", ProbeQuality) | !is.na(OverlappingSNP) | 
-		!is.na(SecondMatches) | !is.na(OtherGenomicMatches) | !is.na(RepeatMask))
-exclude$probe <- union(exclude$probe, annot$ArrayAddress)
+		!is.na(SecondMatches) | !is.na(OtherGenomicMatches) | 
+		!is.na(RepeatMask))$ArrayAddress)
 ```
 
 
