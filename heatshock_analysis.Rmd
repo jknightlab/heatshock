@@ -21,7 +21,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(readr)
-library(illuminaHumanv3.db)
+library(illuminaHumanv4.db)
 library(knitr)
 library(pander)
 library(reshape2)
@@ -295,14 +295,14 @@ sig.data.raw <- reshapeData(sig.data.raw, "intensity")
 det.data.long <- reshapeData(det.data.raw, "p.value")
 ```
 
-Annotations for all probes were obtained via the *illuminaHumanv3.db* Bioconductor
-package [@Barbosa10]. Only probes that are considered to are of perfect or good
-quality were considered for analysis. Additionally, all probes mapping to more than
+Annotations for all probes were obtained via the *illuminaHumanv4.db* Bioconductor
+package [@Barbosa10]. Only probes that are considered to be of perfect or good
+quality were taken forward for analysis. Additionally, all probes mapping to more than
 one genomic location or to a location that contains a known SNP were excluded.
 
 ```{r probeQual}
-annot <- illuminaHumanv3fullReannotation()
-annot <- subset(illuminaHumanv3fullReannotation(), 
+annot <- illuminaHumanv4fullReannotation()
+annot <- subset(annot, 
 		!grepl("Good|Perfect", ProbeQuality) | !is.na(OverlappingSNP) | 
 		!is.na(SecondMatches) | !is.na(OtherGenomicMatches) | !is.na(RepeatMask))
 exclude$probe <- union(exclude$probe, annot$ArrayAddress)
@@ -714,8 +714,8 @@ system("tar -czf tmp/yri_geno.tar.gz tmp/hapmap_yri.smpl_flt2.bed tmp/hapmap_yri
 # Differential expression analysis
 
 All remaining samples were analysed for differences in gene expression between the basal
-stimulated states, pairing samples from the same individual, using the Limma R package
-[@Ritchie15].
+stimulated states, pairing samples from the same individual, using the *limma* 
+Bioconductor package [@Ritchie15].
 
 ```{r limma}
 labels <- strsplit(colnames(sig.data.norm), "_")
@@ -725,13 +725,22 @@ design <- model.matrix(~sample+state)
 fit <- lmFit(sig.data.norm, design)
 fit <- contrasts.fit(fit, coefficients="stateStim")
 fit <- eBayes(fit)
+limmaTable <- topTable(fit, n=length(fit$coefficients))
+```
+
+Individual probes were associated with corresponding genes using the updated
+annotations provided by the *illuminaHumanv3.db* Bioconductor package [@Barbosa10].
+
+```{r annotateTable}
+limmaTable <- cbind(ArrayAddress=rownames(limmaTable), limmaTable)
+limmaTable <- inner_join(select(annot, ArrayAddress, NuID, SymbolReannotated),
+		limmaTable)
 ```
 
 # Results
 ## Differential expression analysis
 
 ```{r limmaResult}
-limmaTable <- topTable(fit, n=length(fit$coefficients))
 set.caption(tabRef("topTable", "Top 20 differentially expressed probes."))
 pander(head(limmaTable, 20))
 ```
