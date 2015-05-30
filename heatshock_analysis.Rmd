@@ -749,7 +749,7 @@ particular interest highlighted.
 ```{r limmaResult, cache=FALSE}
 set.caption(tabRef("topTable", "Top 20 differentially expressed probes."))
 rownames(limmaTable) <- NULL
-pander(head(limmaTable, 20))
+pander(head(dplyr::select(limmaTable, -ArrayAddress), 20))
 ```
 
 ```{r limmaPlot, cache=FALSE, fig.cap=figRef("volcano", "Volcano plot of differential expression results. Probes with an adjusted p-value below 0.01 and a log fold cange of at least 0.5 are shown as yellow and red dots. Probes showing particularly strong evidence of gene expression through a combination of p-value and fold change are labelled with the corresponding gene symbol.")}
