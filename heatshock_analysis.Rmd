@@ -748,6 +748,7 @@ particular interest highlighted.
 
 ```{r limmaResult, cache=FALSE}
 set.caption(tabRef("topTable", "Top 20 differentially expressed probes."))
+rownames(limmaTable) <- NULL
 pander(head(limmaTable, 20))
 ```
 
