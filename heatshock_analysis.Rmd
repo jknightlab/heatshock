@@ -499,7 +499,7 @@ shows no further evidence for outliers (`r figRef("mds")`).
 ### Normalising gene expression estimates
 
 Probe intensities were normalised with VSN [@Huber02]. A PCA plot of the initial 
-VSN normalised data (`r figRef("vsnPCAcluster")`) shows clear evidence of samples
+VSN normalised data (`r figRef("vsnPCA")`) shows clear evidence of samples
 clustering by BeadChip, as well as three obvious outliers, which were removed.
 
 ```{r vsn}
@@ -577,7 +577,7 @@ exprDist <- dist(t(sig.data.norm))
 exprClust <- hclust(exprDist, method="ward.D")
 ```
 
-```{r clustPlot, cache=FALSE, fig.cap=figRef("exprDendro2", paste("Dendrogram of gene expression samples. Colours of leaves correspond to clusters in", figRef("vsnPCA")))}
+```{r clustPlot, cache=FALSE, fig.cap=figRef("exprDendro", paste("Dendrogram of gene expression samples. Colours of leaves correspond to clusters in", figRef("vsnPCA")))}
 dendroData <- dendro_data(exprClust)
 labels <- strsplit(as.character(dendroData$labels$label), "_")
 dendroData$labels$label <- sapply(labels, "[[", 1)
