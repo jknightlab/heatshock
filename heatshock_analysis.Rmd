@@ -508,8 +508,11 @@ sig.data.norm <- justvsn(acast(sig.data.raw, formula=probe ~ sample + treatment,
 ```
 
 ```{r vsnPCA}
+probeMean <- rowMeans(sig.data.norm)
 probeSD <- apply(sig.data.norm, 1, sd)
-sig.select <- dplyr::filter(as.data.frame(sig.data.norm), probeSD > quantile(probeSD, 0.9) )
+meanCut <- quantile(probeMean, 0.75)
+sdCut <- quantile(probeSD[probeMean > meanCut], 0.9)
+sig.select <- dplyr::filter(as.data.frame(sig.data.norm), probeSD > sdCut & probeMean > meanCut)
 sig.pca <- prcomp(t(sig.select), scale=TRUE)
 sig.pc <- as.data.frame(sig.pca$x)
 sig.pc$sample <- rownames(sig.pc)
@@ -517,13 +520,13 @@ sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
 sig.pc <- inner_join(sig.pc, info, by="sample")
 ```
 
-```{r vsnOutliers}
+```{r vsnOutliers, debendson="vsnPCA"}
 sig.pc <- mutate(sig.pc, outlier= sample %in% c("NA18508_Basal", "NA19201_Stim", 
 			"NA19209_Stim"))
 exclude$sample <- union(exclude$sample, c("NA18508", "NA19201", "NA19209"))
 ```
 
-```{r vsnPCAcluster}
+```{r vsnPCAcluster, dependson=c("vsnPCA", "vsnOutliers")}
 clusterChip1<- dplyr::filter(sig.pc, Sentrix_ID == 536403752 & !outlier)
 clusterChip1Bound_1_2 <- chull(clusterChip1$PC1, clusterChip1$PC2)
 clusterChip1Bound_2_3 <- chull(clusterChip1$PC2, clusterChip1$PC3)
