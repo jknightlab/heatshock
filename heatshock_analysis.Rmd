@@ -508,7 +508,9 @@ sig.data.norm <- justvsn(acast(sig.data.raw, formula=probe ~ sample + treatment,
 ```
 
 ```{r vsnPCA}
-sig.pca <- prcomp(t(sig.data.norm), scale=TRUE)
+sigSD <- apply(sig.data.norm, 1, sd)
+sig.select <- select(sig.data.norm, probeSD >quantile(probeSD, 0.9) )
+sig.pca <- prcomp(t(sig.select), scale=TRUE)
 sig.pc <- as.data.frame(sig.pca$x)
 sig.pc$sample <- rownames(sig.pc)
 sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
@@ -522,32 +524,22 @@ exclude$sample <- union(exclude$sample, c("NA18508", "NA19201", "NA19209"))
 ```
 
 ```{r vsnPCAcluster}
-clusterOp1<- dplyr::filter(sig.pc, Sentrix_ID == 526786720 & !outlier)
-clusterOp1Bound_1_2 <- chull(clusterOp1$PC1, clusterOp1$PC2)
-clusterOp1Bound_2_3 <- chull(clusterOp1$PC2, clusterOp1$PC3)
-clusterOp1Bound_1_3 <- chull(clusterOp1$PC1, clusterOp1$PC3)
+clusterChip1<- dplyr::filter(sig.pc, Sentrix_ID == 536403752 & !outlier)
+clusterChip1Bound_1_2 <- chull(clusterChip1$PC1, clusterChip1$PC2)
+clusterChip1Bound_2_3 <- chull(clusterChip1$PC2, clusterChip1$PC3)
+clusterChip1Bound_1_3 <- chull(clusterChip1$PC1, clusterChip1$PC3)
 
-clusterOp2<- dplyr::filter(sig.pc, Sentrix_ID == 526786721 & !outlier)
+clusterOp2<- dplyr::filter(sig.pc, `Operator initial cRNA` == "PE" & !outlier)
 clusterOp2Bound_1_2 <- chull(clusterOp2$PC1, clusterOp2$PC2)
 clusterOp2Bound_2_3 <- chull(clusterOp2$PC2, clusterOp2$PC3)
 clusterOp2Bound_1_3 <- chull(clusterOp2$PC1, clusterOp2$PC3)
  
 
-clusterChip1 <- dplyr::filter(sig.pc, Sentrix_ID == 536403752 & !outlier)
-clusterChip1Bound_1_2 <- chull(clusterChip1$PC1, clusterChip1$PC2)
-clusterChip1Bound_1_3 <- chull(clusterChip1$PC1, clusterChip1$PC3)
-clusterChip1Bound_2_3 <- chull(clusterChip1$PC2, clusterChip1$PC3)
-
-clusterChip2 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786722, 526786736, 
-				526786743, 526786749, 536403729) & !outlier)
-clusterChip2Bound_1_2 <- chull(clusterChip2$PC1, clusterChip2$PC2)
-clusterChip2Bound_1_3 <- chull(clusterChip2$PC1, clusterChip2$PC3)
-clusterChip2Bound_2_3 <- chull(clusterChip2$PC2, clusterChip2$PC3)
-
-clusterChip3 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(536403760, 536403730) & !outlier)
-clusterChip3Bound_1_2 <- chull(clusterChip3$PC1, clusterChip3$PC2)
-clusterChip3Bound_1_3 <- chull(clusterChip3$PC1, clusterChip3$PC3)
-clusterChip3Bound_2_3 <- chull(clusterChip3$PC2, clusterChip3$PC3)
+clusterOp1 <- dplyr::filter(sig.pc, `Operator initial cRNA` == "CE" & 
+		Sentrix_ID != 536403752 & !outlier)
+clusterOp1Bound_1_2 <- chull(clusterOp1$PC1, clusterOp1$PC2)
+clusterOp1Bound_1_3 <- chull(clusterOp1$PC1, clusterOp1$PC3)
+clusterOp1Bound_2_3 <- chull(clusterOp1$PC2, clusterOp1$PC3)
 ```
 
 ```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample. Five clusters corresponfing to differnt sets of BeadChips are clearly visible.")}
@@ -558,10 +550,6 @@ ggplot(sig.pc, aes(x=PC1, y=PC2)) +
 	 		fill="pink", colour="red") +
 	 geom_polygon(data=clusterChip1[clusterChip1Bound_1_2, ], alpha=0.7, 
 	 		fill="yellow", colour="orange") +
-	 geom_polygon(data=clusterChip2[clusterChip2Bound_1_2, ], alpha=0.7, 
-	 		fill="lightgreen", colour="green") +
-	 geom_polygon(data=clusterChip3[clusterChip3Bound_1_2, ], alpha=0.7, 
-	 		fill="lightblue", colour="blue") +
 	 geom_point(aes( colour=as.character(Sentrix_ID), shape=outlier), size=3) + 
      theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("Outlier")
 ```
@@ -598,19 +586,15 @@ dendroData$segments <- merge(dendroData$segments,
 		info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID")], 
 		by.x="label", by.y="Cell Line", all.x=TRUE)
 dendroData$segments <- mutate(dendroData$segments, 
-		cluster=ifelse(Sentrix_ID == 526786720, "1",
-		ifelse(Sentrix_ID == 526786721, "2",
-		ifelse(Sentrix_ID == 536403752, "3",
-		ifelse(Sentrix_ID %in% c(526786722, 526786736, 
-				526786743, 526786749, 536403729), "4", "5")))))
+		cluster=ifelse(Sentrix_ID == 536403752, "1",
+		ifelse(`Operator initial cRNA` == "PE", "2","3")))
 dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
 dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
  
 ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, linetype=treatment, colour=cluster)) + 
         scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
         scale_linetype_manual(values=c(Basal="solid", Stim="dashed", internal="solid")) +
-        scale_colour_manual(values=c("1"="grey", "2"="red", "3"="orange", "4"="green",
-        "5"="blue", "internal"="black")) +
+        scale_colour_manual(values=c("1"="grey", "2"="red", "3"="orange", "internal"="black")) +
         theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
 
