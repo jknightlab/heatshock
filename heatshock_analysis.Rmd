@@ -521,40 +521,23 @@ sig.pc <- inner_join(sig.pc, info, by="sample")
 ```
 
 ```{r vsnOutliers, debendson="vsnPCA"}
-sig.pc <- mutate(sig.pc, outlier= sample %in% c("NA18508_Basal", "NA19201_Stim", 
-			"NA19209_Stim"))
-exclude$sample <- union(exclude$sample, c("NA18508", "NA19201", "NA19209"))
+sig.pc <- mutate(sig.pc, outlier= sample %in% c("NA19201_Stim", "NA19159_Stim", 
+			"NA19172_Stim", "NA19172_Basal", "NA18523_Stim",
+			"NA18523_Basal"))
+exclude$sample <- union(exclude$sample, c("NA19201", "NA19159",  "NA19172", "NA18523"))
 ```
 
 ```{r vsnPCAcluster, dependson=c("vsnPCA", "vsnOutliers")}
-clusterChip1<- dplyr::filter(sig.pc, Sentrix_ID == 536403752 & !outlier)
-clusterChip1Bound_1_2 <- chull(clusterChip1$PC1, clusterChip1$PC2)
-clusterChip1Bound_2_3 <- chull(clusterChip1$PC2, clusterChip1$PC3)
-clusterChip1Bound_1_3 <- chull(clusterChip1$PC1, clusterChip1$PC3)
-
-clusterOp2<- dplyr::filter(sig.pc, `Operator initial cRNA` == "PE" & !outlier)
-clusterOp2Bound_1_2 <- chull(clusterOp2$PC1, clusterOp2$PC2)
-clusterOp2Bound_2_3 <- chull(clusterOp2$PC2, clusterOp2$PC3)
-clusterOp2Bound_1_3 <- chull(clusterOp2$PC1, clusterOp2$PC3)
- 
-
-clusterOp1 <- dplyr::filter(sig.pc, `Operator initial cRNA` == "CE" & 
-		Sentrix_ID != 536403752 & !outlier)
-clusterOp1Bound_1_2 <- chull(clusterOp1$PC1, clusterOp1$PC2)
-clusterOp1Bound_1_3 <- chull(clusterOp1$PC1, clusterOp1$PC3)
-clusterOp1Bound_2_3 <- chull(clusterOp1$PC2, clusterOp1$PC3)
+sig.pc$cluster <- 3
+sig.pc[sig.pc$Sentrix_ID==536403752,"cluster"] <- 1 
+sig.pc[sig.pc$Sentrix_ID!=536403752 & sig.pc$PC2 < 1.6,"cluster"] <- 2
+sig.pc[sig.pc$outlier,"cluster"] <- NA
 ```
 
-```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample. Five clusters corresponfing to differnt sets of BeadChips are clearly visible.")}
+```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample. Three clusters are clearly visible. Cluster 1 is composed of samples from a single BeadChip (ID 536403752). The remaining two clusters show some correlation with RNA extraction day but the correspondence is not perfect.")}
 ggplot(sig.pc, aes(x=PC1, y=PC2)) +  
-	 geom_polygon(data=clusterOp1[clusterOp1Bound_1_2, ], alpha=0.7, 
-	 		fill="lightgrey", colour="grey") +
-	 geom_polygon(data=clusterOp2[clusterOp2Bound_1_2, ], alpha=0.7, 
-	 		fill="pink", colour="red") +
-	 geom_polygon(data=clusterChip1[clusterChip1Bound_1_2, ], alpha=0.7, 
-	 		fill="yellow", colour="orange") +
-	 geom_point(aes( colour=as.character(Sentrix_ID), shape=outlier), size=3) + 
-     theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("Outlier")
+	geom_point(aes( colour=as.character(cluster), shape=Treatment), size=3) + 
+     theme_bw() + scale_colour_discrete("Cluster")
 ```
 
 ```{r excludeOutliers, ref.label="filterSample"}
@@ -588,9 +571,9 @@ info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
 dendroData$segments <- merge(dendroData$segments, 
 		info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID", "Operator initial cRNA")], 
 		by.x="label", by.y="Cell Line", all.x=TRUE)
-dendroData$segments <- mutate(dendroData$segments, 
-		cluster=ifelse(Sentrix_ID == 536403752, "1",
-		ifelse(`Operator initial cRNA` == "PE", "2","3")))
+dendroData$segments <- merge(dendroData$segments, 
+		sig.pc[, c("Cell Line", "cluster")],
+		by.x="label", by.y="Cell Line")
 dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
 dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
  
