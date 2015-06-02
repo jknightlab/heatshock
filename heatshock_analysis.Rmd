@@ -508,8 +508,8 @@ sig.data.norm <- justvsn(acast(sig.data.raw, formula=probe ~ sample + treatment,
 ```
 
 ```{r vsnPCA}
-sigSD <- apply(sig.data.norm, 1, sd)
-sig.select <- dplyr::select(as.data.frame(sig.data.norm), probeSD >quantile(probeSD, 0.9) )
+probeSD <- apply(sig.data.norm, 1, sd)
+sig.select <- dplyr::filter(as.data.frame(sig.data.norm), probeSD > quantile(probeSD, 0.9) )
 sig.pca <- prcomp(t(sig.select), scale=TRUE)
 sig.pc <- as.data.frame(sig.pca$x)
 sig.pc$sample <- rownames(sig.pc)
