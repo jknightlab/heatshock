@@ -567,6 +567,7 @@ dendroData$labels$label <- sapply(labels, "[[", 1)
 dendroData$labels$treatment <- sapply(labels, "[[", 2)
 dendroData$segments <- merge(dendroData$segments, dendroData$labels, by.x=c("xend", "yend"), by.y=c("x", "y"), all.x=TRUE)
 dendroData$segments[is.na(dendroData$segments$treatment), "treatment"] <- "internal"
+dendroData$segments[is.na(dendroData$segments$cluster), "cluster"] <- "internal"
 info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
 dendroData$segments <- merge(dendroData$segments, 
 		info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID", "Operator initial cRNA")], 
@@ -580,7 +581,7 @@ dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ]
 ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, linetype=treatment, colour=cluster)) + 
         scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
         scale_linetype_manual(values=c(Basal="solid", Stim="dashed", internal="solid")) +
-        scale_colour_manual(values=c("1"="orange", "2"="red", "3"="grey", "internal"="black")) +
+ #       scale_colour_manual(values=c("1"="orange", "2"="red", "3"="grey", "internal"="black")) +
         theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
 
