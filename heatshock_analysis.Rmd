@@ -556,6 +556,7 @@ appropriate. To achieve this, a hierarhical clustering of samples, averaged acro
 is performed^[This ensures that both samples from the same individual are clustered together.].
 
 ```{r exprClust}
+sig.select <- filter(sig.select, !sample %in% exclude$sample)
 exprDist <- dist(t(sig.select))
 exprClust <- hclust(exprDist, method="ward.D")
 ```
