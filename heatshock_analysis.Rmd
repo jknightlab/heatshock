@@ -540,7 +540,7 @@ ggplot(sig.pc, aes(x=PC1, y=PC2)) +
      theme_bw() + scale_colour_discrete("Cluster")
 ```
 
-```{r excludeOutliers, ref.label="filterSample"}
+```{r excludeOutliers, ref.label="filterSample", dependson="vsnOutliers"}
 ```
 
 ```{r exclOutlGeno, ref.label="sampleList", cache=FALSE}
