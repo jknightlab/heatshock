@@ -507,12 +507,16 @@ sig.data.norm <- justvsn(acast(sig.data.raw, formula=probe ~ sample + treatment,
 		value.var="intensity"))
 ```
 
-```{r vsnPCA}
+```{r selectProbes}
 probeMean <- rowMeans(sig.data.norm)
 probeSD <- apply(sig.data.norm, 1, sd)
-meanCut <- quantile(probeMean, 0.75)
-sdCut <- quantile(probeSD[probeMean > meanCut], 0.9)
-sig.select <- dplyr::filter(as.data.frame(sig.data.norm), probeSD > sdCut & probeMean > meanCut)
+sig.select <- as.tbl(as.data.frame(sig.data.norm))
+sig.select <- mutate(sig.select, mean=probeMean, sd=probeSD)
+sig.select <- arrange(sig.select, desc(probeMean), desc(probeSD))
+sig.select <- head(sig.select, 2000)
+```
+
+```{r vsnPCA}
 sig.pca <- prcomp(t(sig.select), scale=TRUE)
 sig.pc <- as.data.frame(sig.pca$x)
 sig.pc$sample <- rownames(sig.pc)
@@ -549,6 +553,9 @@ ggplot(sig.pc, aes(x=PC1, y=PC2)) +
 ```{r vsn2, ref.label="vsn"}
 ```
 
+```{r selectProbes2, ref.label="selectProbes"}
+```
+
 Considering a hierarchical clustering of the remaining samples a similar grouping
 of samples by BeadChip is apparent (`r figRef("exprDendro")`). However, the substantial
 overlap between some of the BeadChips suggests that a more nuanced clustering may be
@@ -556,8 +563,7 @@ appropriate. To achieve this, a hierarhical clustering of samples, averaged acro
 is performed^[This ensures that both samples from the same individual are clustered together.].
 
 ```{r exprClust}
-sig.select <- sig.select[, !grepl(paste0("^", exclude$sample, "_"), colnames(sig.select))]
-exprDist <- dist(t(sig.select))
+exprDist <- dist(t(select(sig.select, -mean, -sd)))
 exprClust <- hclust(exprDist, method="ward.D")
 ```
 
@@ -566,7 +572,8 @@ dendroData <- dendro_data(exprClust)
 labels <- strsplit(as.character(dendroData$labels$label), "_")
 dendroData$labels$label <- sapply(labels, "[[", 1)
 dendroData$labels$treatment <- sapply(labels, "[[", 2)
-dendroData$segments <- merge(dendroData$segments, dendroData$labels, by.x=c("xend", "yend"), by.y=c("x", "y"), all.x=TRUE)
+dendroData$segments <- left_join(dendroData$segments, dendroData$labels, by=c(x="x", yend="y"))
+
 dendroData$segments[is.na(dendroData$segments$treatment), "treatment"] <- "internal"
 info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
 dendroData$segments <- merge(dendroData$segments, 
