@@ -532,7 +532,7 @@ sig.pc <- mutate(sig.pc, outlier= sample %in% c("NA19201_Stim", "NA19159_Stim",
 exclude$sample <- union(exclude$sample, c("NA19201", "NA19159",  "NA19172", "NA18523"))
 ```
 
-```{r vsnPCAcluster, dependson=c("vsnPCA", "vsnOutliers")}
+```{r vsnPCAcluster, dependson=c("vsnPCA", "vsnOutliers", "selectProbes")}
 sig.pc$cluster <- 3
 sig.pc[sig.pc$Sentrix_ID==536403752,"cluster"] <- 1 
 sig.pc[sig.pc$Sentrix_ID!=536403752 & sig.pc$PC2 < 1.6,"cluster"] <- 2
@@ -551,10 +551,10 @@ ggplot(sig.pc, aes(x=PC1, y=PC2)) +
 ```{r exclOutlGeno, ref.label="sampleList", cache=FALSE}
 ```
 
-```{r vsn2, ref.label="vsn"}
+```{r vsn2, ref.label="vsn", dependson="excludeOutliers"}
 ```
 
-```{r selectProbes2, ref.label="selectProbes"}
+```{r selectProbes2, ref.label="selectProbes", dependson="vsn2"}
 ```
 
 Considering a hierarchical clustering of the remaining samples a similar grouping
