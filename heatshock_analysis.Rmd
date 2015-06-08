@@ -574,13 +574,10 @@ dendroData$labels$label <- sapply(labels, "[[", 1)
 dendroData$labels$treatment <- sapply(labels, "[[", 2)
 dendroData$segments <- left_join(dendroData$segments, dendroData$labels, by=c(x="x", yend="y"))
 
+dendroData$segments <- left_join(dendroData$segments, select(sig.pc, -(sample:PC4)),
+		by=c(label="Cell Line", treatment="Treatment"))
+
 dendroData$segments[is.na(dendroData$segments$treatment), "treatment"] <- "internal"
-info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
-dendroData$segments <- left_join(dendroData$segments, 
-		info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID", "Operator initial cRNA")], 
-		by=c(label="Cell Line"))
-dendroData$segments <- left_join(dendroData$segments, sig.pc[, c("Cell Line", "cluster")],
-		by=c(label="Cell Line"))
 dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
 dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
  
