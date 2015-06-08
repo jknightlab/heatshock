@@ -575,7 +575,7 @@ dendroData$labels$label <- sapply(labels, "[[", 1)
 dendroData$labels$treatment <- sapply(labels, "[[", 2)
 dendroData$segments <- left_join(dendroData$segments, dendroData$labels, by=c(x="x", yend="y"))
 
-dendroData$segments <- left_join(dendroData$segments, select(sig.pc, -(sample:PC4)),
+dendroData$segments <- left_join(dendroData$segments, dplyr::select(sig.pc, -(sample:PC4)),
 		by=c(label="Cell Line", treatment="Treatment"))
 
 dendroData$segments[is.na(dendroData$segments$treatment), "treatment"] <- "internal"
