@@ -261,6 +261,7 @@ for(i in factors){
 	info[[i]] <- factor(as.character(info[[i]]))
 }
 info[["Cell Line"]] <- sub("^GM", "NA", info[["Cell Line"]])
+info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
 info <- mutate(info, sample=paste(`Cell Line`, `Treatment`, sep="_"))
 
 newNames <- paste(info[["Cell Line"]], info$Treatment, sep="_")
