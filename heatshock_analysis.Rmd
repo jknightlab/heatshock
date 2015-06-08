@@ -605,7 +605,6 @@ cluster <- cutree(exprClust, k=6)
 ```{r clustPlot2, cache=FALSE, fig.cap=figRef("exprDendro2", "Dendrogram of averaged gene expression samples.")}
 dendroData <- dendro_data(exprClust)
 dendroData$segments <- merge(dendroData$segments, dendroData$labels, by.x=c("xend", "yend"), by.y=c("x", "y"), all.x=TRUE)
-info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
 info$cluster <- cluster[info[["Cell Line"]]]
 dendroData$segments <- merge(dendroData$segments, 
         info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID", "cluster")], 
