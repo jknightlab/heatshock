@@ -530,7 +530,7 @@ sig.data.norm <- justvsn(acast(sig.data.raw, formula=probe ~ sample + treatment,
 ```{r selectProbes}
 probeMean <- rowMeans(sig.data.norm)
 probeSD <- apply(sig.data.norm, 1, sd)
-sig.select <- as.tbl(as.data.frame(sig.data.norm)
+sig.select <- as.tbl(as.data.frame(sig.data.norm))
 sig.select <- mutate(sig.select, mean=probeMean, sd=probeSD)
 sig.select <- filter(sig.select, mean > 7)
 sig.select <- arrange(sig.select, desc(sd), desc(mean))
