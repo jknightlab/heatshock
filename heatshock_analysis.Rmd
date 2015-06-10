@@ -97,14 +97,29 @@ adjustLabel <- function(x, y, centre){
 	just
 }
 
+## Create a scatter plot with one panel per group (by default BeadChip)
+## Data points (by default samples in PC space) are assumed to be from a 
+## bivariate t distribution. Confidence ellipses are drawn based on this
+## (at a 95% level by default) and points outside these ellipses are marked 
+## as outliers. 
 outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID", 
 			shape="Treatment", id="Cell Line", level=0.95, ...){
 	ellipses <- by(data[, c(x, y)], data[[group]], 
 			function(d) tryCatch(dataEllipse(as.matrix(d), levels=level, draw=FALSE, robust=TRUE), 
                     error=function(e) cbind(NA, NA)))
 	data[[group]] <- as.character(data[[group]])
+	
+	names(data)[which(names(data) == x)] <- make.names(x)
+	x <- make.names(x)
+	names(data)[which(names(data) == y)] <- make.names(y)
+	y <- make.names(y)
+	names(data)[which(names(data) == group)] <- make.names(group)
+	group <- make.names(group)
+	names(data)[which(names(data) == shape)] <- make.names(shape)
+	shape <- make.names(shape)
 	names(data)[which(names(data) == id)] <- make.names(id)
 	id <- make.names(id)
+	
 	data$outlier <- logical(nrow(data))
 	for(i in 1:nrow(data)){
 		data$outlier[i] <- !sp::point.in.polygon(data[i, x], data[i, y], 
