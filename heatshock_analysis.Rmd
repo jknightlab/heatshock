@@ -86,24 +86,48 @@ pcaClusterPlot <- function(data, i, j, fillColour, legend=TRUE){
     fig
 }
 
+adjustLabel <- function(x, y, centre){
+	just <- c(h=0, v=0)
+	if(x < centre[1]){
+		just["h"] <- just["h"] + 0.9
+	} 
+	if(y < centre[2]){
+		just["v"] <- just["v"] + 1
+	}
+	just
+}
+
 outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID", 
-			shape="Treatment", level=0.95, ...){
+			shape="Treatment", id="Cell Line", level=0.95, ...){
 	ellipses <- by(data[, c(x, y)], data[[group]], 
 			function(d) tryCatch(dataEllipse(as.matrix(d), levels=level, draw=FALSE, robust=TRUE), 
                     error=function(e) cbind(NA, NA)))
 	data[[group]] <- as.character(data[[group]])
+	names(data)[which(names(data) == id)] <- make.names(id)
+	id <- make.names(id)
 	data$outlier <- logical(nrow(data))
 	for(i in 1:nrow(data)){
 		data$outlier[i] <- !sp::point.in.polygon(data[i, x], data[i, y], 
 				ellipses[[as.character(data[i, group])]][,1], 
 				ellipses[[as.character(data[i, group])]][,2])
 	}
-	ggplot(data, aes_string(x=x, y=y, colour=group)) +
-			geom_point(aes_string(shape=shape, fill="outlier"), size=3) + 
+	data$colour <- as.character(data[[group]])
+	data$colour[data$outlier] <- NA
+	centre <- by(data[, c(x, y)], data[[group]], colMeans)
+	data$h <- if(!is.null(list(...)$hjust)) list(...)$hjust else 0
+	data$v <- if(!is.null(list(...)$vjust)) list(...)$vjust else 0
+	labelJust <- mapply(function(x, y, g, c) adjustLabel(x, y, c[[g]]), 
+			data[[x]], data[[y]], data[[group]], MoreArgs=list(centre))
+	data$h <- ifelse(labelJust["h", ] > 0, -data$h, data$h)
+	data$h <- data$h + labelJust["h", ]
+	data$v <- ifelse(labelJust["v", ] > 0, -data$v, data$v)
+	data$v <- data$v + labelJust["v", ]			
+	ggplot(data, aes_string(x=x, y=y, colour="colour")) +
+			geom_point(aes_string(shape=shape), size=3) + 
 			stat_ellipse(level=level) + facet_wrap(as.formula(paste("~", group))) +
-			theme_bw() + scale_colour_discrete(guide="none") +
-            scale_shape_manual(values=c(Basal=21, Stim=24)) +
-            scale_fill_manual(values=c("TRUE"="grey", "FALSE"="white"), guide="none")
+			geom_text(data=dplyr::filter(data, outlier), 
+					aes_string(label=id, hjust="h", vjust="v")) +
+			theme_bw() + scale_colour_discrete(guide="none")
 }
 
 # Multiple plot function
