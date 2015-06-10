@@ -605,7 +605,7 @@ ggOutlier
 
 Probe intensities were normalised with VSN [@Huber02]. A PCA plot of the initial 
 VSN normalised data (`r figRef("vsnPCA")`) shows clear evidence of samples
-clustering by BeadChip, as well as `r length(unique(g$data["outlier", "Cell Line"])) - 1` 
+clustering by BeadChip, as well as `r length(unique(ggOutlier$data["outlier", "Cell Line"])) - 1` 
 obvious outliers, which were removed. In addition the only remaining sample from chip
 563403729 was removed as the entire chip appears to be suspect.
 
