@@ -560,10 +560,6 @@ shows no further evidence for outliers (`r figRef("mds")`).
 
 ### Normalising gene expression estimates
 
-Probe intensities were normalised with VSN [@Huber02]. A PCA plot of the initial 
-VSN normalised data (`r figRef("vsnPCA")`) shows clear evidence of samples
-clustering by BeadChip, as well as three obvious outliers, which were removed.
-
 ```{r vsn}
 sig.data.norm <- justvsn(acast(sig.data.raw, formula=probe ~ sample + treatment, 
 		value.var="intensity"))
@@ -601,11 +597,17 @@ sig.pc[sig.pc$Sentrix_ID!=536403752 & sig.pc$PC2 < 1.6,"cluster"] <- 2
 sig.pc[sig.pc$outlier,"cluster"] <- NA
 ```
 
-```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample. Three clusters are clearly visible. Cluster 1 is composed of samples from a single BeadChip (ID 536403752). The remaining two clusters show some correlation with RNA extraction day but the correspondence is not perfect.")}
-ggplot(sig.pc, aes(x=PC1, y=PC2)) +  
-	geom_point(aes( colour=as.character(cluster), shape=Treatment), size=3) + 
-     theme_bw() + scale_colour_discrete("Cluster")
+```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample. Each panal is comprised of the remaining samples for a singel BeadChip. For each BeadChip a 99% confidence ellipse is shown. While the majority of samples cluster well within chips some clear ouliers are visible. Variability between chips is relatively high with chips 563403730 and 563403752 appearing distinct from the bulk of the samples.")}
+ggOutlier <- outlierPlot(sig.pc, level=0.99, hjust=0.2, vjust=-0.5)
+exclude$samples <- union(exclude$samples, ggOutlier$data["outlier", "Cell Line"])
+ggOutlier
 ```
+
+Probe intensities were normalised with VSN [@Huber02]. A PCA plot of the initial 
+VSN normalised data (`r figRef("vsnPCA")`) shows clear evidence of samples
+clustering by BeadChip, as well as `r length(unique(g$data["outlier", "Cell Line"])) - 1` 
+obvious outliers, which were removed. In addition the only remaining sample from chip
+563403729 was removed as the entire chip appears to be suspect.
 
 ```{r excludeOutliers, ref.label="filterSample", dependson="vsnOutliers"}
 ```
@@ -619,89 +621,14 @@ ggplot(sig.pc, aes(x=PC1, y=PC2)) +
 ```{r selectProbes2, ref.label="selectProbes", dependson="vsn2"}
 ```
 
-Considering a hierarchical clustering of the remaining samples a similar grouping
-of samples by BeadChip is apparent (`r figRef("exprDendro")`). However, the substantial
-overlap between some of the BeadChips suggests that a more nuanced clustering may be
-appropriate. To achieve this, a hierarhical clustering of samples, averaged across conditions,
-is performed^[This ensures that both samples from the same individual are clustered together.].
-
-```{r exprClust}
-exprDist <- dist(t(dplyr::select(sig.select, -mean, -sd)))
-exprClust <- hclust(exprDist, method="ward.D")
-```
-
-```{r clustPlot, cache=FALSE, fig.cap=figRef("exprDendro", paste("Dendrogram of gene expression samples. Colours of leaves correspond to clusters in", figRef("vsnPCA")))}
-dendroData <- dendro_data(exprClust)
-labels <- strsplit(as.character(dendroData$labels$label), "_")
-dendroData$labels$label <- sapply(labels, "[[", 1)
-dendroData$labels$treatment <- sapply(labels, "[[", 2)
-dendroData$segments <- left_join(dendroData$segments, dendroData$labels, by=c(x="x", yend="y"))
-
-dendroData$segments <- left_join(dendroData$segments, dplyr::select(sig.pc, -(sample:PC4)),
-		by=c(label="Cell Line", treatment="Treatment"))
-
-dendroData$segments[is.na(dendroData$segments$treatment), "treatment"] <- "internal"
-dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
-dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
- 
-ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, linetype=treatment, colour=cluster)) + 
-        scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
-        scale_linetype_manual(values=c(Basal="solid", Stim="dashed", internal="solid")) +
- #       scale_colour_manual(values=c("1"="orange", "2"="red", "3"="grey", "internal"="black")) +
-        theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
-```
-
-```{r meanClust}
-sig.data.mean <- matrix(nrow=nrow(sig.data.norm), ncol=ncol(sig.data.norm)/2)
-colnames(sig.data.mean) <- sapply(strsplit(colnames(sig.data.norm)[seq(1, ncol(sig.data.norm),by=2)], "_"),"[[", 1)
-for(i in 0:(ncol(sig.data.mean)-1)){
-    sig.data.mean[, i+1] <- rowMeans(sig.data.norm[, c(i*2, i*2+1)+1])
-}
-exprDist <- dist(t(sig.data.mean))
-exprClust <- hclust(exprDist, method="ward.D")
-cluster <- cutree(exprClust, k=6)
-```
-
-```{r clustPlot2, cache=FALSE, fig.cap=figRef("exprDendro2", "Dendrogram of averaged gene expression samples.")}
-dendroData <- dendro_data(exprClust)
-dendroData$segments <- merge(dendroData$segments, dendroData$labels, by.x=c("xend", "yend"), by.y=c("x", "y"), all.x=TRUE)
-info$cluster <- cluster[info[["Cell Line"]]]
-dendroData$segments <- merge(dendroData$segments, 
-        info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID", "cluster")], 
-        by.x="label", by.y="Cell Line", all.x=TRUE)
-dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
-dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
- 
-ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, colour=cluster)) + 
-        scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
-        scale_colour_manual(values=c("1"="grey", "2"="red", "3"="orange", "4"="green",
-        "5"="blue", "6"="purple", "internal"="black")) +
-        theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
-```
-
-```{r meanPCA}
-sig.pca <- prcomp(t(sig.data.mean), scale=TRUE)
-sig.pc <- as.data.frame(sig.pca$x)
-sig.pc$sample <- rownames(sig.pc)
-sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
-sig.pc <- inner_join(sig.pc, info, by=c("sample" = "Cell Line"))
-```
-
-```{r meanPCAplot, cache=FALSE, fig.cap=figRef("meanPCA", "Plot of first few principle components showing clusters for averaged samples as determined by hierarchical clustering.")}
-fillColour <- c("grey", "red", "orange", "green", "blue", "purple")
-fig <- mapply(pcaClusterPlot, i=c(1,1,2,2), j=c(2,3,3,4), 
-        MoreArgs=list(data=sig.pc, fillColour=fillColour, legend=FALSE), SIMPLIFY=FALSE)
-multiplot(plotlist=fig, cols=2)
-```
-
-The resulting dendrogram was cut to produce six clusters (`r figRef("exprDendro2")` and `r figRef("meanPCA")`).
-The samples were then normalised separately for each cluster and differences between groups
-corrected with ComBat [@Johnson07;@SVA15], preserving differences due to heat shock
-stimulation.
+The remaining samples were normalised separately for each BeadChip and differences 
+between groups corrected with ComBat [@Johnson07;@SVA15], preserving differences due to 
+heat shock stimulation.
 
 ```{r vsnBatch}
-batch <- data.frame(sample=paste(rep(names(cluster), each=2), c("Basal", "Stim"), sep="_"), 
-        cluster=rep(cluster, each=2), treatment=c("Basal", "Stim"), stringsAsFactors=FALSE)
+batch <- with(subset(info, !`Cell Line` %in% exclude$sample), 
+		data.frame(sample=sample, cluster=as.integer(factor(Sentrix_ID)), 
+			treatment=info$Treatment, stringsAsFactors=FALSE))
 sig.raw <- acast(sig.data.raw, formula=probe ~ sample + treatment, 
 		value.var="intensity")
 colnames(sig.raw) <- sub("_._", "_", colnames(sig.raw))
@@ -725,6 +652,7 @@ par(mfrow=c(1,1))
 
 ```{r combat}
 batch <- batch[order(batch$cluster), ]
+sig.data.norm <- sig.data.norm[, batch$sample]
 sig.data.norm <- ComBat(sig.data.norm, batch=batch$cluster, 
 		mod=model.matrix(~treatment, data=batch))
 ```
