@@ -105,7 +105,8 @@ adjustLabel <- function(x, y, centre){
 outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID", 
 			shape="Treatment", id="Cell Line", level=0.95, ...){
 	ellipses <- by(data[, c(x, y)], data[[group]], 
-			function(d) tryCatch(dataEllipse(as.matrix(d), levels=level, draw=FALSE, robust=TRUE), 
+			function(d) tryCatch(car::dataEllipse(as.matrix(d), 
+						levels=level, draw=FALSE, robust=TRUE), 
                     error=function(e) cbind(NA, NA)))
 	data[[group]] <- as.character(data[[group]])
 	
@@ -139,7 +140,7 @@ outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID",
 	data$v <- data$v + labelJust["v", ]			
 	ggplot(data, aes_string(x=x, y=y, colour="colour")) +
 			geom_point(aes_string(shape=shape), size=3) + 
-			stat_ellipse(level=level) + facet_wrap(as.formula(paste("~", group))) +
+			stat_ellipse(level=level) + facet_wrap(eval(parse(text=paste("~", group)))) +
 			geom_text(data=dplyr::filter(data, outlier), 
 					aes_string(label=id, hjust="h", vjust="v")) +
 			theme_bw() + scale_colour_discrete(guide="none")
