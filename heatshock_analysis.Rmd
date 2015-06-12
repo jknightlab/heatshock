@@ -583,7 +583,7 @@ sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
 sig.pc <- inner_join(sig.pc, info, by="sample")
 ```
 
-```{r vsnOutliers, debendson="vsnPCA"}
+```{r vsnOutliers, dependson="vsnPCA"}
 sig.pc <- mutate(sig.pc, outlier= sample %in% c("NA19201_Stim", "NA19159_Stim", 
 			"NA19172_Stim", "NA19172_Basal", "NA18523_Stim",
 			"NA18523_Basal"))
