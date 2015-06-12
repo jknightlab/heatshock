@@ -612,7 +612,7 @@ obvious outliers, which were removed. In addition the only remaining sample from
 `r sampleCount <- table(ggOutlier$data$Sentrix_ID); unique(dplyr::filter(ggOutlier$data, Sentrix_ID %in% names(sampleCount)[sampleCount == 2])$Sentrix_ID)` 
 was removed as the entire chip appears to be suspect.
 
-```{r excludeOutliers, ref.label="filterSample", dependson="vsnOutliers"}
+```{r excludeOutliers, ref.label="filterSample", dependson="vsnOutliers", cache.extra=exclude$sample}
 ```
 
 ```{r exclOutlGeno, ref.label="sampleList", cache=FALSE}
