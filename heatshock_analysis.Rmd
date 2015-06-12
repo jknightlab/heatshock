@@ -616,12 +616,6 @@ obvious outliers, which were removed. In addition the only remaining sample from
 ```{r exclOutlGeno, ref.label="sampleList", cache=FALSE}
 ```
 
-```{r vsn2, ref.label="vsn", dependson="excludeOutliers"}
-```
-
-```{r selectProbes2, ref.label="selectProbes", dependson="vsn2"}
-```
-
 The remaining samples were normalised separately for each BeadChip and differences 
 between groups corrected with ComBat [@Johnson07;@SVA15], preserving differences due to 
 heat shock stimulation.
