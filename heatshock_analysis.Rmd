@@ -142,7 +142,7 @@ outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID",
 			geom_point(aes_string(shape=shape), size=3) + 
 			stat_ellipse(level=level) + facet_wrap(eval(parse(text=paste("~", group))), ncol=3) +
 			geom_text(data=dplyr::filter(data, outlier), 
-					aes_string(label=id, hjust="h", vjust="v"), size=6) +
+					aes_string(label=id, hjust="h", vjust="v"), size=4) +
 			theme_bw() + scale_colour_discrete(guide="none")
 }
 
