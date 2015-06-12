@@ -265,7 +265,7 @@ url <- paste("heatshock_analysis", formats, sep=".")
 
 ## Data
 
-```{r linkData, cache=FALSE, results="asis"}
+```{r linkData, echo=FALSE, cache=FALSE, results="asis"}
 dataFiles <- sapply(data, linkFile, "data", "markdown")
 desc <- sapply(data, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse=",\n"))
@@ -273,7 +273,7 @@ cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse=",\n"))
 
 ## Log files
 
-```{r linkLogs, cache=FALSE, results="asis"}
+```{r linkLogs, echo=FALSE, cache=FALSE, results="asis"}
 logFiles <- sapply(logs, linkLog, "markdown")
 desc <- sapply(logs, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse=",\n"))
