@@ -629,7 +629,7 @@ heat shock stimulation.
 ```{r vsnBatch}
 batch <- with(subset(info, !`Cell Line` %in% exclude$sample), 
 		data.frame(sample=sample, cluster=as.integer(factor(Sentrix_ID)), 
-			treatment=info$Treatment, stringsAsFactors=FALSE))
+			treatment=Treatment, stringsAsFactors=FALSE))
 sig.raw <- acast(sig.data.raw, formula=probe ~ sample + treatment, 
 		value.var="intensity")
 colnames(sig.raw) <- sub("_._", "_", colnames(sig.raw))
