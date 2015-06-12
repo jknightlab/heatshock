@@ -652,6 +652,9 @@ sig.data.norm <- ComBat(sig.data.norm, batch=batch$cluster,
 		mod=model.matrix(~treatment, data=batch))
 ```
 
+```{r selectProbes2, ref.label="selectProbes"}
+```
+
 ```{r vsnPCA3, ref.label="vsnPCA"}
 ```
 
