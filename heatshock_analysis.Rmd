@@ -31,7 +31,7 @@ library(ggdendro)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
-opts_chunk$set(echo=FALSE)
+opts_chunk$set(echo=TRUE)
 opts_chunk$set(cache=TRUE)
 panderOptions("digits", 3)
 panderOptions("table.split.table", 160)
