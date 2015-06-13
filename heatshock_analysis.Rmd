@@ -712,7 +712,7 @@ are up and `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < 0))` down regul
 followig heat shock treatment. Further restricting this list by excluding all probes with a 
 log fold change of less than 0.5 leaves `r nrow(filter(limmaTable, adj.P.Val < 0.01 & abs(logFC) > 0.5))` 
 probes with `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC > 0.5))` and 
-`r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < 0.5))` up and down regulated respectively. 
+`r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < -0.5))` up and down regulated respectively. 
 `r figRef("volcano")` shows a smoothed volcano plot highlighting probes of particular interest. 
 
 ```{r limmaResult, cache=FALSE}
