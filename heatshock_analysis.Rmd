@@ -723,25 +723,24 @@ limmaExtreme <- subset(limmaTable, abs(logFC) > 0.5 & adj.P.Val < 0.01)
 limmaExtreme <- mutate(limmaExtreme, distance=(fcScale*logFC)^2 + log10(adj.P.Val)^2)
 limmaExtreme <- limmaExtreme[order(limmaExtreme$distance, decreasing=TRUE), ]
 ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) + 
-		stat_density2d(geom="tile", aes(fill=..density..^0.1), contour=FALSE) + 
-		geom_point(data=limmaExtreme, size=1.5, aes(colour=distance)) +
-		geom_text(data=subset(limmaExtreme, abs(logFC) > 0.5 & distance > 350), 
-				aes(label=SymbolReannotated), vjust=0, hjust=0, angle=30) +
-		stat_function(fun=function(x, scale, limit, pvalLimit, fcLimit){
-					y <- ifelse(!(x >= 0 & x < fcLimit) & !(x <= 0 & x > -fcLimit), 
-						(limit - (scale*x)^2)^0.5, 
-						Inf)
-					y <- ifelse(y < -log10(pvalLimit), Inf, y)
-					y <- ifelse(is.na(y), -log10(pvalLimit), y)
-				}, 
-				args=list(limit=350, scale=fcScale, pvalLimit=0.01, fcLimit=0.5), linetype="dashed") +
-		geom_line(data=data.frame(x=c(-Inf, -0.5), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
-		geom_line(data=data.frame(x=c(0.5, Inf), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
-		geom_line(data=data.frame(x=c(0.5, 0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
-		geom_line(data=data.frame(x=c(-0.5, -0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
-		scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256), breaks=NULL) +
-		scale_colour_gradientn(colours = colorRampPalette(c("yellow", "red"))(256), guide="none") +
-		theme_bw() + xlab("log(fold change)") + ylab("-log(p-value)") + expand_limits(x=max(limmaTable$logFC)+0.25, 
+        stat_density2d(geom="tile", aes(fill=..density..^0.1), contour=FALSE) + 
+        geom_point(data=limmaExtreme, size=1.5, aes(colour=distance)) +
+        geom_text(data=subset(limmaExtreme, distance > (1.5*fcScale)^2), 
+                aes(label=SymbolReannotated), vjust=0, hjust=0, angle=30) +
+        stat_function(fun=function(x, scale, limit, pvalLimit, fcLimit){
+                    y <- ifelse(!(x >= 0 & x < fcLimit) & !(x <= 0 & x > -fcLimit), 
+                        (limit - (scale*x)^2)^0.5, 
+                        Inf)
+                    y <- ifelse(y < -log10(pvalLimit) | is.na(y), -log10(pvalLimit), y)
+                }, 
+                args=list(limit=(1.5*fcScale)^2, scale=fcScale, pvalLimit=0.01, fcLimit=0.5), linetype="dashed") +
+        geom_line(data=data.frame(x=c(-Inf, -0.5), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
+        geom_line(data=data.frame(x=c(0.5, Inf), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
+        geom_line(data=data.frame(x=c(0.5, 0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
+        geom_line(data=data.frame(x=c(-0.5, -0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
+        scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256), breaks=NULL) +
+        scale_colour_gradientn(colours = colorRampPalette(c("yellow", "red"))(256), guide="none") +
+        theme_bw() + xlab("log(fold change)") + ylab("-log(p-value)") + expand_limits(x=max(limmaTable$logFC)+0.25, 
             y=max(-log10(limmaTable$adj.P.Val))+2)
 ```
 
