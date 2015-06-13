@@ -599,7 +599,7 @@ sig.pc[sig.pc$outlier,"cluster"] <- NA
 ```
 
 ```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample. Each panal is comprised of the remaining samples for a singel BeadChip. For each BeadChip a 99% confidence ellipse is shown. While the majority of samples cluster well within chips some clear ouliers are visible. Variability between chips is relatively high with chips 563403730 and 563403752 appearing distinct from the bulk of the samples.")}
-ggOutlier <- outlierPlot(sig.pc, level=0.99, hjust=0.2, vjust=-0.5)lazy
+ggOutlier <- outlierPlot(sig.pc, level=0.99, hjust=0.2, vjust=-0.5)
 exclude$sample <- union(exclude$sample, dplyr::filter(ggOutlier$data, outlier)[["Cell.Line"]])
 ggOutlier
 ```
