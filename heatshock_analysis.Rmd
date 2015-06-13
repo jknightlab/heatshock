@@ -642,7 +642,7 @@ sig.data.norm <- do.call(cbind, sig.data.norm)
 ```
 
 ```{r vsnBatchFit, cache=FALSE, results="hide", fig.cap=figRef("vsnBatchFit", "VSN fits to grouped dataset.")}
-par(mfrow=c(4,3))
+par(mfrow=c(3,3))
 mapply(meanSdPlot, vsnFit, main=paste("Cluster", 1:max(batch$cluster)), MoreArgs=list(ylim=c(0,3)))
 par(mfrow=c(1,1))
 ```
