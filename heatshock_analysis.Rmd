@@ -707,9 +707,13 @@ limmaTable <- limmaTable[order(limmaTable$P.Value),]
 
 In total `r nrow(filter(limmaTable, adj.P.Val < 0.01))` probes are identified
 as differentially expressed at a p-value threshold of 0.01 (see `r tabRef("topTable")`
-for the top 20 results). Of these `r nrow(filter(limmaTable, adj.P.Val < 0.01 & abs(logFC) > 0.5))` 
-have a log fold change of at least 0.5. `r figRef("volcano")` shows a smoothed volcano plot highlighting
-probes of particular interest. 
+for the top 20 results). Of these `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC > 0))` 
+are up and `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < 0))` down regulated
+followig heat shock treatment. Further restricting this list by excluding all probes with a 
+log fold change of less than 0.5 leaves `r nrow(filter(limmaTable, adj.P.Val < 0.01 & abs(logFC) > 0.5))` 
+probes with `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC > 0.5))` and 
+`r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < 0.5))` up and down regulated respectively. 
+`r figRef("volcano")` shows a smoothed volcano plot highlighting probes of particular interest. 
 
 ```{r limmaResult, cache=FALSE}
 set.caption(tabRef("topTable", "Top 20 differentially expressed probes."))
