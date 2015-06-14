@@ -581,20 +581,6 @@ sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
 sig.pc <- inner_join(sig.pc, info, by="sample")
 ```
 
-```{r vsnOutliers, dependson="vsnPCA"}
-sig.pc <- mutate(sig.pc, outlier= sample %in% c("NA19201_Stim", "NA19159_Stim", 
-			"NA19172_Stim", "NA19172_Basal", "NA18523_Stim",
-			"NA18523_Basal"))
-exclude$sample <- union(exclude$sample, c("NA19201", "NA19159",  "NA19172", "NA18523"))
-```
-
-```{r vsnPCAcluster, dependson=c("vsnPCA", "vsnOutliers", "selectProbes")}
-sig.pc$cluster <- 3
-sig.pc[sig.pc$Sentrix_ID==536403752,"cluster"] <- 1 
-sig.pc[sig.pc$Sentrix_ID!=536403752 & sig.pc$PC2 < 1.6,"cluster"] <- 2
-sig.pc[sig.pc$outlier,"cluster"] <- NA
-```
-
 ```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample. Each panal is comprised of the remaining samples for a singel BeadChip. For each BeadChip a 99% confidence ellipse is shown. While the majority of samples cluster well within chips some clear ouliers are visible. Variability between chips is relatively high with chips 563403730 and 563403752 appearing distinct from the bulk of the samples.")}
 ggOutlier <- outlierPlot(sig.pc, level=0.99, hjust=0.2, vjust=-0.5)
 exclude$sample <- union(exclude$sample, dplyr::filter(ggOutlier$data, outlier)[["Cell.Line"]])
