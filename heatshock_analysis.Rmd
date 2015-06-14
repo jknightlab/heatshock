@@ -604,10 +604,10 @@ ggOutlier
 Probe intensities were normalised with VSN [@Huber02]. A PCA plot of the initial 
 VSN normalised data (`r figRef("vsnPCA")`) shows clear evidence of samples
 clustering by BeadChip, as well as 
-`r length(unique(dplyr::filter(ggOutlier$data, outlier)[["Cell.Line"]])) - 1` 
-obvious outliers, which were removed. In addition the only remaining sample from chip
-`r sampleCount <- table(ggOutlier$data$Sentrix_ID); unique(dplyr::filter(ggOutlier$data, Sentrix_ID %in% names(sampleCount)[sampleCount == 2])$Sentrix_ID)` 
-was removed as the entire chip appears to be suspect.
+`r length(unique(dplyr::filter(ggOutlier$data, outlier)[["Cell.Line"]]))` 
+obvious outliers, which were removed. In addition the few remaining samples from chip
+`r sampleCount <- table(ggOutlier$data$Sentrix_ID); unique(dplyr::filter(ggOutlier$data, Sentrix_ID %in% names(sampleCount)[sampleCount == 4])$Sentrix_ID)` 
+were removed as the entire chip appears to be suspect.
 
 ```{r excludeOutliers, ref.label="filterSample", dependson="vsnOutliers", cache.extra=exclude$sample}
 ```
