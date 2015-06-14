@@ -373,14 +373,14 @@ exclude$probe <- union(exclude$probe, subset(annot,
 
 
 Probes were required to exhibit significant signal (detection p-value < 0.05) 
-in at least seven samples and samples with less than 30% of the remaining probes 
+in at least ten samples and samples with less than 30% of the remaining probes 
 providing significant signal were excluded (together with the paired sample).
 Samples showing exceptionally low variation in probe intensities (standard deviation
 of the log intensities of all retained probes below 0.7) were also removed.
 
 ```{r lowDetProbe}
 detected <- tally(group_by(subset(det.data.long, p.value < 0.05), probe))
-exclude$probe <- union(exclude$probe, filter(detected, n < 7)$probe)
+exclude$probe <- union(exclude$probe, filter(detected, n < 10)$probe)
 ```
 
 ```{r filterProbe}
