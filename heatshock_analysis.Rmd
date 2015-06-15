@@ -398,7 +398,7 @@ exclude$sample <- union(exclude$sample, filter(missingSample, n >= 0.7)$sample)
 ```{r lowSD}
 sampleSD <- summarise(group_by(filter(sig.data.long, is.finite(intensity)), 
 				sample, treatment), sd(intensity))
-exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < 0.7)$sample)
+exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < 0.8)$sample)
 ```
 
 ```{r filterSample}
