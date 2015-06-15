@@ -593,17 +593,18 @@ sig.pc <- inner_join(sig.pc, info, by="sample")
 
 ```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample. Each panal is comprised of the remaining samples for a singel BeadChip. For each BeadChip a 99% confidence ellipse is shown. While the majority of samples cluster well within chips some clear ouliers are visible. Variability between chips is relatively high with chips 563403730 and 563403752 appearing distinct from the bulk of the samples.")}
 ggOutlier <- outlierPlot(sig.pc, level=0.99, hjust=0.2, vjust=-0.5)
-exclude$sample <- union(exclude$sample, dplyr::filter(ggOutlier$data, outlier)[["Cell.Line"]])
-sampleCount <- table(ggOutlier$data$Sentrix_ID)
-excludeChip <- unique(dplyr::filter(ggOutlier$data, Sentrix_ID %in% names(sampleCount)[sampleCount == 4])$Sentrix_ID)
-exclude$sample <- union(exclude$sample, dplyr::filter(ggOutlier$data, Sentrix_ID %in% excludeChip)$Cell.Line)
+sampleCount <- table(dplyr::filter(ggOutlier$data, !outlier)$Sentrix_ID)
+excludeChip <- unique(dplyr::filter(ggOutlier$data, Sentrix_ID %in% names(sampleCount)[sampleCount <= 4])$Sentrix_ID)
+outlierSample <- unique(dplyr::filter(ggOutlier$data, outlier)$Cell.Line)
+chipExclusion <- unique(dplyr::filter(ggOutlier$data, Sentrix_ID %in% excludeChip)$Cell.Line)
+exclude$sample <- union(exclude$sample, outlierSample, chipExclusion)
 ggOutlier
 ```
 
 Probe intensities were normalised with VSN [@Huber02]. A PCA plot of the initial 
 VSN normalised data (`r figRef("vsnPCA")`) shows clear evidence of samples
 clustering by BeadChip, as well as 
-`r length(unique(dplyr::filter(ggOutlier$data, outlier)[["Cell.Line"]]))` 
+`r length(outlierSample) - length(excludeChip)` 
 obvious outliers, which were removed. In addition the few remaining samples from chip
 `r paste(excludeChip, collapse=", ")` 
 were removed as the entire chip appears to be suspect.
