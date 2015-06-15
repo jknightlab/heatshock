@@ -640,10 +640,12 @@ sig.data.norm <- ComBat(sig.data.norm, batch=batch$cluster,
 		mod=model.matrix(~treatment, data=batch))
 ```
 
-```{r selectProbes2, ref.label="selectProbes"}
-```
-
-```{r vsnPCA3, ref.label="vsnPCA"}
+```{r combatPCA}
+sig.pca <- prcomp(t(sig.data.norm), scale = TRUE)
+sig.pc <- as.data.frame(sig.pca$x)
+sig.pc$sample <- rownames(sig.pc)
+sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
+sig.pc <- inner_join(sig.pc, info, by = "sample")
 ```
 
 ```{r combatPCAplot, cache=FALSE, fig.cap=figRef("combatPCA", "PCA plot of ComBat corrected gene expression.")}
