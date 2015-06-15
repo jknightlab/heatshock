@@ -371,16 +371,23 @@ exclude$probe <- union(exclude$probe, subset(annot,
 		!is.na(RepeatMask))$ArrayAddress)
 ```
 
+```{r thresholds}
+det.pval <- 0.5
+det.n <- 10
+sample.missing <- 0.7
+sd.min <- 0.8
+```
 
-Probes were required to exhibit significant signal (detection p-value < 0.05) 
-in at least ten samples and samples with less than 30% of the remaining probes 
-providing significant signal were excluded (together with the paired sample).
-Samples showing exceptionally low variation in probe intensities (standard deviation
-of the log intensities of all retained probes below 0.7) were also removed.
+Probes were required to exhibit significant signal (detection p-value < `r det.pval`) 
+in at least `r det.n` samples and samples with less than `r (1-sample.missing)*100`% 
+of the remaining probes providing significant signal were excluded 
+(together with the paired sample). Samples showing exceptionally low variation in 
+probe intensities (standard deviation of the log intensities of all retained probes 
+below `r sd.min`) were also removed.
 
 ```{r lowDetProbe}
-detected <- tally(group_by(subset(det.data.long, p.value < 0.05), probe))
-exclude$probe <- union(exclude$probe, filter(detected, n < 10)$probe)
+detected <- tally(group_by(subset(det.data.long, p.value < det.pval), probe))
+exclude$probe <- union(exclude$probe, filter(detected, n < det.n)$probe)
 ```
 
 ```{r filterProbe}
@@ -390,15 +397,15 @@ det.data.long <- filter(det.data.long, !probe %in% exclude$probe)
 ```
 
 ```{r lowDetSample}
-missingSample <- tally(group_by(filter(det.data.long, p.value > 0.05), sample, treatment))
+missingSample <- tally(group_by(filter(det.data.long, p.value > det.pval), sample, treatment))
 missingSample$n <- missingSample$n/count(det.data.long, sample, treatment)$n
-exclude$sample <- union(exclude$sample, filter(missingSample, n >= 0.7)$sample)
+exclude$sample <- union(exclude$sample, filter(missingSample, n >= sample.missing)$sample)
 ```
 
 ```{r lowSD}
 sampleSD <- summarise(group_by(filter(sig.data.long, is.finite(intensity)), 
 				sample, treatment), sd(intensity))
-exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < 0.8)$sample)
+exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < sd.min)$sample)
 ```
 
 ```{r filterSample}
