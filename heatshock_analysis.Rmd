@@ -354,6 +354,7 @@ exclude$probe <- character()
 
 ```{r longData}
 sig.data.long <- reshapeData(sig.data.log, "intensity")
+sig.data.raw.long <- reshapeData(sig.data.raw, "intensity")
 det.data.long <- reshapeData(det.data.raw, "p.value")
 ```
 
@@ -384,6 +385,7 @@ exclude$probe <- union(exclude$probe, filter(detected, n < 10)$probe)
 
 ```{r filterProbe}
 sig.data.long <- filter(sig.data.long, !probe %in% exclude$probe)
+sig.data.raw.long <- filter(sig.data.raw.long, !probe %in% exclude$probe)
 det.data.long <- filter(det.data.long, !probe %in% exclude$probe)
 ```
 
@@ -401,6 +403,7 @@ exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < 0.7)$
 
 ```{r filterSample}
 sig.data.long <- filter(sig.data.long, !sample %in% exclude$sample)
+sig.data.raw.long <- filter(sig.data.raw.long, !sample %in% exclude$sample)
 det.data.long <- filter(det.data.long, !sample %in% exclude$sample)
 ```
 
@@ -559,7 +562,7 @@ shows no further evidence for outliers (`r figRef("mds")`).
 ### Normalising gene expression estimates
 
 ```{r vsn}
-sig.data.norm <- justvsn(acast(sig.data.long, formula=probe ~ sample + treatment, 
+sig.data.norm <- justvsn(acast(sig.data.raw.long, formula=probe ~ sample + treatment, 
 		value.var="intensity"))
 ```
 
@@ -612,7 +615,7 @@ heat shock stimulation.
 batch <- with(subset(info, !`Cell Line` %in% exclude$sample), 
 		data.frame(sample=sample, cluster=as.integer(factor(Sentrix_ID)), 
 			treatment=Treatment, stringsAsFactors=FALSE))
-sig.raw <- acast(sig.data.long, formula=probe ~ sample + treatment, 
+sig.raw <- acast(sig.data.raw.long, formula=probe ~ sample + treatment, 
 		value.var="intensity")
 colnames(sig.raw) <- sub("_._", "_", colnames(sig.raw))
 sig.raw <- sig.raw[, batch$sample]
@@ -645,7 +648,7 @@ sig.pca <- prcomp(t(sig.data.norm), scale = TRUE)
 sig.pc <- as.data.frame(sig.pca$x)
 sig.pc$sample <- rownames(sig.pc)
 sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
-sig.pc <- inner_join(sig.pc, info, by = "sample")
+sig.pc <- inner_join(sig.pc, info, by = "sample")l
 ```
 
 ```{r combatPCAplot, cache=FALSE, fig.cap=figRef("combatPCA", "PCA plot of ComBat corrected gene expression.")}
