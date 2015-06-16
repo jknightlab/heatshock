@@ -372,7 +372,7 @@ exclude$probe <- union(exclude$probe, subset(annot,
 ```
 
 ```{r thresholds}
-det.pval <- 0.5
+det.pval <- 0.05
 det.n <- 10
 sample.missing <- 0.7
 sd.min <- 0.8
