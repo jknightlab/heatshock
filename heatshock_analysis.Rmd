@@ -28,6 +28,7 @@ library(knitr)
 library(pander)
 library(reshape2)
 library(ggdendro)
+library(topGO)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
