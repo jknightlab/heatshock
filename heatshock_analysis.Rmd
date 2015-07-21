@@ -717,6 +717,38 @@ limmaTable <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannota
 limmaTable <- limmaTable[order(limmaTable$P.Value),]
 ```
 
+## GO enrichment analysis
+
+To further investigate the patterns of differential expression a GO enrichment analysis 
+was carried out using the Bioconductor package *topGO* [@Alexa10]. Fisher's Exact Test
+was used to determine enrichment separately for significantly (FDR < 0.01) up 
+(`r tabRef("topGOUp")`) and down (`r tabRef("topGODown")`) regulated genes.
+
+```{r preTopGO}
+tCut <- min(abs(limmaTable$t[limmaTable$adj.P.Val < 0.01]))
+universe <- limmaTable$t
+names(universe) <- limmaTable$EntrezReannotated
+universe <- universe[!is.na(names(universe))]
+tgUp <- new("topGOdata", ontology="BP", allGenes=universe, 
+			geneSelectionFun=selGenesUp, nodeSize=10,
+			description="Genes up-regulated after heat shock",
+			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+tgDown <- new("topGOdata", ontology="BP", allGenes=universe, 
+			geneSelectionFun=selGenesDown, nodeSize=10,
+			description="Genes down-regulated after heat shock",
+			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+tgAny <- new("topGOdata", ontology="BP", allGenes=universe, 
+			geneSelectionFun=selGenesAny, nodeSize=10,
+			description="Genes differentially expressed in response to heat shock",
+			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+```
+
+```{r testTopGO}
+resultUp <- runTest(tgUp, algorithm="elim", statistic="fisher")
+resultDown <- runTest(tgDown, algorithm="elim", statistic="fisher")
+```
+
+
 # Results
 ## Differential expression analysis
 
@@ -763,28 +795,25 @@ ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) +
             y=max(-log10(limmaTable$adj.P.Val))+2)
 ```
 
-### GO enrichment analysis
-To further investigate the patterns of differential expression a GO enrichment analysis 
-was carried out using the Bioconductor package *topGO* [@Alexa10].
+## GO enrichment analysis
+The GO analysis highlights several categories that are significantly enriched amongst
+the up and down regulated genes (`r sum(score(resultUp) < 0.01)` and 
+`r sum(score(resultDown) < 0.01)` categories with a p-value < 0.01 respectively).
+Considering the top categories (`r tabRef("topGOUp")` and `r tabRef("topGODown")`)
+it appears that genes upregulated in response to heat shock are predominantly
+related to stress response and protein folding whereas down regulated genes
+broadly relate to gene expression, cell proliferation and normal lymphocyte function.
 
-```{r preTopGO}
-tCut <- min(abs(limmaTable$t[limmaTable$adj.P.Val < 0.01]))
-universe <- limmaTable$t
-names(universe) <- limmaTable$EntrezReannotated
-universe <- universe[!is.na(names(universe))]
-tgUp <- new("topGOdata", ontology="BP", allGenes=universe, 
-			geneSelectionFun=selGenesUp, nodeSize=10,
-			description="Genes up-regulated after heat shock",
-			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
-tgDown <- new("topGOdata", ontology="BP", allGenes=universe, 
-			geneSelectionFun=selGenesDown, nodeSize=10,
-			description="Genes down-regulated after heat shock",
-			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
-tgAny <- new("topGOdata", ontology="BP", allGenes=universe, 
-			geneSelectionFun=selGenesAny, nodeSize=10,
-			description="Genes differentially expressed in response to heat shock",
-			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+```{r tableTopGOUp, chache=FALSE}
+set.caption(tabRef("topGOUp", "Top 20 GO categories enriched for up regulated genes."))
+pander(GenTable(tgUp, up=resultUp, topNodes=20))
 ```
+
+```{r tableTopGODown, chache=FALSE}
+set.caption(tabRef("topGODown", "Top 20 GO categories enriched for down regulated genes"))
+pander(GenTable(tgDown, down=resultUp, topNodes=20))
+```
+
 
 
 # Appendix {-}
