@@ -194,6 +194,21 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
+## Functions to select interesting genes for topGO analysis.
+## Requires `tCut` to be defined in global environment.
+selGenesUp <- function(score){
+	score >= tCut
+}
+
+selGenesDown <- function(score){
+	score <= -tCut
+}
+
+selGenesAny <- function(score){
+	abs(score) >= tCut
+}
+
+
 figRef <- local({
     tag <- numeric()
     created <- logical()
@@ -697,7 +712,7 @@ annotations provided by the *illuminaHumanv3.db* Bioconductor package [@Barbosa1
 
 ```{r annotateTable}
 limmaTable <- cbind(ArrayAddress=rownames(limmaTable), limmaTable)
-limmaTable <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, GenomicLocation),
+limmaTable <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, EntrezReannotated, GenomicLocation),
 		limmaTable)
 limmaTable <- limmaTable[order(limmaTable$P.Value),]
 ```
@@ -718,7 +733,7 @@ probes with `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC > 0.5))` and
 ```{r limmaResult, cache=FALSE}
 set.caption(tabRef("topTable", "Top 20 differentially expressed probes."))
 rownames(limmaTable) <- NULL
-pander(head(dplyr::select(limmaTable, -ArrayAddress), 20))
+pander(head(dplyr::select(limmaTable, -ArrayAddress, -EntrezReannotated, -GenomicLocation), 20))
 ```
 
 ```{r limmaPlot, cache=FALSE, fig.cap=figRef("volcano", "Volcano plot of differential expression results. Probes with an adjusted p-value below 0.01 and a log fold cange of at least 0.5 are shown as yellow and red dots. Probes showing particularly strong evidence of changes in gene expression through a combination of p-value and fold change are labelled with the corresponding gene symbol.")}
@@ -747,6 +762,30 @@ ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) +
         theme_bw() + xlab("log(fold change)") + ylab("-log(p-value)") + expand_limits(x=max(limmaTable$logFC)+0.25, 
             y=max(-log10(limmaTable$adj.P.Val))+2)
 ```
+
+### GO enrichment analysis
+To further investigate the patterns of differential expression a GO enrichment analysis 
+was carried out using the Bioconductor package *topGO* [@Alexa10].
+
+```{r preTopGO}
+tCut <- min(abs(limmaTable$t[limmaTable$adj.P.Val < 0.01]))
+universe <- limmaTable$t
+names(universe) <- limmaTable$EntrezReannotated
+universe <- universe[!is.na(names(universe))]
+tgUp <- new("topGOdata", ontology="BP", allGenes=universe, 
+			geneSelectionFun=selGenesUp, nodeSize=10,
+			description="Genes up-regulated after heat shock",
+			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+tgDown <- new("topGOdata", ontology="BP", allGenes=universe, 
+			geneSelectionFun=selGenesDown, nodeSize=10,
+			description="Genes down-regulated after heat shock",
+			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+tgAny <- new("topGOdata", ontology="BP", allGenes=universe, 
+			geneSelectionFun=selGenesAny, nodeSize=10,
+			description="Genes differentially expressed in response to heat shock",
+			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+```
+
 
 # Appendix {-}
 ## Custom functions used
