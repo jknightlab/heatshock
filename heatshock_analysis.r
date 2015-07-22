@@ -52,8 +52,13 @@ includeLogs <- function(logs, format=c("markdown", "html")){
 	logs <- logs[sapply(logs, function(x) file.exists(file.path(x$dir, x$file)))]
 	df <- data.frame(log=sapply(logs, linkLog, format), 
 			description=sapply(logs, "[[", "desc"))
-	kable(df, format=format, row.names=FALSE)
+	ans <- kable(df, format=format, row.names=FALSE)
+  if(format == "html"){
+    ans <- gsub("&lt;(/?a.*?)&gt;", "<\\1>", ans)
+  }
+  ans
 }
+
 
 ## create config entry for one format block
 formatConfigSection <- function(config){
