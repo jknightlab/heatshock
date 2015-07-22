@@ -811,7 +811,7 @@ pander(GenTable(tgUp, up=resultUp, topNodes=20))
 
 ```{r tableTopGODown, chache=FALSE}
 set.caption(tabRef("topGODown", "Top 20 GO categories enriched for down regulated genes"))
-pander(GenTable(tgDown, down=resultUp, topNodes=20))
+pander(GenTable(tgDown, down=resultDown, topNodes=20))
 ```
 
 
