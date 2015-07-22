@@ -13,9 +13,8 @@ V: geometry:margin=2cm
    classoption:a4paper
 H: include/captions.tex
 
-t: html5
+t: bootstrap
 self-contained:
 webtex:
 template: include/report.html5
-c: include/buttondown.css
 

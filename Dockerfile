@@ -13,7 +13,7 @@ RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150507/plink
 
 ## Install additional R packages
 RUN Rscript -e "biocLite(c('sparcl', 'dplyr', 'tidyr', 'devtools', 'illuminaHumanv3.db', 'pander', 'ggdendro', 'sp', 'topGO'))"
-RUN Rscript -e "devtools::install_github('hadley/readr')"
+RUN Rscript -e "devtools::install_github('hadley/readr'); devtools::install_github('jimhester/knitrBootstrap')"
 
 ## Add basic instruction to display for interactive containers
 COPY config/message.txt /etc/motd
