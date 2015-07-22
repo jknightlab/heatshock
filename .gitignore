@@ -2,3 +2,5 @@
 data/*
 nohup.out
 .settings
+.Rhistory
+.Rproj.user

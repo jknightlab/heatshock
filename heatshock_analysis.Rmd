@@ -10,6 +10,8 @@ date: `r format(Sys.time(), "%a %d %b %Y")`
 ---
 
 ```{r, setup, include=FALSE, cache=FALSE}
+library(MASS)
+library(proto)
 library(gdata)
 library(affy)
 library(vsn)
@@ -26,10 +28,11 @@ library(knitr)
 library(pander)
 library(reshape2)
 library(ggdendro)
+library(topGO)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
-opts_chunk$set(echo=FALSE)
+opts_chunk$set(echo=TRUE)
 opts_chunk$set(cache=TRUE)
 panderOptions("digits", 3)
 panderOptions("table.split.table", 160)
@@ -84,6 +87,66 @@ pcaClusterPlot <- function(data, i, j, fillColour, legend=TRUE){
     fig
 }
 
+adjustLabel <- function(x, y, centre){
+	just <- c(h=0, v=0)
+	if(x < centre[1]){
+		just["h"] <- just["h"] + 0.9
+	} 
+	if(y < centre[2]){
+		just["v"] <- just["v"] + 1
+	}
+	just
+}
+
+## Create a scatter plot with one panel per group (by default BeadChip)
+## Data points (by default samples in PC space) are assumed to be from a 
+## bivariate t distribution. Confidence ellipses are drawn based on this
+## (at a 95% level by default) and points outside these ellipses are marked 
+## as outliers. 
+outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID", 
+			shape="Treatment", id="Cell Line", level=0.95, ...){
+	ellipses <- by(data[, c(x, y)], data[[group]], 
+			function(d) tryCatch(car::dataEllipse(as.matrix(d), 
+						levels=level, draw=FALSE, robust=TRUE), 
+                    error=function(e) cbind(NA, NA)))
+	data[[group]] <- as.character(data[[group]])
+	
+	names(data)[which(names(data) == x)] <- make.names(x)
+	x <- make.names(x)
+	names(data)[which(names(data) == y)] <- make.names(y)
+	y <- make.names(y)
+	names(data)[which(names(data) == group)] <- make.names(group)
+	group <- make.names(group)
+	names(data)[which(names(data) == shape)] <- make.names(shape)
+	shape <- make.names(shape)
+	names(data)[which(names(data) == id)] <- make.names(id)
+	id <- make.names(id)
+	
+	data$outlier <- logical(nrow(data))
+	for(i in 1:nrow(data)){
+		data$outlier[i] <- !sp::point.in.polygon(data[i, x], data[i, y], 
+				ellipses[[as.character(data[i, group])]][,1], 
+				ellipses[[as.character(data[i, group])]][,2])
+	}
+	data$colour <- as.character(data[[group]])
+	data$colour[data$outlier] <- NA
+	centre <- by(data[, c(x, y)], data[[group]], colMeans)
+	data$h <- if(!is.null(list(...)$hjust)) list(...)$hjust else 0
+	data$v <- if(!is.null(list(...)$vjust)) list(...)$vjust else 0
+	labelJust <- mapply(function(x, y, g, c) adjustLabel(x, y, c[[g]]), 
+			data[[x]], data[[y]], data[[group]], MoreArgs=list(centre))
+	data$h <- ifelse(labelJust["h", ] > 0, -data$h, data$h)
+	data$h <- data$h + labelJust["h", ]
+	data$v <- ifelse(labelJust["v", ] > 0, -data$v, data$v)
+	data$v <- data$v + labelJust["v", ]			
+	ggplot(data, aes_string(x=x, y=y, colour="colour")) +
+			geom_point(aes_string(shape=shape), size=3) + 
+			stat_ellipse(level=level) + facet_wrap(eval(parse(text=paste("~", group))), ncol=3) +
+			geom_text(data=dplyr::filter(data, outlier), 
+					aes_string(label=id, hjust="h", vjust="v"), size=4) +
+			theme_bw() + scale_colour_discrete(guide="none")
+}
+
 # Multiple plot function
 #
 # ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
@@ -130,6 +193,21 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     }
   }
 }
+
+## Functions to select interesting genes for topGO analysis.
+## Requires `tCut` to be defined in global environment.
+selGenesUp <- function(score){
+	score >= tCut
+}
+
+selGenesDown <- function(score){
+	score <= -tCut
+}
+
+selGenesAny <- function(score){
+	abs(score) >= tCut
+}
+
 
 figRef <- local({
     tag <- numeric()
@@ -203,7 +281,7 @@ url <- paste("heatshock_analysis", formats, sep=".")
 
 ## Data
 
-```{r linkData, cache=FALSE, results="asis"}
+```{r linkData, echo=FALSE, cache=FALSE, results="asis"}
 dataFiles <- sapply(data, linkFile, "data", "markdown")
 desc <- sapply(data, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse=",\n"))
@@ -211,7 +289,7 @@ cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse=",\n"))
 
 ## Log files
 
-```{r linkLogs, cache=FALSE, results="asis"}
+```{r linkLogs, echo=FALSE, cache=FALSE, results="asis"}
 logFiles <- sapply(logs, linkLog, "markdown")
 desc <- sapply(logs, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse=",\n"))
@@ -261,6 +339,7 @@ for(i in factors){
 	info[[i]] <- factor(as.character(info[[i]]))
 }
 info[["Cell Line"]] <- sub("^GM", "NA", info[["Cell Line"]])
+info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
 info <- mutate(info, sample=paste(`Cell Line`, `Treatment`, sep="_"))
 
 newNames <- paste(info[["Cell Line"]], info$Treatment, sep="_")
@@ -291,56 +370,63 @@ exclude$probe <- character()
 
 ```{r longData}
 sig.data.long <- reshapeData(sig.data.log, "intensity")
-sig.data.raw <- reshapeData(sig.data.raw, "intensity")
+sig.data.raw.long <- reshapeData(sig.data.raw, "intensity")
 det.data.long <- reshapeData(det.data.raw, "p.value")
 ```
 
 Annotations for all probes were obtained via the *illuminaHumanv3.db* Bioconductor
-package [@Barbosa10]. Only probes that are considered to are of perfect or good
-quality were considered for analysis. Additionally, all probes mapping to more than
+package [@Barbosa10]. Only probes that are considered to be of perfect or good
+quality were taken forward for analysis. Additionally, all probes mapping to more than
 one genomic location or to a location that contains a known SNP were excluded.
 
 ```{r probeQual}
-annot <- illuminaHumanv3fullReannotation()
-annot <- subset(illuminaHumanv3fullReannotation(), 
+annot <- illuminaHumanv3fullReannotation() 
+exclude$probe <- union(exclude$probe, subset(annot, 
 		!grepl("Good|Perfect", ProbeQuality) | !is.na(OverlappingSNP) | 
-		!is.na(SecondMatches) | !is.na(OtherGenomicMatches) | !is.na(RepeatMask))
-exclude$probe <- union(exclude$probe, annot$ArrayAddress)
+		!is.na(SecondMatches) | !is.na(OtherGenomicMatches) | 
+		!is.na(RepeatMask))$ArrayAddress)
 ```
 
+```{r thresholds}
+det.pval <- 0.01
+det.n <- 10
+sample.missing <- 0.7
+sd.min <- 0.8
+```
 
-Probes were required to exhibit significant signal (detection p-value < 0.05) 
-in at least seven samples and samples with less than 30% of the remaining probes 
-providing significant signal were excluded (together with the paired sample).
-Samples showing exceptionally low variation in probe intensities (standard deviation
-of the log intensities of all retained probes below 0.7) were also removed.
+Probes were required to exhibit significant signal (detection p-value < `r det.pval`) 
+in at least `r det.n` samples and samples with less than `r (1-sample.missing)*100`% 
+of the remaining probes providing significant signal were excluded 
+(together with the paired sample). Samples showing exceptionally low variation in 
+probe intensities (standard deviation of the log intensities of all retained probes 
+below `r sd.min`) were also removed.
 
 ```{r lowDetProbe}
-detected <- tally(group_by(subset(det.data.long, p.value < 0.05), probe))
-exclude$probe <- union(exclude$probe, filter(detected, n < 7)$probe)
+detected <- tally(group_by(subset(det.data.long, p.value < det.pval), probe))
+exclude$probe <- union(exclude$probe, filter(detected, n < det.n)$probe)
 ```
 
 ```{r filterProbe}
 sig.data.long <- filter(sig.data.long, !probe %in% exclude$probe)
-sig.data.raw <- filter(sig.data.raw, !probe %in% exclude$probe)
+sig.data.raw.long <- filter(sig.data.raw.long, !probe %in% exclude$probe)
 det.data.long <- filter(det.data.long, !probe %in% exclude$probe)
 ```
 
 ```{r lowDetSample}
-missingSample <- tally(group_by(filter(det.data.long, p.value > 0.05), sample, treatment))
+missingSample <- tally(group_by(filter(det.data.long, p.value > det.pval), sample, treatment))
 missingSample$n <- missingSample$n/count(det.data.long, sample, treatment)$n
-exclude$sample <- union(exclude$sample, filter(missingSample, n >= 0.7)$sample)
+exclude$sample <- union(exclude$sample, filter(missingSample, n >= sample.missing)$sample)
 ```
 
 ```{r lowSD}
 sampleSD <- summarise(group_by(filter(sig.data.long, is.finite(intensity)), 
 				sample, treatment), sd(intensity))
-exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < 0.7)$sample)
+exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < sd.min)$sample)
 ```
 
 ```{r filterSample}
 sig.data.long <- filter(sig.data.long, !sample %in% exclude$sample)
-sig.data.raw <- filter(sig.data.raw, !sample %in% exclude$sample)
+sig.data.raw.long <- filter(sig.data.raw.long, !sample %in% exclude$sample)
 det.data.long <- filter(det.data.long, !sample %in% exclude$sample)
 ```
 
@@ -498,175 +584,62 @@ shows no further evidence for outliers (`r figRef("mds")`).
 
 ### Normalising gene expression estimates
 
-Probe intensities were normalised with VSN [@Huber02]. A PCA plot of the initial 
-VSN normalised data (`r figRef("vsnPCAcluster")`) shows clear evidence of samples
-clustering by BeadChip, as well as three obvious outliers, which were removed.
-
 ```{r vsn}
-sig.data.norm <- justvsn(acast(sig.data.raw, formula=probe ~ sample + treatment, 
+sig.data.norm <- justvsn(acast(sig.data.raw.long, formula=probe ~ sample + treatment, 
 		value.var="intensity"))
 ```
 
+```{r selectProbes}
+probeMean <- rowMeans(sig.data.norm)
+probeSD <- apply(sig.data.norm, 1, sd)
+sig.select <- as.tbl(as.data.frame(sig.data.norm))
+sig.select <- mutate(sig.select, mean=probeMean, sd=probeSD)
+sig.select <- filter(sig.select, mean > 7)
+sig.select <- arrange(sig.select, desc(sd), desc(mean))
+sig.select <- head(sig.select, 2000)
+```
+
 ```{r vsnPCA}
-sig.pca <- prcomp(t(sig.data.norm), scale=TRUE)
+sig.pca <- prcomp(t(sig.select), scale=TRUE)
 sig.pc <- as.data.frame(sig.pca$x)
 sig.pc$sample <- rownames(sig.pc)
 sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
 sig.pc <- inner_join(sig.pc, info, by="sample")
 ```
 
-```{r vsnOutliers}
-sig.pc <- mutate(sig.pc, outlier= sample %in% c("NA18508_Basal", "NA19201_Stim", 
-			"NA19209_Stim"))
-exclude$sample <- union(exclude$sample, c("NA18508", "NA19201", "NA19209"))
+```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample. Each panal is comprised of the remaining samples for a singel BeadChip. For each BeadChip a 99% confidence ellipse is shown. While the majority of samples cluster well within chips some clear ouliers are visible. Variability between chips is relatively high with chips 563403730 and 563403752 appearing distinct from the bulk of the samples.")}
+ggOutlier <- outlierPlot(sig.pc, level=0.99, hjust=0.2, vjust=-0.5)
+sampleCount <- table(ggOutlier$data$Sentrix_ID)
+excludeChip <- unique(dplyr::filter(ggOutlier$data, Sentrix_ID %in% names(sampleCount)[sampleCount <= 4])$Sentrix_ID)
+outlierSample <- unique(dplyr::filter(ggOutlier$data, outlier)$Cell.Line)
+chipExclusion <- unique(dplyr::filter(ggOutlier$data, Sentrix_ID %in% excludeChip)$Cell.Line)
+exclude$sample <- Reduce(union, list(exclude$sample, outlierSample, chipExclusion))
+ggOutlier
 ```
 
-```{r vsnPCAcluster}
-clusterOp1<- dplyr::filter(sig.pc, Sentrix_ID == 526786720 & !outlier)
-clusterOp1Bound_1_2 <- chull(clusterOp1$PC1, clusterOp1$PC2)
-clusterOp1Bound_2_3 <- chull(clusterOp1$PC2, clusterOp1$PC3)
-clusterOp1Bound_1_3 <- chull(clusterOp1$PC1, clusterOp1$PC3)
+Probe intensities were normalised with VSN [@Huber02]. A PCA plot of the initial 
+VSN normalised data (`r figRef("vsnPCA")`) shows clear evidence of samples
+clustering by BeadChip, as well as 
+`r length(outlierSample) - length(excludeChip)` 
+obvious outliers, which were removed. In addition the few remaining samples from chip
+`r paste(excludeChip, collapse=", ")` 
+were removed as the entire chip appears to be suspect.
 
-clusterOp2<- dplyr::filter(sig.pc, Sentrix_ID == 526786721 & !outlier)
-clusterOp2Bound_1_2 <- chull(clusterOp2$PC1, clusterOp2$PC2)
-clusterOp2Bound_2_3 <- chull(clusterOp2$PC2, clusterOp2$PC3)
-clusterOp2Bound_1_3 <- chull(clusterOp2$PC1, clusterOp2$PC3)
- 
-
-clusterChip1 <- dplyr::filter(sig.pc, Sentrix_ID == 536403752 & !outlier)
-clusterChip1Bound_1_2 <- chull(clusterChip1$PC1, clusterChip1$PC2)
-clusterChip1Bound_1_3 <- chull(clusterChip1$PC1, clusterChip1$PC3)
-clusterChip1Bound_2_3 <- chull(clusterChip1$PC2, clusterChip1$PC3)
-
-clusterChip2 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(526786722, 526786736, 
-				526786743, 526786749, 536403729) & !outlier)
-clusterChip2Bound_1_2 <- chull(clusterChip2$PC1, clusterChip2$PC2)
-clusterChip2Bound_1_3 <- chull(clusterChip2$PC1, clusterChip2$PC3)
-clusterChip2Bound_2_3 <- chull(clusterChip2$PC2, clusterChip2$PC3)
-
-clusterChip3 <- dplyr::filter(sig.pc, Sentrix_ID %in% c(536403760, 536403730) & !outlier)
-clusterChip3Bound_1_2 <- chull(clusterChip3$PC1, clusterChip3$PC2)
-clusterChip3Bound_1_3 <- chull(clusterChip3$PC1, clusterChip3$PC3)
-clusterChip3Bound_2_3 <- chull(clusterChip3$PC2, clusterChip3$PC3)
-```
-
-```{r vsnPCAplot, cache=FALSE, fig.cap=figRef("vsnPCA", "PCA plot of normalised gene expression estimates by sample. Five clusters corresponfing to differnt sets of BeadChips are clearly visible.")}
-ggplot(sig.pc, aes(x=PC1, y=PC2)) +  
-	 geom_polygon(data=clusterOp1[clusterOp1Bound_1_2, ], alpha=0.7, 
-	 		fill="lightgrey", colour="grey") +
-	 geom_polygon(data=clusterOp2[clusterOp2Bound_1_2, ], alpha=0.7, 
-	 		fill="pink", colour="red") +
-	 geom_polygon(data=clusterChip1[clusterChip1Bound_1_2, ], alpha=0.7, 
-	 		fill="yellow", colour="orange") +
-	 geom_polygon(data=clusterChip2[clusterChip2Bound_1_2, ], alpha=0.7, 
-	 		fill="lightgreen", colour="green") +
-	 geom_polygon(data=clusterChip3[clusterChip3Bound_1_2, ], alpha=0.7, 
-	 		fill="lightblue", colour="blue") +
-	 geom_point(aes( colour=as.character(Sentrix_ID), shape=outlier), size=3) + 
-     theme_bw() + scale_colour_discrete("BeadChip") + scale_shape_discrete("Outlier")
-```
-
-```{r excludeOutliers, ref.label="filterSample"}
+```{r excludeOutliers, ref.label="filterSample", dependson="vsnOutliers", cache.extra=exclude$sample}
 ```
 
 ```{r exclOutlGeno, ref.label="sampleList", cache=FALSE}
 ```
 
-```{r vsn2, ref.label="vsn"}
-```
-
-Considering a hierarchical clustering of the remaining samples a similar grouping
-of samples by BeadChip is apparent (`r figRef("exprDendro")`). However, the substantial
-overlap between some of the BeadChips suggests that a more nuanced clustering may be
-appropriate. To achieve this, a hierarhical clustering of samples, averaged across conditions,
-is performed^[This ensures that both samples from the same individual are clustered together.].
-
-```{r exprClust}
-exprDist <- dist(t(sig.data.norm))
-exprClust <- hclust(exprDist, method="ward.D")
-```
-
-```{r clustPlot, cache=FALSE, fig.cap=figRef("exprDendro2", paste("Dendrogram of gene expression samples. Colours of leaves correspond to clusters in", figRef("vsnPCA")))}
-dendroData <- dendro_data(exprClust)
-labels <- strsplit(as.character(dendroData$labels$label), "_")
-dendroData$labels$label <- sapply(labels, "[[", 1)
-dendroData$labels$treatment <- sapply(labels, "[[", 2)
-dendroData$segments <- merge(dendroData$segments, dendroData$labels, by.x=c("xend", "yend"), by.y=c("x", "y"), all.x=TRUE)
-dendroData$segments[is.na(dendroData$segments$treatment), "treatment"] <- "internal"
-info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
-dendroData$segments <- merge(dendroData$segments, 
-		info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID")], 
-		by.x="label", by.y="Cell Line", all.x=TRUE)
-dendroData$segments <- mutate(dendroData$segments, 
-		cluster=ifelse(Sentrix_ID == 526786720, "1",
-		ifelse(Sentrix_ID == 526786721, "2",
-		ifelse(Sentrix_ID == 536403752, "3",
-		ifelse(Sentrix_ID %in% c(526786722, 526786736, 
-				526786743, 526786749, 536403729), "4", "5")))))
-dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
-dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
- 
-ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, linetype=treatment, colour=cluster)) + 
-        scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
-        scale_linetype_manual(values=c(Basal="solid", Stim="dashed", internal="solid")) +
-        scale_colour_manual(values=c("1"="grey", "2"="red", "3"="orange", "4"="green",
-        "5"="blue", "internal"="black")) +
-        theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
-```
-
-```{r meanClust}
-sig.data.mean <- matrix(nrow=nrow(sig.data.norm), ncol=ncol(sig.data.norm)/2)
-colnames(sig.data.mean) <- sapply(strsplit(colnames(sig.data.norm)[seq(1, ncol(sig.data.norm),by=2)], "_"),"[[", 1)
-for(i in 0:(ncol(sig.data.mean)-1)){
-    sig.data.mean[, i+1] <- rowMeans(sig.data.norm[, c(i*2, i*2+1)+1])
-}
-exprDist <- dist(t(sig.data.mean))
-exprClust <- hclust(exprDist, method="ward.D")
-cluster <- cutree(exprClust, k=6)
-```
-
-```{r clustPlot2, cache=FALSE, fig.cap=figRef("exprDendro2", "Dendrogram of averaged gene expression samples.")}
-dendroData <- dendro_data(exprClust)
-dendroData$segments <- merge(dendroData$segments, dendroData$labels, by.x=c("xend", "yend"), by.y=c("x", "y"), all.x=TRUE)
-info[["Cell Line"]] <- sub("_.$", "", info[["Cell Line"]])
-info$cluster <- cluster[info[["Cell Line"]]]
-dendroData$segments <- merge(dendroData$segments, 
-        info[info$Treatment == "Basal",c("Cell Line", "Sentrix_ID", "cluster")], 
-        by.x="label", by.y="Cell Line", all.x=TRUE)
-dendroData$segments$cluster[is.na(dendroData$segments$cluster)] <- "internal"
-dendroData$segments <- dendroData$segments[order(dendroData$segments$xend), ] 
- 
-ggplot(dendroData$segments) + geom_segment(aes(x=x, y=y, xend=xend, yend=yend, colour=cluster)) + 
-        scale_x_discrete(label=filter(dendroData$segments, label != "internal")$label) + 
-        scale_colour_manual(values=c("1"="grey", "2"="red", "3"="orange", "4"="green",
-        "5"="blue", "6"="purple", "internal"="black")) +
-        theme_dendro() + theme(axis.text.x = element_text(angle=90, hjust=1))
-```
-
-```{r meanPCA}
-sig.pca <- prcomp(t(sig.data.mean), scale=TRUE)
-sig.pc <- as.data.frame(sig.pca$x)
-sig.pc$sample <- rownames(sig.pc)
-sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
-sig.pc <- inner_join(sig.pc, info, by=c("sample" = "Cell Line"))
-```
-
-```{r meanPCAplot, cache=FALSE, fig.cap=figRef("meanPCA", "Plot of first few principle components showing clusters for averaged samples as determined by hierarchical clustering.")}
-fillColour <- c("grey", "red", "orange", "green", "blue", "purple")
-fig <- mapply(pcaClusterPlot, i=c(1,1,2,2), j=c(2,3,3,4), 
-        MoreArgs=list(data=sig.pc, fillColour=fillColour, legend=FALSE), SIMPLIFY=FALSE)
-multiplot(plotlist=fig, cols=2)
-```
-
-The resulting dendrogram was cut to produce six clusters (`r figRef("exprDendro2")` and `r figRef("meanPCA")`).
-The samples were then normalised separately for each cluster and differences between groups
-corrected with ComBat [@Johnson07;@SVA15], preserving differences due to heat shock
-stimulation.
+The remaining samples were normalised separately for each BeadChip and differences 
+between groups corrected with ComBat [@Johnson07;@SVA15], preserving differences due to 
+heat shock stimulation.
 
 ```{r vsnBatch}
-batch <- data.frame(sample=paste(rep(names(cluster), each=2), c("Basal", "Stim"), sep="_"), 
-        cluster=rep(cluster, each=2), treatment=c("Basal", "Stim"), stringsAsFactors=FALSE)
-sig.raw <- acast(sig.data.raw, formula=probe ~ sample + treatment, 
+batch <- with(subset(info, !`Cell Line` %in% exclude$sample), 
+		data.frame(sample=sample, cluster=as.integer(factor(Sentrix_ID)), 
+			treatment=Treatment, stringsAsFactors=FALSE))
+sig.raw <- acast(sig.data.raw.long, formula=probe ~ sample + treatment, 
 		value.var="intensity")
 colnames(sig.raw) <- sub("_._", "_", colnames(sig.raw))
 sig.raw <- sig.raw[, batch$sample]
@@ -682,18 +655,24 @@ sig.data.norm <- do.call(cbind, sig.data.norm)
 ```
 
 ```{r vsnBatchFit, cache=FALSE, results="hide", fig.cap=figRef("vsnBatchFit", "VSN fits to grouped dataset.")}
-par(mfrow=c(2,3))
-mapply(meanSdPlot, vsnFit, main=paste("Cluster", 1:max(batch$cluster)), MoreArgs=list(ylim=c(0,3)))
+par(mfrow=c(3,3))
+mapply(meanSdPlot, vsnFit, main=paste("Cluster", 1:max(batch$cluster)), MoreArgs=list(ylim=c(0, 1)))
 par(mfrow=c(1,1))
 ```
 
 ```{r combat}
 batch <- batch[order(batch$cluster), ]
+sig.data.norm <- sig.data.norm[, batch$sample]
 sig.data.norm <- ComBat(sig.data.norm, batch=batch$cluster, 
 		mod=model.matrix(~treatment, data=batch))
 ```
 
-```{r vsnPCA3, ref.label="vsnPCA"}
+```{r combatPCA}
+sig.pca <- prcomp(t(sig.data.norm), scale = TRUE)
+sig.pc <- as.data.frame(sig.pca$x)
+sig.pc$sample <- rownames(sig.pc)
+sig.pc <- dplyr::select(as.tbl(sig.pc), sample, PC1, PC2, PC3, PC4)
+sig.pc <- inner_join(sig.pc, info, by = "sample")
 ```
 
 ```{r combatPCAplot, cache=FALSE, fig.cap=figRef("combatPCA", "PCA plot of ComBat corrected gene expression.")}
@@ -703,14 +682,139 @@ ggplot(sig.pc, aes(x=PC1, y=PC2)) +
 ```
 
 ```{r writeExpr}
-
+exprOut <- gzfile("/analysis/tmp/heatshock_expr_norm.tab.gz", open="w")
+write.table(sig.data.norm, file=exprOut, quote=FALSE)
 ```
 
 ```{r compressData, cache=FALSE}
 system("tar -czf tmp/yri_geno.tar.gz tmp/hapmap_yri.smpl_flt2.bed tmp/hapmap_yri.smpl_flt2.bim tmp/hapmap_yri.smpl_flt2.fam")
 ```
 
+## Differential expression analysis
+
+All remaining samples were analysed for differences in gene expression between the basal
+stimulated states, pairing samples from the same individual, using the *limma* 
+Bioconductor package [@Ritchie15].
+
+```{r limma}
+labels <- strsplit(colnames(sig.data.norm), "_")
+sample <- factor(sapply(labels, "[[", 1))
+state <- factor(sapply(labels, "[[", 2), levels=c("Basal", "Stim"))
+design <- model.matrix(~sample+state)
+fit <- lmFit(sig.data.norm, design)
+fit <- contrasts.fit(fit, coefficients="stateStim")
+fit <- eBayes(fit)
+limmaTable <- topTable(fit, n=length(fit$coefficients))
+```
+
+Individual probes were associated with corresponding genes using the updated
+annotations provided by the *illuminaHumanv3.db* Bioconductor package [@Barbosa10].
+
+```{r annotateTable}
+limmaTable <- cbind(ArrayAddress=rownames(limmaTable), limmaTable)
+limmaTable <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, EntrezReannotated, GenomicLocation),
+		limmaTable)
+limmaTable <- limmaTable[order(limmaTable$P.Value),]
+```
+
+## GO enrichment analysis
+
+To further investigate the patterns of differential expression a GO enrichment analysis 
+was carried out using the Bioconductor package *topGO* [@Alexa10]. Fisher's Exact Test
+was used to determine enrichment separately for significantly (FDR < 0.01) up 
+(`r tabRef("topGOUp")`) and down (`r tabRef("topGODown")`) regulated genes.
+
+```{r preTopGO}
+tCut <- min(abs(limmaTable$t[limmaTable$adj.P.Val < 0.01]))
+universe <- limmaTable$t
+names(universe) <- limmaTable$EntrezReannotated
+universe <- universe[!is.na(names(universe))]
+tgUp <- new("topGOdata", ontology="BP", allGenes=universe, 
+			geneSelectionFun=selGenesUp, nodeSize=10,
+			description="Genes up-regulated after heat shock",
+			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+tgDown <- new("topGOdata", ontology="BP", allGenes=universe, 
+			geneSelectionFun=selGenesDown, nodeSize=10,
+			description="Genes down-regulated after heat shock",
+			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+tgAny <- new("topGOdata", ontology="BP", allGenes=universe, 
+			geneSelectionFun=selGenesAny, nodeSize=10,
+			description="Genes differentially expressed in response to heat shock",
+			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+```
+
+```{r testTopGO}
+resultUp <- runTest(tgUp, algorithm="elim", statistic="fisher")
+resultDown <- runTest(tgDown, algorithm="elim", statistic="fisher")
+```
+
+
 # Results
+## Differential expression analysis
+
+In total `r nrow(filter(limmaTable, adj.P.Val < 0.01))` probes are identified
+as differentially expressed at a p-value threshold of 0.01 (see `r tabRef("topTable")`
+for the top 20 results). Of these `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC > 0))` 
+are up and `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < 0))` down regulated
+followig heat shock treatment. Further restricting this list by excluding all probes with a 
+log fold change of less than 0.5 leaves `r nrow(filter(limmaTable, adj.P.Val < 0.01 & abs(logFC) > 0.5))` 
+probes with `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC > 0.5))` and 
+`r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < -0.5))` up and down regulated respectively. 
+`r figRef("volcano")` shows a smoothed volcano plot highlighting probes of particular interest. 
+
+```{r limmaResult, cache=FALSE}
+set.caption(tabRef("topTable", "Top 20 differentially expressed probes."))
+rownames(limmaTable) <- NULL
+pander(head(dplyr::select(limmaTable, -ArrayAddress, -EntrezReannotated, -GenomicLocation), 20))
+```
+
+```{r limmaPlot, cache=FALSE, fig.cap=figRef("volcano", "Volcano plot of differential expression results. Probes with an adjusted p-value below 0.01 and a log fold cange of at least 0.5 are shown as yellow and red dots. Probes showing particularly strong evidence of changes in gene expression through a combination of p-value and fold change are labelled with the corresponding gene symbol.")}
+fcScale <- max(-log10(limmaTable$adj.P.Val))/max(abs(limmaTable$logFC))
+limmaExtreme <- subset(limmaTable, abs(logFC) > 0.5 & adj.P.Val < 0.01)
+limmaExtreme <- mutate(limmaExtreme, distance=(fcScale*logFC)^2 + log10(adj.P.Val)^2)
+limmaExtreme <- limmaExtreme[order(limmaExtreme$distance, decreasing=TRUE), ]
+ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) + 
+        stat_density2d(geom="tile", aes(fill=..density..^0.1), contour=FALSE) + 
+        geom_point(data=limmaExtreme, size=1.5, aes(colour=distance)) +
+        geom_text(data=subset(limmaExtreme, distance > (1.5*fcScale)^2), 
+                aes(label=SymbolReannotated), vjust=0, hjust=0, angle=30) +
+        stat_function(fun=function(x, scale, limit, pvalLimit, fcLimit){
+                    y <- ifelse(!(x >= 0 & x < fcLimit) & !(x <= 0 & x > -fcLimit), 
+                        (limit - (scale*x)^2)^0.5, 
+                        Inf)
+                    y <- ifelse(y < -log10(pvalLimit) | is.na(y), -log10(pvalLimit), y)
+                }, 
+                args=list(limit=(1.5*fcScale)^2, scale=fcScale, pvalLimit=0.01, fcLimit=0.5), linetype="dashed") +
+        geom_line(data=data.frame(x=c(-Inf, -0.5), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
+        geom_line(data=data.frame(x=c(0.5, Inf), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
+        geom_line(data=data.frame(x=c(0.5, 0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
+        geom_line(data=data.frame(x=c(-0.5, -0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
+        scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256), breaks=NULL) +
+        scale_colour_gradientn(colours = colorRampPalette(c("yellow", "red"))(256), guide="none") +
+        theme_bw() + xlab("log(fold change)") + ylab("-log(p-value)") + expand_limits(x=max(limmaTable$logFC)+0.25, 
+            y=max(-log10(limmaTable$adj.P.Val))+2)
+```
+
+## GO enrichment analysis
+The GO analysis highlights several categories that are significantly enriched amongst
+the up and down regulated genes (`r sum(score(resultUp) < 0.01)` and 
+`r sum(score(resultDown) < 0.01)` categories with a p-value < 0.01 respectively).
+Considering the top categories (`r tabRef("topGOUp")` and `r tabRef("topGODown")`)
+it appears that genes upregulated in response to heat shock are predominantly
+related to stress response and protein folding whereas down regulated genes
+broadly relate to gene expression, cell proliferation and normal lymphocyte function.
+
+```{r tableTopGOUp, chache=FALSE}
+set.caption(tabRef("topGOUp", "Top 20 GO categories enriched for up regulated genes."))
+pander(GenTable(tgUp, up=resultUp, down=resultDown, topNodes=20, orderBy="up"))
+```
+
+```{r tableTopGODown, chache=FALSE}
+set.caption(tabRef("topGODown", "Top 20 GO categories enriched for down regulated genes"))
+pander(GenTable(tgDown, down=resultDown, up=resultUp, topNodes=20, orderBy="down"))
+```
+
+
 
 # Appendix {-}
 ## Custom functions used

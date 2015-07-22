@@ -131,7 +131,7 @@ tryCatch(
 		knit("heatshock_analysis.Rmd"),
 		error=function(e){
 			cat("# We have a problem!", "R encountered the following issue while trying",
-					"to analise the heat shock data:", "<p class=\"errorMessage\">",
+					"to analyse the heat shock data:", "<p class=\"errorMessage\">",
 					e$message, "</p>", "## Log files", includeLogs(logs, "markdown"), 
 					sep="\n", 
 					file="heatshock_analysis.md")
