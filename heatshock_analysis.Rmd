@@ -806,12 +806,12 @@ broadly relate to gene expression, cell proliferation and normal lymphocyte func
 
 ```{r tableTopGOUp, chache=FALSE}
 set.caption(tabRef("topGOUp", "Top 20 GO categories enriched for up regulated genes."))
-pander(GenTable(tgUp, up=resultUp, down=resultDown, topNodes=20, orderBy="resultUp"))
+pander(GenTable(tgUp, up=resultUp, down=resultDown, topNodes=20, orderBy="up"))
 ```
 
 ```{r tableTopGODown, chache=FALSE}
 set.caption(tabRef("topGODown", "Top 20 GO categories enriched for down regulated genes"))
-pander(GenTable(tgDown, up=resultUp, down=resultDown, topNodes=20, orderBy="resultDown"))
+pander(GenTable(tgDown, down=resultDown, up=resultUp, topNodes=20, orderBy="down"))
 ```
 
 
