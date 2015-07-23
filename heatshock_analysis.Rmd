@@ -283,21 +283,11 @@ tabRef <- local({
     }
 })
 ``` 
-```{r, formats, include=FALSE}
-formats <- read.dcf(file="default.pandoc", fields="t")[,1]
-formats <- formats[!is.na(formats) & !grepl("html", formats)]
-latexIdx <- which(formats == "latex")
-if(length(latexIdx)){
-	formats[latexIdx] <- "pdf"
-}
-url <- paste("heatshock_analysis", formats, sep=".")
-```
-
 <aside class="download">
 
 # Downloads
 ## Report
-`r paste0("<span title=\"Download report as ", formats, "\">[", formats, "](", url, ")</span>", collapse=", ")`
+<span title=\"Download report as PDF"\">[PDF](heatshock_analysis.pdf)</span>
 
 ## Data
 
