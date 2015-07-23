@@ -56,6 +56,8 @@ includeLogs <- function(logs, format=c("markdown", "html")){
 	ans <- kable(df, format=format, row.names=FALSE)
   if(format == "html"){
     ans <- gsub("&lt;(/?a.*?)&gt;", "<\\1>", ans)
+    ans <- gsub("&quot;", "\"", ans)
+    ans <- gsub("<table>", "<table class=\"table table-hover\">", ans)
   }
   ans
 }
