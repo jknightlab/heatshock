@@ -91,6 +91,7 @@ tryCatch(
 		finally={
 			file.copy("heatshock_analysis.html", file.path(htmlRoot, "index.html"),
 					overwrite=TRUE)
+      file.copy("heatshock_analysis_files", htmlRoot)
 			copyFiles(logs, file.path(htmlRoot, "log"))
 			copyFiles(data, file.path(htmlRoot, "data"))
 			if(file.exists("heatshock_analysis.pdf")){
