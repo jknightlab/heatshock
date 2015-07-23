@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-library(knitr)
+library(rmarkdown)
 library(knitrBootstrap)
 
 htmlRoot <- "/var/www/html"
@@ -59,99 +59,25 @@ includeLogs <- function(logs, format=c("markdown", "html")){
   ans
 }
 
-
-## create config entry for one format block
-formatConfigSection <- function(config){
-	out <- character()
-	config <- config[!is.na(config)]
-	out <- paste(names(config), config, sep=":")
-	out <- gsub("\n", "\n  ", out)
-	out <- unlist(strsplit(out, "\n"))
-	out
-}
-
-## Create apandoc config file for use with knitr
-writeConfig <- function(config, file){
-	configList <- split(config, row(config))
-	configList <- lapply(configList, `names<-`, colnames(config))
-	out <- lapply(configList, formatConfigSection)
-	con <- file(file, open="w")
-	on.exit(close(con))
-	for(block in out){
-		writeLines(block, con=con)
-		cat("\n", file=con)
-	}
-}
-
-pandocBootstrap <- function(input, format, config = getOption('config.pandoc'), ext = NA,
-                  encoding = getOption('encoding')) {
-  if(!is.null(config)){
-  	if(file.exists(config)){
-  		config <- read.dcf(config)
-  	} else{
-  		config <- read.dcf(textConnection(config))
-  	}
-  	parNames <- colnames(config)
-  	if (length(parNames) && 'format' %in% parNames) {
-    	warning("Field 'format' in configuration renamed to 't'")
-    	colnames(config)[parNames == 'format'] <-'t'
-  	}
-  	if("t" %in% parNames && "bootstrap" %in% config[,"t"]){
-  		bootParam <- config[which(config[,"t"] %in% c("bootstrap", "") | is.na(config[,"t"])), , drop=FALSE]
-  		bootIdx <- which(bootParam[, "t"] == "bootstrap")
-  		bootParam[bootIdx, "t"] <- "html5"
-  		header <- knitrBootstrap:::create_header()
-  		if("H" %in% colnames(bootParam)){
-			if(!is.na(bootParam[bootIdx, "H"])){
-  				header <- paste(bootParam[bootIdx,"H"], header, sep="\\n")
-			}
-			bootParam[bootIdx, "H"] <- header
-  		} else {
-			headerCol <- as.character(rep(NA, nrow(bootParam)))
-			headerCol[bootIdx] <- header
-  			bootParam <- cbind(bootParam, H=headerCol)	
-  		}
-  		config <- config[which(config[,"t"] != "bootstrap"), , drop=FALSE]
-  	}
-  	
-  	if(missing(format) || is.null(format) || format != "html5" && (nrow(config) && any(!is.na(config[, "t"])))){
-  		configFile <- tempfile("pandocCfg")
-  		writeConfig(config, file=configFile)
-  		knitr::pandoc(input, format, config=configFile, ext=ext, encoding=encoding)
-  	}
-  	if(nrow(bootParam)){
-  		bootFile <- tempfile("bootCfg")
-  		writeConfig(bootParam, file=bootFile)
-		knitrBootstrap::render_bootstrap()
-		knit("heatshock_analysis.Rmd", "heatshock_analysis_boot.md")
-  		knitr::pandoc("heatshock_analysis_boot.md", format=format, config=bootFile, ext=ext, encoding=encoding)
-  	}
-  }
-}
-
 for(file in c("heatshock_analysis.md", "heatshock_analysis.html", "heatshock_analysis.pdf")){
 	if(file.exists(file)) file.remove(file)
 }
 tryCatch(
-		knit("heatshock_analysis.Rmd"),
-		error=function(e){
-			cat("# We have a problem!", "R encountered the following issue while trying",
-					"to analyse the heat shock data:", "<p class=\"errorMessage\">",
-					e$message, "</p>", "## Log files", includeLogs(logs, "markdown"), 
-					sep="\n", 
-					file="heatshock_analysis.md")
-		}
-)
-
-tryCatch(
-		pandocBootstrap("heatshock_analysis.md", config="default.pandoc"),
+		render("heatshock_analysis.Rmd"),
 		error=function(e){
 			cat("<!DOCTYPE html>", "<html>", "<head>", '<meta charset="UTF-8">',
-					"<title>Pandoc error</title>","</head>", "<body>", 
-					"<h1>We have a problem!</h1>", 
-					"<p>Pandoc encountered a problem while trying to generate the analysis report.</p>",
-					"<p class=\"errorMessage\">", e$message, "</p>",
+					"<title>Error</title>",
+					"<script src=\"https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js\"></script>",
+  					"<script src=\"https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js\"></script>",
+  					"<script src=\"https://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js\"></script>",
+					"</head>", "<body>", 
+					"<div class=\"page-header\"><h1>We have a problem!</h1></div>", 
+					"<p>A problem occured while trying to generate the analysis report.</p>",
+					"<div class=\"panel panel-danger\">", 
+					"<div class=\"panel-heading\"><h3>Error message</h3></div>",	
+					"<div class=\"panel-body\">",e$message, "</div></div>",
 					"<h2>Log files</h2>",
+					"The following log files were generated and may help in diagnosing the problem.",
 					includeLogs(logs, "html"),
 					"</body>","</html>", sep="\n", file="heatshock_analysis.html")
 		},
