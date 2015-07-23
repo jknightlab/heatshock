@@ -27,9 +27,9 @@ output:
     bootstrap.theme.chooser: true
     bootstrap.highlight.chooser: true
     template: include/report.html5
-geometry:margin=2cm
-documentclass:report
-classoption:a4paper
+geometry: margin=2cm
+documentclass: report
+classoption: a4paper
 ---
 
 ```{r, setup, include=FALSE, cache=FALSE}
