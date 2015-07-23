@@ -73,14 +73,16 @@ tryCatch(
   					"<script src=\"https://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js\"></script>",
 					"<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css\">",
 					"</head>", "<body>", 
+					"<div id=\"wrap\"><div class=\"container\">",
 					"<div class=\"page-header\"><h1>We have a problem!</h1></div>", 
 					"<p>A problem occured while trying to generate the analysis report.</p>",
 					"<div class=\"panel panel-danger\">", 
-					"<div class=\"panel-heading\"><h3>Error message</h3></div>",	
+					"<div class=\"panel-heading\"><h4>Error message</h4></div>",	
 					"<div class=\"panel-body\">",e$message, "</div></div>",
 					"<h2>Log files</h2>",
 					"The following log files were generated and may help in diagnosing the problem.",
 					includeLogs(logs, "html"),
+					"</div></div>",
 					"</body>","</html>", sep="\n", file="heatshock_analysis.html")
 		},
 		finally={
