@@ -11,12 +11,9 @@ output:
   pdf_document:
     includes:
       in_header: include/captions.tex
-    standalone: true
-    smart: true
-    normalize: true
     toc: true
-    highlight-style: tango
-    bibliography: include/references.bib
+    highlight: tango
+    pandoc_args: ["--bibliography=include/references.bib"]
   knitrBootstrap::bootstrap_document:
     standalone: true
     smart: true
