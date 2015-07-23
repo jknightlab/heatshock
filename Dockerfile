@@ -35,7 +35,7 @@ RUN cat /tmp/supervisored.conf >> /etc/supervisor/conf.d/supervisord.conf
 COPY data/ /analysis/data/
 
 ## Add R and pandoc files
-COPY heatshock_analysis.* default.pandoc /analysis/
+COPY heatshock_analysis.* /analysis/
 COPY include/ /analysis/include/
 COPY html/ /analysis/html/
 

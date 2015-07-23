@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(rmarkdown)
+library(knitr)
 library(knitrBootstrap)
 
 htmlRoot <- "/var/www/html"
