@@ -13,6 +13,7 @@ output:
       in_header: include/captions.tex
     toc: true
     highlight: tango
+    template: include/report.latex
     pandoc_args: ["--bibliography=include/references.bib"]
   knitrBootstrap::bootstrap_document:
     standalone: true
