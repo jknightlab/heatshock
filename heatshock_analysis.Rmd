@@ -8,25 +8,25 @@ address:
     address: Wellcome Trust Centre for Human Genetics, University of Oxford, Roosevelt Dr., Oxford, OX3 7BN, UK
 date: "`r format(Sys.time(), '%a %d %b %Y')`"
 output:
-	pdf_document:
-		includes:
-			in_header: include/captions.tex
-		standalone: true
-		smart: true
-		normalize: true
-		toc: true
-		highlight-style: tango
-		bibliography: include/references.bib
-	knitrBootstrap::bootstrap_document:
-		standalone: true
-		smart: true
-		normalize: true
-		self-contained: true
-		webtex: true
-		bootstrap.highlight: "Solarized - Light"
-		bootstrap.theme.chooser: true
-		bootstrap.highlight.chooser: true
-		template: include/report.html5
+  pdf_document:
+    includes:
+      in_header: include/captions.tex
+    standalone: true
+    smart: true
+    normalize: true
+    toc: true
+    highlight-style: tango
+    bibliography: include/references.bib
+  knitrBootstrap::bootstrap_document:
+    standalone: true
+    smart: true
+    normalize: true
+    self-contained: true
+    webtex: true
+    bootstrap.highlight: "Solarized - Light"
+    bootstrap.theme.chooser: true
+    bootstrap.highlight.chooser: true
+    template: include/report.html5
 geometry:margin=2cm
 documentclass:report
 classoption:a4paper
