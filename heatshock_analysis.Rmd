@@ -6,7 +6,7 @@ author:
 address:
   - code: 1
     address: Wellcome Trust Centre for Human Genetics, University of Oxford, Roosevelt Dr., Oxford, OX3 7BN, UK
-date: "`r format(Sys.time(), "%a %d %b %Y")`"
+date: "`r format(Sys.time(), '%a %d %b %Y')`"
 output:
 	pdf_document:
 		includes:
