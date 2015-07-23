@@ -66,7 +66,7 @@ for(file in c("heatshock_analysis.md", "heatshock_analysis.html", "heatshock_ana
 	if(file.exists(file)) file.remove(file)
 }
 tryCatch(
-		render("heatshock_analysis.Rmd"),
+		render("heatshock_analysis.Rmd", output_format="all"),
 		error=function(e){
 			cat("<!DOCTYPE html>", "<html>", "<head>", '<meta charset="UTF-8">',
 					"<title>Error</title>",
