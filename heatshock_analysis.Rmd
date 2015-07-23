@@ -16,15 +16,9 @@ output:
     template: include/report.latex
     pandoc_args: ["--bibliography=include/references.bib"]
   knitrBootstrap::bootstrap_document:
-    standalone: true
-    smart: true
-    normalize: true
-    self-contained: true
-    webtex: true
-    bootstrap.highlight: "Solarized - Light"
-    bootstrap.theme.chooser: true
-    bootstrap.highlight.chooser: true
-    template: include/report.html5
+    highlight: "Solarized - Light"
+    theme.chooser: true
+    highlight.chooser: true
 geometry: margin=2cm
 documentclass: report
 classoption: a4paper
