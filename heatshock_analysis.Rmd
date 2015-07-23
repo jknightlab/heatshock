@@ -16,9 +16,11 @@ output:
     template: include/report.latex
     pandoc_args: ["--bibliography=include/references.bib"]
   knitrBootstrap::bootstrap_document:
+    title: Genome-wide analysis of heat shock response
     highlight: "Solarized - Light"
     theme.chooser: true
     highlight.chooser: true
+bibliography: include/references.bib
 geometry: margin=2cm
 documentclass: report
 classoption: a4paper
