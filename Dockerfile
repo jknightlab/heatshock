@@ -3,7 +3,7 @@ FROM bioconductor/release_microarray:latest
 MAINTAINER Peter Humburg <peter.humburg@gmail.com>
 
 ## Install additional software packages
-RUN apt-get update -y && apt-get install -y haskell-platform nginx lmodern texlive-full libssh-dev
+RUN apt-get update -y && apt-get install -y nginx lmodern libssh-dev haskell-platform
 
 ## Install pandoc
 RUN cabal update && cabal install pandoc
@@ -13,7 +13,7 @@ RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150507/plink
 
 ## Install additional R packages
 RUN Rscript -e "biocLite(c('sparcl', 'dplyr', 'tidyr', 'devtools', 'illuminaHumanv3.db', 'pander', 'ggdendro', 'sp', 'topGO'))"
-RUN Rscript -e "devtools::install_github('hadley/readr'); devtools::install_github('humburg/knitrBootstrap', ref='collapse')"
+RUN Rscript -e "devtools::install_github('hadley/readr'); devtools::install_github('humburg/knitrBootstrap', ref='rmarkdown_template')"
 
 ## Add basic instruction to display for interactive containers
 COPY config/message.txt /etc/motd
