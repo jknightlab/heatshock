@@ -51,6 +51,11 @@ opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
 opts_chunk$set(echo=TRUE)
 opts_chunk$set(cache=TRUE)
+opts_chunk$set(bootstrap.show.code=FALSE, 
+		bootstrap.show.output=FALSE,
+		bootstrap.show.message=FALSE,
+		bootstrap.show.warning=FALSE,
+		bootstrap.show.error=TRUE)
 panderOptions("digits", 3)
 panderOptions("table.split.table", 160)
 options(figcap.prefix = "Figure", figcap.sep = ":", figcap.prefix.highlight = "**")
