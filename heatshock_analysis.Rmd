@@ -2,10 +2,8 @@
 title: Genome-wide analysis of heat shock response 
 author: 
   - name: Peter Humburg
-    affiliation: 1
-address:
-  - code: 1
-    address: Wellcome Trust Centre for Human Genetics, University of Oxford, Roosevelt Dr., Oxford, OX3 7BN, UK
+    affiliation: Wellcome Trust Centre for Human Genetics, University of Oxford, Roosevelt Dr., Oxford, OX3 7BN, UK
+    email: peter.humburg@well.ox.ac.uk
 date: "`r format(Sys.time(), '%a %d %b %Y')`"
 output:
   pdf_document:
