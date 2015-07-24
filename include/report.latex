@@ -144,6 +144,10 @@ $if(author)$
 		$for(author)$
 			$if(author.name)$
 				\author{$author.name$}
+				$for(author.affiliation)$
+					\affil{$author.affiliation$}
+
+				$endfor$
 			$else$
 				\author{$author$}
 			$endif$
