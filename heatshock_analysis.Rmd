@@ -279,14 +279,15 @@ tabRef <- local({
         }
     }
 })
-``` 
-<div class="hidden-print hidden-xs hidden-sm sidebar affix">
+```
 
-# Downloads {-}
-## Report
+<div class="col-md-3 hidden-print hidden-xs col-sm-6 well pull-right">
+
+### Downloads {-}
+##### Report
 <span title=\"Download report as PDF"\">[PDF](heatshock_analysis.pdf)</span>
 
-## Data
+#### Data
 
 ```{r linkData, echo=FALSE, cache=FALSE, results="asis"}
 dataFiles <- sapply(data, linkFile, "data", "markdown")
@@ -294,7 +295,7 @@ desc <- sapply(data, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse=",\n"))
 ```
 
-## Log files
+#### Log files
 
 ```{r linkLogs, echo=FALSE, cache=FALSE, results="asis"}
 logFiles <- sapply(logs, linkLog, "markdown")
@@ -302,7 +303,6 @@ desc <- sapply(logs, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse=",\n"))
 ```
 </div>
-
 
 # Introduction
 The heat shock response is a highly conserved mechanism responsible for the 
