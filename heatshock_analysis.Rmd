@@ -49,6 +49,7 @@ opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
 opts_chunk$set(echo=TRUE)
 opts_chunk$set(cache=TRUE)
+opts_chunk$set(type="button")
 panderOptions("digits", 3)
 panderOptions("table.split.table", 160)
 options(figcap.prefix = "Figure", figcap.sep = ":", figcap.prefix.highlight = "**")
@@ -282,7 +283,7 @@ tabRef <- local({
 <div class="col-md-3 hidden-print hidden-xs col-sm-6 well pull-right">
 
 ### Downloads {-}
-##### Report
+#### Report
 <span title="Download report as PDF">[PDF](heatshock_analysis.pdf)</span>
 
 #### Data
