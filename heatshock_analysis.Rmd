@@ -51,11 +51,6 @@ opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
 opts_chunk$set(echo=TRUE)
 opts_chunk$set(cache=TRUE)
-opts_chunk$set(bootstrap.show.code=FALSE, 
-		bootstrap.show.output=FALSE,
-		bootstrap.show.message=FALSE,
-		bootstrap.show.warning=FALSE,
-		bootstrap.show.error=TRUE)
 panderOptions("digits", 3)
 panderOptions("table.split.table", 160)
 options(figcap.prefix = "Figure", figcap.sep = ":", figcap.prefix.highlight = "**")
@@ -290,14 +285,14 @@ tabRef <- local({
 
 ### Downloads {-}
 ##### Report
-<span title=\"Download report as PDF"\">[PDF](heatshock_analysis.pdf)</span>
+<span title="Download report as PDF">[PDF](heatshock_analysis.pdf)</span>
 
 #### Data
 
 ```{r linkData, echo=FALSE, cache=FALSE, results="asis"}
 dataFiles <- sapply(data, linkFile, "data", "markdown")
 desc <- sapply(data, "[[", "desc")
-cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse=",\n"))
+cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse="<br>"))
 ```
 
 #### Log files
@@ -305,7 +300,7 @@ cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse=",\n"))
 ```{r linkLogs, echo=FALSE, cache=FALSE, results="asis"}
 logFiles <- sapply(logs, linkLog, "markdown")
 desc <- sapply(logs, "[[", "desc")
-cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse=",\n"))
+cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse="<br>"))
 ```
 </div>
 
