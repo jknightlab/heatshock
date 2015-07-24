@@ -16,7 +16,7 @@ output:
     template: include/report.latex
   knitrBootstrap::bootstrap_document:
     title: Genome-wide analysis of heat shock response
-    highlight: "Solarized - Light"
+    highlight: github 
     theme.chooser: true
     highlight.chooser: true
     toc: true
