@@ -280,9 +280,9 @@ tabRef <- local({
     }
 })
 ``` 
-<aside class="download">
+<div class="hidden-print hidden-xs hidden-sm sidebar affix">
 
-# Downloads
+# Downloads {-}
 ## Report
 <span title=\"Download report as PDF"\">[PDF](heatshock_analysis.pdf)</span>
 
@@ -301,7 +301,7 @@ logFiles <- sapply(logs, linkLog, "markdown")
 desc <- sapply(logs, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse=",\n"))
 ```
-</aside>
+</div>
 
 
 # Introduction
