@@ -687,7 +687,7 @@ ggplot(sig.pc, aes(x=PC1, y=PC2)) +
      theme_bw() + scale_colour_discrete("BeadChip")
 ```
 
-```{r writeExpr}
+```{r writeExpr, cache=FALSE}
 exprOut <- gzfile("/analysis/tmp/heatshock_expr_norm.tab.gz", open="w")
 write.table(sig.data.norm, file=exprOut, quote=FALSE)
 ```
@@ -721,6 +721,10 @@ limmaTable <- cbind(ArrayAddress=rownames(limmaTable), limmaTable)
 limmaTable <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, EntrezReannotated, GenomicLocation),
 		limmaTable)
 limmaTable <- limmaTable[order(limmaTable$P.Value),]
+```
+
+```{r writeDiffExpr, cache=FALSE}
+write.table(limmaTable, file="/analysis/tmp/differential_expression.tab")
 ```
 
 ## GO enrichment analysis
