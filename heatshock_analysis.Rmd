@@ -389,7 +389,6 @@ one genomic location or to a location that contains a known SNP were excluded.
 annot <- illuminaHumanv3fullReannotation() 
 exclude$probe <- union(exclude$probe, subset(annot, 
 		!grepl("Good|Perfect", ProbeQuality) | !is.na(OverlappingSNP) | 
-		!is.na(SecondMatches) | !is.na(OtherGenomicMatches) | 
 		!is.na(RepeatMask))$ArrayAddress)
 ```
 
@@ -724,7 +723,7 @@ limmaTable <- limmaTable[order(limmaTable$P.Value),]
 ```
 
 ```{r writeDiffExpr, cache=FALSE}
-write.table(limmaTable, file="/analysis/tmp/differential_expression.tab")
+write.table(limmaTable, file="/analysis/tmp/differential_expression.tab", row.names=FALSE, quote=FALSE, sep="\t")
 ```
 
 ## GO enrichment analysis
