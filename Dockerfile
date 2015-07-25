@@ -1,19 +1,16 @@
 ## Docker file to create reproducible environment for heat shock analysis
-FROM bioconductor/release_microarray:latest
+FROM humburg/eqtl-intro 
 MAINTAINER Peter Humburg <peter.humburg@gmail.com>
 
 ## Install additional software packages
-RUN apt-get update -y && apt-get install -y haskell-platform nginx lmodern texlive-full libssh-dev
-
-## Install pandoc
-RUN cabal update && cabal install pandoc
+RUN apt-get update -y && apt-get install -y nginx lmodern libssh-dev
 
 ## Install plink
-RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150507/plink_linux_x86_64.zip && unzip plink_linux_x86_64.zip && cp plink /usr/local/bin/ 
+RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150717/plink_linux_x86_64.zip && unzip plink_linux_x86_64.zip && cp plink /usr/local/bin/ 
 
 ## Install additional R packages
-RUN Rscript -e "biocLite(c('sparcl', 'dplyr', 'tidyr', 'devtools', 'illuminaHumanv3.db', 'pander', 'ggdendro', 'sp', 'topGO'))"
-RUN Rscript -e "devtools::install_github('hadley/readr'); devtools::install_github('jimhester/knitrBootstrap')"
+RUN Rscript -e "biocLite(c('sparcl', 'illuminaHumanv3.db', 'pander', 'ggdendro', 'sp', 'topGO', 'gdata', 'affy', 'vsn', 'limma', 'sva', 'scatterplot3d'))"
+RUN Rscript -e "devtools::install_github('jimhester/knitrBootstrap', ref='rmarkdown_template')"
 
 ## Add basic instruction to display for interactive containers
 COPY config/message.txt /etc/motd
@@ -35,7 +32,7 @@ RUN cat /tmp/supervisored.conf >> /etc/supervisor/conf.d/supervisord.conf
 COPY data/ /analysis/data/
 
 ## Add R and pandoc files
-COPY heatshock_analysis.* default.pandoc /analysis/
+COPY heatshock_analysis.* /analysis/
 COPY include/ /analysis/include/
 COPY html/ /analysis/html/
 

@@ -2,11 +2,26 @@
 title: Genome-wide analysis of heat shock response 
 author: 
   - name: Peter Humburg
-    affiliation: 1
-address:
-  - code: 1
-    address: Wellcome Trust Centre for Human Genetics, University of Oxford, Roosevelt Dr., Oxford, OX3 7BN, UK
-date: `r format(Sys.time(), "%a %d %b %Y")`
+    affiliation: Wellcome Trust Centre for Human Genetics, University of Oxford, Roosevelt Dr., Oxford, OX3 7BN, UK
+    email: peter.humburg@well.ox.ac.uk
+date: "`r format(Sys.time(), '%a %d %b %Y')`"
+output:
+  pdf_document:
+    includes:
+      in_header: include/captions.tex
+    toc: true
+    highlight: tango
+    template: include/report.latex
+  knitrBootstrap::bootstrap_document:
+    title: Genome-wide analysis of heat shock response
+    highlight: github 
+    theme.chooser: true
+    highlight.chooser: true
+    toc: true
+bibliography: include/references.bib
+geometry: margin=2cm
+documentclass: report
+classoption: a4paper
 ---
 
 ```{r, setup, include=FALSE, cache=FALSE}
@@ -34,6 +49,7 @@ opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
 opts_chunk$set(echo=TRUE)
 opts_chunk$set(cache=TRUE)
+opts_chunk$set(bootstrap.type="button")
 panderOptions("digits", 3)
 panderOptions("table.split.table", 160)
 options(figcap.prefix = "Figure", figcap.sep = ":", figcap.prefix.highlight = "**")
@@ -262,40 +278,30 @@ tabRef <- local({
         }
     }
 })
-``` 
-```{r, formats, include=FALSE}
-formats <- read.dcf(file="default.pandoc", fields="t")[,1]
-formats <- formats[!is.na(formats) & !grepl("html", formats)]
-latexIdx <- which(formats == "latex")
-if(length(latexIdx)){
-	formats[latexIdx] <- "pdf"
-}
-url <- paste("heatshock_analysis", formats, sep=".")
 ```
 
-<aside class="download">
+<div class="col-md-3 hidden-print hidden-xs col-sm-6 well pull-right">
 
-# Downloads
-## Report
-`r paste0("<span title=\"Download report as ", formats, "\">[", formats, "](", url, ")</span>", collapse=", ")`
+### Downloads {-}
+#### Report
+<span title="Download report as PDF">[PDF](heatshock_analysis.pdf)</span>
 
-## Data
+#### Data
 
 ```{r linkData, echo=FALSE, cache=FALSE, results="asis"}
 dataFiles <- sapply(data, linkFile, "data", "markdown")
 desc <- sapply(data, "[[", "desc")
-cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse=",\n"))
+cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse="<br>"))
 ```
 
-## Log files
+#### Log files
 
 ```{r linkLogs, echo=FALSE, cache=FALSE, results="asis"}
 logFiles <- sapply(logs, linkLog, "markdown")
 desc <- sapply(logs, "[[", "desc")
-cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse=",\n"))
+cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse="<br>"))
 ```
-</aside>
-
+</div>
 
 # Introduction
 The heat shock response is a highly conserved mechanism responsible for the 
