@@ -52,6 +52,7 @@ opts_chunk$set(cache=TRUE)
 opts_chunk$set(bootstrap.type="button")
 opts_chunk$set(bootstrap.show.code=FALSE,
 		bootstrap.show.output=FALSE,
+		bootstrap.show.message=FALSE,
 		bootstrap.show.warning=FALSE,
 		bootstrap.show.error=TRUE)
 panderOptions("digits", 3)
