@@ -286,9 +286,9 @@ tabRef <- local({
 })
 ```
 
-<div class="col-md-3 hidden-print hidden-xs col-sm-6 well pull-right">
+<div class="col-md-3 hidden-print hidden-xs col-sm-6 well pull-right downloads">
 
-### Downloads {- .downloads}
+### Downloads {-}
 #### Report
 <span title="Download report as PDF">[PDF](heatshock_analysis.pdf)</span>
 
