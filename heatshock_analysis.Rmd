@@ -13,8 +13,7 @@ output:
     highlight: tango
     template: include/report.latex
   knitrBootstrap::bootstrap_document:
-    includes:
-      in_header: include/report.css
+    css: include/report.css
     title: Genome-wide analysis of heat shock response
     highlight: github 
     theme.chooser: true
