@@ -13,6 +13,8 @@ output:
     highlight: tango
     template: include/report.latex
   knitrBootstrap::bootstrap_document:
+    includes:
+      in_header: include/report.css
     title: Genome-wide analysis of heat shock response
     highlight: github 
     theme.chooser: true
@@ -287,7 +289,7 @@ tabRef <- local({
 
 <div class="col-md-3 hidden-print hidden-xs col-sm-6 well pull-right">
 
-### Downloads {-}
+### Downloads {- .downloads}
 #### Report
 <span title="Download report as PDF">[PDF](heatshock_analysis.pdf)</span>
 
