@@ -6,7 +6,7 @@ MAINTAINER Peter Humburg <peter.humburg@gmail.com>
 RUN apt-get update -y && apt-get install -y nginx lmodern libssh-dev
 
 ## additional python packages
-easy_install pandocfilters
+RUN easy_install pandocfilters
 
 ## Install plink
 RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150717/plink_linux_x86_64.zip && unzip plink_linux_x86_64.zip && cp plink /usr/local/bin/ 
