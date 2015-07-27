@@ -3,6 +3,7 @@
 library(rmarkdown)
 library(knitr)
 library(knitrBootstrap)
+library(pushoverr)
 
 htmlRoot <- "/var/www/html"
 file.copy("html/waiting.html", file.path(htmlRoot, "index.html"), overwrite=TRUE)
@@ -65,11 +66,28 @@ includeLogs <- function(logs, format=c("markdown", "html")){
   ans
 }
 
+activatePushover <- function(){
+  if(file.exists("pushover/credentials.yaml")){
+    tokens <- readLines("pushover/credentials.yaml")
+    splt <- strsplit(tokens, "\\s*:\\s*")
+    tokens <- sapply(splt, "[[", 2)
+    names(tokens) <- sapply(splt, "[[", 1)
+    set_pushover_app(token=tokens["app"], user=tokens["user"])
+    TRUE
+  } else{
+    FALSE
+  }
+}
+
 for(file in c("heatshock_analysis.md", "heatshock_analysis.html", "heatshock_analysis.pdf")){
 	if(file.exists(file)) file.remove(file)
 }
+usePushover <- activatePushover()
 tryCatch(
-		render("heatshock_analysis.Rmd", output_format="all"),
+		{
+      render("heatshock_analysis.Rmd", output_format="all")
+      if(usePushover) pushover_quiet("Heat shock analysis complete.")
+    },
 		error=function(e){
 			cat("<!DOCTYPE html>", "<html>", "<head>", '<meta charset="UTF-8">',
 					"<title>Error</title>",
@@ -90,6 +108,7 @@ tryCatch(
 					includeLogs(logs, "html"),
 					"</div></div>",
 					"</body>","</html>", sep="\n", file="heatshock_analysis.html")
+      if(usePushover) pushover(paste("Error during heat shock analysis:", e$message)
 		},
 		finally={
 			file.copy("heatshock_analysis.html", file.path(htmlRoot, "index.html"),
