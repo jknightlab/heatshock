@@ -10,9 +10,9 @@ from pandocfilters import toJSONFilter, Div
 def removeHidden(key, value, format, meta):
   if key == 'Div':
     [[ident, classes, kvs], contents] = value
-      if "hidden-print" in classes:
-        if format == "latex":
-          return []
+    if "hidden-print" in classes:
+      if format == "latex":
+        return []
 
 if __name__ == "__main__":
     toJSONFilter(removeHidden)

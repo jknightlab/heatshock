@@ -12,7 +12,7 @@ output:
     toc: true
     highlight: tango
     template: include/report.latex
-    pandoc_args: ["--filter include/hidden-print.py"]
+    pandoc_args: ["--filter=/analysis/include/hidden-print.py"]
   knitrBootstrap::bootstrap_document:
     includes:
      in_header:  include/report.css
