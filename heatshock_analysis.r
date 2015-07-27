@@ -3,7 +3,6 @@
 library(rmarkdown)
 library(knitr)
 library(knitrBootstrap)
-library(pushoverr)
 
 htmlRoot <- "/var/www/html"
 file.copy("html/waiting.html", file.path(htmlRoot, "index.html"), overwrite=TRUE)
@@ -67,7 +66,7 @@ includeLogs <- function(logs, format=c("markdown", "html")){
 }
 
 activatePushover <- function(){
-  if(file.exists("pushover/credentials.yaml")){
+  if(require(pushoverr) && file.exists("pushover/credentials.yaml")){
     tokens <- readLines("pushover/credentials.yaml")
     splt <- strsplit(tokens, "\\s*:\\s*")
     tokens <- sapply(splt, "[[", 2)
