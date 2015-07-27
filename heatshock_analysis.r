@@ -107,7 +107,7 @@ tryCatch(
 					includeLogs(logs, "html"),
 					"</div></div>",
 					"</body>","</html>", sep="\n", file="heatshock_analysis.html")
-      if(usePushover) pushover(paste("Error during heat shock analysis:", e$message)
+      if(usePushover) pushover(paste("Error during heat shock analysis:", e$message))
 		},
 		finally={
 			file.copy("heatshock_analysis.html", file.path(htmlRoot, "index.html"),
