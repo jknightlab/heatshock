@@ -814,7 +814,7 @@ the up and down regulated genes (`r sum(score(resultUp) < 0.01)` and
 `r sum(score(resultDown) < 0.01)` categories with a p-value < 0.01 respectively).
 Considering the top categories (`r tabRef("topGOUp")` and `r tabRef("topGODown")`)
 it appears that genes upregulated in response to heat shock are predominantly
-related to stress response (including *regulation of cellular response to heat* [GO:1900034]) 
+related to stress response (including *response to heat* [GO:0009408]) 
 and protein folding (including *response to unfolded protein* [GO:0006986] and 
 *protein refolding* [GO:0042026]) whereas down regulated genes
 broadly relate to cell proliferation and normal lymphocyte function and 
