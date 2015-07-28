@@ -771,7 +771,7 @@ resultDown <- runTest(tgDown, algorithm="elim", statistic="fisher")
 ## Differential expression analysis
 
 In total `r nrow(filter(limmaTable, adj.P.Val < 0.01))` probes are identified
-as differentially expressed at a p-value threshold of 0.01 (see `r tabRef("topTable")`
+as differentially expressed at an FDR threshold of 0.01 (see `r tabRef("topTable")`
 for the top 20 results). Of these `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC > 0))` 
 are up and `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < 0))` down regulated
 followig heat shock treatment. Further restricting this list by excluding all probes with a 
