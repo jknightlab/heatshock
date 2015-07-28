@@ -833,6 +833,21 @@ set.caption(tabRef("topGODown", "Top 20 GO categories enriched for down regulate
 pander(GenTable(tgDown, down=resultDown, up=resultUp, topNodes=20, orderBy="down"))
 ```
 
+```{r goPlot, cache=FALSE, fig.cap=figRef("goPlot", "GO category enrichment for differentially expressed genes.")}
+tblUp <- GenTable(tgUp, up=resultUp, topNodes=length(score(resultUp)))
+tblUp$up <- as.numeric(tblUp$up)
+tblDown <- GenTable(tgDown, down=resultDown, topNodes=length(score(resultDown)))
+tblDown$down <- as.numeric(tblDown$down)
+tbl <- bind_rows(gather(tblUp, "direction", "p.value", up), gather(tblDown, "direction", "p.value", down))
+fullPlot <- ggplot(tbl, aes(x=Expected, y=Significant)) + 
+    geom_point(data=dplyr::filter(tbl, p.value >= 1e-4), colour="grey") +
+    geom_point(data=dplyr::filter(tbl, p.value < 1e-4), aes(fill=-log10(p.value), shape=direction), 
+        size=2.5) +
+    geom_abline(intercept=0, slope=1) +
+    scale_shape_manual(values=c(up=24, down=25)) +
+    theme_bw()
+multiplot(fullPlot, fullPlot  + xlim(0,50) + ylim(0,100), cols=2)
+```
 
 
 # Appendix {-}
