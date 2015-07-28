@@ -10,6 +10,7 @@ output:
     includes:
       in_header: include/captions.tex
     toc: true
+    fig_caption: true
     highlight: tango
     template: include/report.latex
     pandoc_args: ["--filter=/analysis/include/hidden-print.py"]
@@ -21,6 +22,7 @@ output:
     theme.chooser: true
     highlight.chooser: true
     toc: true
+    fig_caption: true
 bibliography: include/references.bib
 geometry: margin=2cm
 documentclass: report
