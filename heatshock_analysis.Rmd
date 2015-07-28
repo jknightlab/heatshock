@@ -846,8 +846,8 @@ fullPlot <- ggplot(tbl, aes(x=Expected, y=Significant)) +
     geom_abline(intercept=0, slope=1) +
     scale_shape_manual(values=c(up=24, down=25)) +
     theme_bw()
-multiplot(fullPlot + theme(legend.position="none"), fullPlot  + xlim(0,50) + ylim(0,100) + 
-            theme(axis.text.y=element_blank(),axis.ticks.y=element_blank() + axis.title.y=element_blank()), cols=2)
+multiplot(fullPlot + theme(legend.position="none"), fullPlot  + xlim(0,50) +  
+            theme(axis.text.y=element_blank(),axis.ticks.y=element_blank(), axis.title.y=element_blank()), cols=2)
 ```
 
 
