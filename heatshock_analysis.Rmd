@@ -762,8 +762,8 @@ tgAny <- new("topGOdata", ontology="BP", allGenes=universe,
 ```
 
 ```{r testTopGO}
-resultUp <- runTest(tgUp, algorithm="elim", statistic="fisher")
-resultDown <- runTest(tgDown, algorithm="elim", statistic="fisher")
+resultUp <- runTest(tgUp, algorithm="classic", statistic="fisher")
+resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
 ```
 
 
