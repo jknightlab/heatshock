@@ -16,7 +16,7 @@ def linkGO(key, value, format, meta):
     if key == 'Str':
         id = re.findall("GO:\d{7}", value)
         if  len(id) > 0:
-            return [html('<a href="http://amigo.geneontology.org/amigo/term/' + id[0] + '">')] + [Str(value)] + [html('</a>')]
+            return [html('<a href="http://amigo.geneontology.org/amigo/term/' + id[0] + '" target="_blank">')] + [Str(value)] + [html('</a>')]
 
 if __name__ == "__main__":
     toJSONFilter(linkGO)
