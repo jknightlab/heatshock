@@ -13,8 +13,8 @@ def html(s):
 
 
 def linkGO(key, value, format, meta):
-    if key == 'Str' and (format == 'html5' or format == 'html') and match("^GO:\d{7}$") is not None:
-        return [html('<a href="http://amigo.geneontology.org/amigo/term/' + v + '">')] + v + [html('</a>')]
+    if key == 'Str' and (format == 'html5' or format == 'html') and match("GO:\d{7}$", value) is not None:
+        return [html('<a href="http://amigo.geneontology.org/amigo/term/' + value + '">')] + value + [html('</a>')]
 
 if __name__ == "__main__":
     toJSONFilter(linkGO)
