@@ -10,6 +10,7 @@ output:
     includes:
       in_header: include/captions.tex
     toc: true
+    fig_caption: true
     highlight: tango
     template: include/report.latex
     pandoc_args: ["--filter=/analysis/include/hidden-print.py"]
@@ -21,6 +22,7 @@ output:
     theme.chooser: true
     highlight.chooser: true
     toc: true
+    fig_caption: true
 bibliography: include/references.bib
 geometry: margin=2cm
 documentclass: report
@@ -52,6 +54,7 @@ opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
 opts_chunk$set(echo=TRUE)
 opts_chunk$set(cache=TRUE)
+opts_chunk$set(fig.width=8, fig.height=8, dpi=300)
 opts_chunk$set(bootstrap.type="button")
 opts_chunk$set(bootstrap.show.code=FALSE,
 		bootstrap.show.output=FALSE,
@@ -762,8 +765,8 @@ tgAny <- new("topGOdata", ontology="BP", allGenes=universe,
 ```
 
 ```{r testTopGO}
-resultUp <- runTest(tgUp, algorithm="elim", statistic="fisher")
-resultDown <- runTest(tgDown, algorithm="elim", statistic="fisher")
+resultUp <- runTest(tgUp, algorithm="classic", statistic="fisher")
+resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
 ```
 
 
@@ -771,7 +774,7 @@ resultDown <- runTest(tgDown, algorithm="elim", statistic="fisher")
 ## Differential expression analysis
 
 In total `r nrow(filter(limmaTable, adj.P.Val < 0.01))` probes are identified
-as differentially expressed at a p-value threshold of 0.01 (see `r tabRef("topTable")`
+as differentially expressed at an FDR threshold of 0.01 (see `r tabRef("topTable")`
 for the top 20 results). Of these `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC > 0))` 
 are up and `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < 0))` down regulated
 followig heat shock treatment. Further restricting this list by excluding all probes with a 
@@ -788,28 +791,23 @@ pander(head(dplyr::select(limmaTable, -ArrayAddress, -EntrezReannotated, -Genomi
 
 ```{r limmaPlot, cache=FALSE, fig.cap=figRef("volcano", "Volcano plot of differential expression results. Probes with an adjusted p-value below 0.01 and a log fold cange of at least 0.5 are shown as yellow and red dots. Probes showing particularly strong evidence of changes in gene expression through a combination of p-value and fold change are labelled with the corresponding gene symbol.")}
 fcScale <- max(-log10(limmaTable$adj.P.Val))/max(abs(limmaTable$logFC))
-limmaExtreme <- subset(limmaTable, abs(logFC) > 0.5 & adj.P.Val < 0.01)
+limmaExtreme <- dplyr::filter(limmaTable, abs(logFC) > 0.5 & adj.P.Val < 0.01)
 limmaExtreme <- mutate(limmaExtreme, distance=(fcScale*logFC)^2 + log10(adj.P.Val)^2)
 limmaExtreme <- limmaExtreme[order(limmaExtreme$distance, decreasing=TRUE), ]
 ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) + 
         stat_density2d(geom="tile", aes(fill=..density..^0.1), contour=FALSE) + 
         geom_point(data=limmaExtreme, size=1.5, aes(colour=distance)) +
-        geom_text(data=subset(limmaExtreme, distance > (1.5*fcScale)^2), 
+        geom_text(data=dplyr::filter(limmaExtreme, distance > (2*fcScale)^2 & logFC >= 1), 
                 aes(label=SymbolReannotated), vjust=0, hjust=0, angle=30) +
-        stat_function(fun=function(x, scale, limit, pvalLimit, fcLimit){
-                    y <- ifelse(!(x >= 0 & x < fcLimit) & !(x <= 0 & x > -fcLimit), 
-                        (limit - (scale*x)^2)^0.5, 
-                        Inf)
-                    y <- ifelse(y < -log10(pvalLimit) | is.na(y), -log10(pvalLimit), y)
-                }, 
-                args=list(limit=(1.5*fcScale)^2, scale=fcScale, pvalLimit=0.01, fcLimit=0.5), linetype="dashed") +
+        geom_text(data=dplyr::filter(limmaExtreme, distance > (2*fcScale)^2 & logFC <= -1), 
+                aes(label=SymbolReannotated), vjust=0, hjust=1, angle=330) +
         geom_line(data=data.frame(x=c(-Inf, -0.5), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
         geom_line(data=data.frame(x=c(0.5, Inf), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
         geom_line(data=data.frame(x=c(0.5, 0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
         geom_line(data=data.frame(x=c(-0.5, -0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
         scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256), breaks=NULL) +
         scale_colour_gradientn(colours = colorRampPalette(c("yellow", "red"))(256), guide="none") +
-        theme_bw() + xlab("log(fold change)") + ylab("-log(p-value)") + expand_limits(x=max(limmaTable$logFC)+0.25, 
+        theme_bw() + xlab("log2(fold change)") + ylab("-log10(FDR)") + expand_limits(x=max(limmaTable$logFC)+0.25, 
             y=max(-log10(limmaTable$adj.P.Val))+2)
 ```
 
@@ -819,7 +817,7 @@ the up and down regulated genes (`r sum(score(resultUp) < 0.01)` and
 `r sum(score(resultDown) < 0.01)` categories with a p-value < 0.01 respectively).
 Considering the top categories (`r tabRef("topGOUp")` and `r tabRef("topGODown")`)
 it appears that genes upregulated in response to heat shock are predominantly
-related to stress response (including *regulation of cellular response to heat* [GO:1900034]) 
+related to stress response (including *response to heat* [GO:0009408]) 
 and protein folding (including *response to unfolded protein* [GO:0006986] and 
 *protein refolding* [GO:0042026]) whereas down regulated genes
 broadly relate to cell proliferation and normal lymphocyte function and 
@@ -838,6 +836,22 @@ set.caption(tabRef("topGODown", "Top 20 GO categories enriched for down regulate
 pander(GenTable(tgDown, down=resultDown, up=resultUp, topNodes=20, orderBy="down"))
 ```
 
+```{r goPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlot", "GO category enrichment for differentially expressed genes.")}
+tblUp <- GenTable(tgUp, up=resultUp, topNodes=length(score(resultUp)))
+tblUp$up <- as.numeric(tblUp$up)
+tblDown <- GenTable(tgDown, down=resultDown, topNodes=length(score(resultDown)))
+tblDown$down <- as.numeric(tblDown$down)
+tbl <- bind_rows(gather(tblUp, "direction", "p.value", up), gather(tblDown, "direction", "p.value", down))
+fullPlot <- ggplot(tbl, aes(x=Expected, y=Significant)) + 
+    geom_point(data=dplyr::filter(tbl, p.value >= 1e-4), colour="grey") +
+    geom_point(data=dplyr::filter(tbl, p.value < 1e-4), aes(fill=-log10(p.value), shape=direction), 
+        size=2.5) +
+    geom_abline(intercept=0, slope=1) +
+    scale_shape_manual(values=c(up=24, down=25)) +
+    theme_bw()
+multiplot(fullPlot + theme(legend.position="none"), fullPlot  + xlim(0,50) +  
+            theme(axis.text.y=element_blank(),axis.ticks.y=element_blank(), axis.title.y=element_blank()), cols=2)
+```
 
 
 # Appendix {-}
