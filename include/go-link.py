@@ -13,7 +13,7 @@ def html(s):
 
 
 def linkGO(key, value, format, meta):
-    if key == 'Str' and format == 'html5' and match("^GO:\d{7}$") is not None:
+    if key == 'Str' and (format == 'html5' or format == 'html') and match("^GO:\d{7}$") is not None:
         return [html('<a href="http://amigo.geneontology.org/amigo/term/' + v + '">')] + v + [html('</a>')]
 
 if __name__ == "__main__":
