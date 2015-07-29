@@ -23,7 +23,7 @@ output:
     highlight.chooser: true
     toc: true
     fig_caption: true
-    pandoc_args: ["--filter=/analysis/include/go-links.py"]
+    pandoc_args: ["--filter=/analysis/include/go-link.py"]
 bibliography: include/references.bib
 geometry: margin=2cm
 documentclass: report
