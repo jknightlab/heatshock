@@ -9,7 +9,7 @@ links to the corresponding web page. Only HTML output is affected.
 
 
 def html(s):
-    return RawInline('latex', s)
+    return RawInline('html', s)
 
 
 def linkGO(key, value, format, meta):
