@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from pandocfilters import toJSONFilter, RawInline, Str
-from re import match
+import re
 
 """
 Pandoc filter that replaces all references to GO terms with
@@ -13,8 +13,10 @@ def html(s):
 
 
 def linkGO(key, value, format, meta):
-    if key == 'Str' and (format == 'html5' or format == 'html') and match("GO:\d{7}$", value) is not None:
-        return [html('<a href="http://amigo.geneontology.org/amigo/term/' + value + '">')] + [Str(value)] + [html('</a>')]
+    if key == 'Str':
+        id = re.findall("GO:\d{7}", value)
+        if  len(id) > 0:
+            return [html('<a href="http://amigo.geneontology.org/amigo/term/' + id[0] + '">')] + [Str(value)] + [html('</a>')]
 
 if __name__ == "__main__":
     toJSONFilter(linkGO)
