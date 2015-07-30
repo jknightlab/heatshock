@@ -791,24 +791,33 @@ pander(head(dplyr::select(limmaTable, -ArrayAddress, -EntrezReannotated, -Genomi
 ```
 
 ```{r limmaPlot, cache=FALSE, fig.cap=figRef("volcano", "Volcano plot of differential expression results. Probes with an adjusted p-value below 0.01 and a log fold cange of at least 0.5 are shown as yellow and red dots. Probes showing particularly strong evidence of changes in gene expression through a combination of p-value and fold change are labelled with the corresponding gene symbol.")}
+fdrCut <- 0.01
+fcCut <- log2(1.2)  ## highlight all genes with logFC greater than this
+fcCut2 <- log2(2)   ## label all genes with logFC greater than this
 fcScale <- max(-log10(limmaTable$adj.P.Val))/max(abs(limmaTable$logFC))
-limmaExtreme <- dplyr::filter(limmaTable, abs(logFC) > 0.5 & adj.P.Val < 0.01)
+limmaExtreme <- dplyr::filter(limmaTable, abs(logFC) > fcCut & adj.P.Val < fdrCut)
 limmaExtreme <- mutate(limmaExtreme, distance=(fcScale*logFC)^2 + log10(adj.P.Val)^2)
 limmaExtreme <- limmaExtreme[order(limmaExtreme$distance, decreasing=TRUE), ]
 ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) + 
         stat_density2d(geom="tile", aes(fill=..density..^0.1), contour=FALSE) + 
         geom_point(data=limmaExtreme, size=1.5, aes(colour=distance)) +
-        geom_text(data=dplyr::filter(limmaExtreme, distance > (2*fcScale)^2 & logFC >= 1), 
+        geom_text(data=dplyr::filter(limmaExtreme, distance > (2*fcScale)^2 & logFC >= fcCut2), 
                 aes(label=SymbolReannotated), vjust=0, hjust=0, angle=30) +
-        geom_text(data=dplyr::filter(limmaExtreme, distance > (2*fcScale)^2 & logFC <= -1), 
+        geom_text(data=dplyr::filter(limmaExtreme, distance > (2*fcScale)^2 & logFC <= -fcCut2), 
                 aes(label=SymbolReannotated), vjust=0, hjust=1, angle=330) +
-        geom_line(data=data.frame(x=c(-Inf, -0.5), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
-        geom_line(data=data.frame(x=c(0.5, Inf), y=c(2, 2)), aes(x=x, y=y), linetype="dotted") +
-        geom_line(data=data.frame(x=c(0.5, 0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
-        geom_line(data=data.frame(x=c(-0.5, -0.5), y=c(2, Inf)), aes(x=x, y=y), linetype="dotted") +
+        geom_line(data=data.frame(x=c(-Inf, -fcCut), y=c(-log10(fdrCut), log10(fdrCut))), 
+        		aes(x=x, y=y), linetype="dotted") +
+        geom_line(data=data.frame(x=c(fcCut, Inf), 
+        		y=c(log10(fdrCut), log10(fdrCut))), aes(x=x, y=y), linetype="dotted") +
+        geom_line(data=data.frame(x=c(fcCut, fcCut), y=c(log10(fdrCut), Inf)), 
+        		aes(x=x, y=y), linetype="dotted") +
+        geom_line(data=data.frame(x=c(-fcCut, -fcCut), y=c(log10(fdrCut), Inf)), 
+        		aes(x=x, y=y), linetype="dotted") +
         scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256), breaks=NULL) +
-        scale_colour_gradientn(colours = colorRampPalette(c("yellow", "red"))(256), guide="none") +
-        theme_bw() + xlab("log2(fold change)") + ylab("-log10(FDR)") + expand_limits(x=max(limmaTable$logFC)+0.25, 
+        scale_colour_gradientn(colours = colorRampPalette(c("yellow", "red"))(256), 
+        		guide="none") +
+        theme_bw() + xlab("log2(fold change)") + ylab("-log10(FDR)") + 
+        expand_limits(x=c(min(limmaTable$logFC)-0.25, max(limmaTable$logFC)+0.25), 
             y=max(-log10(limmaTable$adj.P.Val))+2)
 ```
 
