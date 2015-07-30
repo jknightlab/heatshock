@@ -38,7 +38,6 @@ library(affy)
 library(vsn)
 library(limma)
 library(scatterplot3d)
-library(sparcl)
 library(sva)
 library(ggplot2)
 library(dplyr)
@@ -70,12 +69,6 @@ options(tabcap.prefix = "Table", tabcap.sep = ":", tabcap.prefix.highlight = "**
 
 
 ```{r, functions, include=FALSE}
-pcaPlot <- function(data, col, pch, ...){
-        pca <- prcomp(t(data), scale=TRUE)
-        scores <- as.data.frame(pca$x)
-        plot(scores$PC1, scores$PC2, col=col, pch=pch, ...)
-}
-
 reshapeData <- function(data, value){
 	ans <- reshape2::melt(data, id.vars="probe",
 		value.name=value, variable.name="sample")
