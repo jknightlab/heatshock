@@ -9,7 +9,7 @@ RUN apt-get update -y && apt-get install -y nginx lmodern libssh-dev
 RUN easy_install pandocfilters
 
 ## Install plink
-RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150717/plink_linux_x86_64.zip && unzip plink_linux_x86_64.zip && cp plink /usr/local/bin/ 
+RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150727/plink_linux_x86_64.zip && unzip plink_linux_x86_64.zip && cp plink /usr/local/bin/ 
 
 ## Install additional R packages
 RUN Rscript -e "biocLite(c('sparcl', 'illuminaHumanv3.db', 'pander', 'ggdendro', 'sp', 'topGO', 'gdata', 'affy', 'vsn', 'limma', 'sva', 'scatterplot3d', 'pushoverr'))"
