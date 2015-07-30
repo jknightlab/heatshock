@@ -809,9 +809,9 @@ ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) +
         		aes(x=x, y=y), linetype="dotted") +
         geom_line(data=data.frame(x=c(fcCut, Inf), 
         		y=c(-log10(fdrCut), -log10(fdrCut))), aes(x=x, y=y), linetype="dotted") +
-        geom_line(data=data.frame(x=c(fcCut, fcCut), y=c(log10(fdrCut), Inf)), 
+        geom_line(data=data.frame(x=c(fcCut, fcCut), y=c(-log10(fdrCut), Inf)), 
         		aes(x=x, y=y), linetype="dotted") +
-        geom_line(data=data.frame(x=c(-fcCut, -fcCut), y=c(log10(fdrCut), Inf)), 
+        geom_line(data=data.frame(x=c(-fcCut, -fcCut), y=c(-log10(fdrCut), Inf)), 
         		aes(x=x, y=y), linetype="dotted") +
         scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256), breaks=NULL) +
         scale_colour_gradientn(colours = colorRampPalette(c("yellow", "red"))(256), 
