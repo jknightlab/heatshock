@@ -215,21 +215,6 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
-## Functions to select interesting genes for topGO analysis.
-## Requires `tCut` to be defined in global environment.
-selGenesUp <- function(score){
-	score >= tCut
-}
-
-selGenesDown <- function(score){
-	score <= -tCut
-}
-
-selGenesAny <- function(score){
-	abs(score) >= tCut
-}
-
-
 figRef <- local({
     tag <- numeric()
     created <- logical()
@@ -740,20 +725,29 @@ was used to determine enrichment separately for significantly (FDR < 0.01) up
 (`r tabRef("topGOUp")`) and down (`r tabRef("topGODown")`) regulated genes.
 
 ```{r preTopGO}
-tCut <- min(abs(limmaTable$t[limmaTable$adj.P.Val < 0.01]))
-universe <- limmaTable$t
-names(universe) <- limmaTable$EntrezReannotated
-universe <- universe[!is.na(names(universe))]
-tgUp <- new("topGOdata", ontology="BP", allGenes=universe, 
-			geneSelectionFun=selGenesUp, nodeSize=10,
+fdrCut <- 0.01
+fcCut <- log2(1.2)
+groupUp <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC > fcCut, 1, 0)
+groupDown <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC < -fcCut, 1, 0)
+groupAll <- ifelse(limmaTable$adj.P.Val < fdrCut & abs(limmaTable$logFC) > fcCut, 1, 0)
+
+universeUp <- factor(groupUp)
+names(universeUp) <- limmaTable$EntrezReannotated
+universeUp <- universeUp[!is.na(names(universeUp))]
+universeDown <- factor(groupDown)
+names(universeDown) <- limmaTable$EntrezReannotated
+universeDown <- universeDown[!is.na(names(universeDown))]
+universeAll <- factor(groupAll)
+names(universeAll) <- limmaTable$EntrezReannotated
+universeAll <- universeAll[!is.na(names(universeAll))]
+
+tgUp <- new("topGOdata", ontology="BP", allGenes=universeUp, nodeSize=10,
 			description="Genes up-regulated after heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
-tgDown <- new("topGOdata", ontology="BP", allGenes=universe, 
-			geneSelectionFun=selGenesDown, nodeSize=10,
+tgDown <- new("topGOdata", ontology="BP", allGenes=universeDown, nodeSize=10,
 			description="Genes down-regulated after heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
-tgAny <- new("topGOdata", ontology="BP", allGenes=universe, 
-			geneSelectionFun=selGenesAny, nodeSize=10,
+tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, nodeSize=10,
 			description="Genes differentially expressed in response to heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
 ```
@@ -767,14 +761,14 @@ resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
 # Results
 ## Differential expression analysis
 
-In total `r nrow(filter(limmaTable, adj.P.Val < 0.01))` probes are identified
-as differentially expressed at an FDR threshold of 0.01 (see `r tabRef("topTable")`
-for the top 20 results). Of these `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC > 0))` 
-are up and `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < 0))` down regulated
+In total `r nrow(filter(limmaTable, adj.P.Val < fdrCut))` probes are identified
+as differentially expressed at an FDR threshold of `r fdrCut` (see `r tabRef("topTable")`
+for the top 20 results). Of these `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC > 0))` 
+are up and `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC < 0))` down regulated
 followig heat shock treatment. Further restricting this list by excluding all probes with a 
-log fold change of less than 0.5 leaves `r nrow(filter(limmaTable, adj.P.Val < 0.01 & abs(logFC) > 0.5))` 
-probes with `r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC > 0.5))` and 
-`r nrow(filter(limmaTable, adj.P.Val < 0.01 & logFC < -0.5))` up and down regulated respectively. 
+fold change of less than `r 2^fcCut` leaves `r nrow(filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut))` 
+probes with `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut))` and 
+`r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC < -fcCut))` up and down regulated respectively. 
 `r figRef("volcano")` shows a smoothed volcano plot highlighting probes of particular interest. 
 
 ```{r limmaResult, cache=FALSE}
@@ -784,8 +778,6 @@ pander(head(dplyr::select(limmaTable, -ArrayAddress, -EntrezReannotated, -Genomi
 ```
 
 ```{r limmaPlot, cache=FALSE, fig.cap=figRef("volcano", "Volcano plot of differential expression results. Probes with an adjusted p-value below 0.01 and a log fold cange of at least 0.5 are shown as yellow and red dots. Probes showing particularly strong evidence of changes in gene expression through a combination of p-value and fold change are labelled with the corresponding gene symbol.")}
-fdrCut <- 0.01
-fcCut <- log2(1.2)  ## highlight all genes with logFC greater than this
 fcCut2 <- log2(2)   ## label all genes with logFC greater than this
 fcScale <- max(-log10(limmaTable$adj.P.Val))/max(abs(limmaTable$logFC))
 limmaExtreme <- dplyr::filter(limmaTable, abs(logFC) > fcCut & adj.P.Val < fdrCut)
@@ -824,10 +816,8 @@ related to stress response (including *response to heat* [GO:0009408])
 and protein folding (including *response to unfolded protein* [GO:0006986] and 
 *protein refolding* [GO:0042026]) whereas down regulated genes
 broadly relate to cell proliferation and normal lymphocyte function and 
-include *positive regulation of B cell activation* [GO:0050871] as well as 
-*regulation of B cell differentiation* [GO:0045577]. Other down regulated genes 
-are annotated with *rRNA processing* [GO:0006364] and *ribosome biogenesis* [GO:0042254],
-indicating a general reduction in translational activity.
+include *positive regulation of cell cycle* [GO:0045787], *spindle assembly* [GO:0051225]
+and *chemokine production* [GO:0032602].
 
 ```{r tableTopGOUp, chache=FALSE}
 set.caption(tabRef("topGOUp", "Top 20 GO categories enriched for up regulated genes."))
