@@ -748,15 +748,15 @@ names(universeAll) <- limmaTable$EntrezReannotated
 universeAll <- universeAll[!is.na(names(universeAll))]
 
 tgUp <- new("topGOdata", ontology="BP", allGenes=universeUp, 
-			geneSelectionFun=selGenesUp, nodeSize=10,
+			geneSelectionFun=selGenes, nodeSize=10,
 			description="Genes up-regulated after heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
 tgDown <- new("topGOdata", ontology="BP", allGenes=universeDown, 
-			geneSelectionFun=selGenesDown, nodeSize=10,
+			geneSelectionFun=selGenes, nodeSize=10,
 			description="Genes down-regulated after heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
 tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, 
-			geneSelectionFun=selGenesAny, nodeSize=10,
+			geneSelectionFun=selGenes, nodeSize=10,
 			description="Genes differentially expressed in response to heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
 ```
