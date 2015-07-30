@@ -784,7 +784,8 @@ limmaExtreme <- dplyr::filter(limmaTable, abs(logFC) > fcCut & adj.P.Val < fdrCu
 limmaExtreme <- mutate(limmaExtreme, distance=(fcScale*logFC)^2 + log10(adj.P.Val)^2)
 limmaExtreme <- limmaExtreme[order(limmaExtreme$distance, decreasing=TRUE), ]
 ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) + 
-        stat_density2d(geom="tile", aes(fill=..density..^0.1), contour=FALSE) + 
+        stat_density2d(data=dplyr::filter(limmaTable, abs(logFC) <= fcCut | adj.P.Val >= fdrCut),
+                      geom="tile", aes(fill=..density..^0.1), contour=FALSE) + 
         geom_point(data=limmaExtreme, size=1.5, aes(colour=distance)) +
         geom_text(data=dplyr::filter(limmaExtreme, distance > (2*fcScale)^2 & logFC >= fcCut2), 
                 aes(label=SymbolReannotated), vjust=0, hjust=0, angle=30) +
