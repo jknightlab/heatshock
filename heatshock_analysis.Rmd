@@ -216,19 +216,10 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 
 ## Functions to select interesting genes for topGO analysis.
-## group should be a factor with levels "up", "down" and "neutral"
-selGenesUp <- function(group){
-	group == "up"
+## group should be a factor with levels "selected" and "neutral"
+selGenes <- function(group){
+	group == "selected"
 }
-
-selGenesDown <- function(group){
-	group == "down"
-}
-
-selGenesAny <- function(group){
-	group %in% c("up", "down")
-}
-
 
 figRef <- local({
     tag <- numeric()
@@ -742,20 +733,29 @@ was used to determine enrichment separately for significantly (FDR < 0.01) up
 ```{r preTopGO}
 fdrCut <- 0.01
 fcCut <- log2(1.2)
-group <- factor(ifelse(limmaTable$adj.P.Val > fdrCut | abs(limmaTable$logFC) < fcCut, "neutral",
-		ifelse(limmaTable$logFC > 0, "up", "down")))
-universe <- group
-names(universe) <- limmaTable$EntrezReannotated
-universe <- universe[!is.na(names(universe))]
-tgUp <- new("topGOdata", ontology="BP", allGenes=universe, 
+groupUp <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC > fcCut, "selected", "neutral")
+groupDown <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC < -fcCut, "selected", "neutral")
+groupAll <- ifelse(limmaTable$adj.P.Val < fdrCut & abs(limmaTable$logFC) > fcCut, "selected", "neutral")
+
+universeUp <- groupUp
+names(universeUp) <- limmaTable$EntrezReannotated
+universeUp <- universeUp[!is.na(names(universeUp))]
+universeDown <- groupDown
+names(universeDown) <- limmaTable$EntrezReannotated
+universeDown <- universeDown[!is.na(names(universeDown))]
+universeAll <- groupAll
+names(universeAll) <- limmaTable$EntrezReannotated
+universeAll <- universeAll[!is.na(names(universeAll))]
+
+tgUp <- new("topGOdata", ontology="BP", allGenes=universeUp, 
 			geneSelectionFun=selGenesUp, nodeSize=10,
 			description="Genes up-regulated after heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
-tgDown <- new("topGOdata", ontology="BP", allGenes=universe, 
+tgDown <- new("topGOdata", ontology="BP", allGenes=universeDown, 
 			geneSelectionFun=selGenesDown, nodeSize=10,
 			description="Genes down-regulated after heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
-tgAny <- new("topGOdata", ontology="BP", allGenes=universe, 
+tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, 
 			geneSelectionFun=selGenesAny, nodeSize=10,
 			description="Genes differentially expressed in response to heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
