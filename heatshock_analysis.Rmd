@@ -216,17 +216,17 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 
 ## Functions to select interesting genes for topGO analysis.
-## Requires `tCut` to be defined in global environment.
-selGenesUp <- function(score){
-	score >= tCut
+## group should be a factor with levels "up", "down" and "neutral"
+selGenesUp <- function(group){
+	group == "up"
 }
 
-selGenesDown <- function(score){
-	score <= -tCut
+selGenesDown <- function(group){
+	group == "down"
 }
 
-selGenesAny <- function(score){
-	abs(score) >= tCut
+selGenesAny <- function(group){
+	group %in% c("up", "down")
 }
 
 
@@ -740,8 +740,11 @@ was used to determine enrichment separately for significantly (FDR < 0.01) up
 (`r tabRef("topGOUp")`) and down (`r tabRef("topGODown")`) regulated genes.
 
 ```{r preTopGO}
-tCut <- min(abs(limmaTable$t[limmaTable$adj.P.Val < 0.01]))
-universe <- limmaTable$t
+fdrCut <- 0.01
+fcCut <- log2(1.2)
+group <- factor(ifelse(limmaTable$adj.P.Val > fdrCut | abs(limmaTable$logFC) < fcCut, "neutral",
+		ifelse(limmaTable$logFC > 0, "up", "down")))
+universe <- group
 names(universe) <- limmaTable$EntrezReannotated
 universe <- universe[!is.na(names(universe))]
 tgUp <- new("topGOdata", ontology="BP", allGenes=universe, 
@@ -784,8 +787,6 @@ pander(head(dplyr::select(limmaTable, -ArrayAddress, -EntrezReannotated, -Genomi
 ```
 
 ```{r limmaPlot, cache=FALSE, fig.cap=figRef("volcano", "Volcano plot of differential expression results. Probes with an adjusted p-value below 0.01 and a log fold cange of at least 0.5 are shown as yellow and red dots. Probes showing particularly strong evidence of changes in gene expression through a combination of p-value and fold change are labelled with the corresponding gene symbol.")}
-fdrCut <- 0.01
-fcCut <- log2(1.2)  ## highlight all genes with logFC greater than this
 fcCut2 <- log2(2)   ## label all genes with logFC greater than this
 fcScale <- max(-log10(limmaTable$adj.P.Val))/max(abs(limmaTable$logFC))
 limmaExtreme <- dplyr::filter(limmaTable, abs(logFC) > fcCut & adj.P.Val < fdrCut)
