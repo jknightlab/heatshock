@@ -215,12 +215,6 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
-## Functions to select interesting genes for topGO analysis.
-## group should be a factor with levels "selected" and "neutral"
-selGenes <- function(group){
-	group == "selected"
-}
-
 figRef <- local({
     tag <- numeric()
     created <- logical()
@@ -733,9 +727,9 @@ was used to determine enrichment separately for significantly (FDR < 0.01) up
 ```{r preTopGO}
 fdrCut <- 0.01
 fcCut <- log2(1.2)
-groupUp <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC > fcCut, "selected", "neutral")
-groupDown <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC < -fcCut, "selected", "neutral")
-groupAll <- ifelse(limmaTable$adj.P.Val < fdrCut & abs(limmaTable$logFC) > fcCut, "selected", "neutral")
+groupUp <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC > fcCut, 1, 0)
+groupDown <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC < -fcCut, 1, 0)
+groupAll <- ifelse(limmaTable$adj.P.Val < fdrCut & abs(limmaTable$logFC) > fcCut, 1, 0)
 
 universeUp <- factor(groupUp)
 names(universeUp) <- limmaTable$EntrezReannotated
@@ -747,16 +741,13 @@ universeAll <- factor(groupAll)
 names(universeAll) <- limmaTable$EntrezReannotated
 universeAll <- universeAll[!is.na(names(universeAll))]
 
-tgUp <- new("topGOdata", ontology="BP", allGenes=universeUp, 
-			geneSelectionFun=selGenes, nodeSize=10,
+tgUp <- new("topGOdata", ontology="BP", allGenes=universeUp, nodeSize=10,
 			description="Genes up-regulated after heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
-tgDown <- new("topGOdata", ontology="BP", allGenes=universeDown, 
-			geneSelectionFun=selGenes, nodeSize=10,
+tgDown <- new("topGOdata", ontology="BP", allGenes=universeDown, nodeSize=10,
 			description="Genes down-regulated after heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
-tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, 
-			geneSelectionFun=selGenes, nodeSize=10,
+tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, nodeSize=10,
 			description="Genes differentially expressed in response to heat shock",
 			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
 ```
