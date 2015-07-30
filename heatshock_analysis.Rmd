@@ -737,13 +737,13 @@ groupUp <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC > fcCut, "sel
 groupDown <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC < -fcCut, "selected", "neutral")
 groupAll <- ifelse(limmaTable$adj.P.Val < fdrCut & abs(limmaTable$logFC) > fcCut, "selected", "neutral")
 
-universeUp <- groupUp
+universeUp <- factor(groupUp)
 names(universeUp) <- limmaTable$EntrezReannotated
 universeUp <- universeUp[!is.na(names(universeUp))]
-universeDown <- groupDown
+universeDown <- factor(groupDown)
 names(universeDown) <- limmaTable$EntrezReannotated
 universeDown <- universeDown[!is.na(names(universeDown))]
-universeAll <- groupAll
+universeAll <- factor(groupAll)
 names(universeAll) <- limmaTable$EntrezReannotated
 universeAll <- universeAll[!is.na(names(universeAll))]
 
