@@ -816,10 +816,8 @@ related to stress response (including *response to heat* [GO:0009408])
 and protein folding (including *response to unfolded protein* [GO:0006986] and 
 *protein refolding* [GO:0042026]) whereas down regulated genes
 broadly relate to cell proliferation and normal lymphocyte function and 
-include *positive regulation of B cell activation* [GO:0050871] as well as 
-*regulation of B cell differentiation* [GO:0045577]. Other down regulated genes 
-are annotated with *rRNA processing* [GO:0006364] and *ribosome biogenesis* [GO:0042254],
-indicating a general reduction in translational activity.
+include *positive regulation of cell cycle* [GO:0045787], *spindle assembly* [GO:0051225]
+and *chemokine production* [GO:0032602].
 
 ```{r tableTopGOUp, chache=FALSE}
 set.caption(tabRef("topGOUp", "Top 20 GO categories enriched for up regulated genes."))
