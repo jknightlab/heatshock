@@ -805,10 +805,10 @@ ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) +
                 aes(label=SymbolReannotated), vjust=0, hjust=0, angle=30) +
         geom_text(data=dplyr::filter(limmaExtreme, distance > (2*fcScale)^2 & logFC <= -fcCut2), 
                 aes(label=SymbolReannotated), vjust=0, hjust=1, angle=330) +
-        geom_line(data=data.frame(x=c(-Inf, -fcCut), y=c(-log10(fdrCut), log10(fdrCut))), 
+        geom_line(data=data.frame(x=c(-Inf, -fcCut), y=c(-log10(fdrCut), -log10(fdrCut))), 
         		aes(x=x, y=y), linetype="dotted") +
         geom_line(data=data.frame(x=c(fcCut, Inf), 
-        		y=c(log10(fdrCut), log10(fdrCut))), aes(x=x, y=y), linetype="dotted") +
+        		y=c(-log10(fdrCut), -log10(fdrCut))), aes(x=x, y=y), linetype="dotted") +
         geom_line(data=data.frame(x=c(fcCut, fcCut), y=c(log10(fdrCut), Inf)), 
         		aes(x=x, y=y), linetype="dotted") +
         geom_line(data=data.frame(x=c(-fcCut, -fcCut), y=c(log10(fdrCut), Inf)), 
