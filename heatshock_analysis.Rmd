@@ -824,7 +824,7 @@ names(geno$bim) <- c("snp", "chrom", "pos")
 ```
 
 ```{r snpPosUpdate}
-geno$bim <- by(geno$bim, geno$bim$$chrom, function(x){
+geno$bim <- by(geno$bim, geno$bim$chrom, function(x){
   locs <- getSNPlocs(paste0("ch", x$chrom[1]), caching=FALSE)
   locs$RefSNP_id <- paste0("rs", locs$RefSNP_id)
   snps <- inner_join(x, locs, by=c(snp="RefSNP_id"))
