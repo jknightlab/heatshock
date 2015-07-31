@@ -286,6 +286,15 @@ desc <- sapply(data, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse="<br>"))
 ```
 
+#### Matrix-eQTL input
+
+```{r linkData, echo=FALSE, cache=FALSE, results="asis"}
+meqtlFiles <- sapply(matrixEQTL, linkFile, "data", "markdown")
+desc <- sapply(matrixEQTL, "[[", "desc")
+cat(paste0("<span title=\"", desc, "\">", meqtlFiles, "</span>", collapse="<br>"))
+```
+
+
 #### Log files
 
 ```{r linkLogs, echo=FALSE, cache=FALSE, results="asis"}
