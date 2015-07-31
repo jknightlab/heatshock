@@ -840,6 +840,7 @@ snpPos <- snpPos[order(snpPos$chrom, snpPos$loc),]
 
 ```{r writeSNPpos, cache=FALSE}
 write.table(snpPos, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
+system("gzip -c tmp/snp_loc_GRCh37.tab > tmp/snp_loc_GRCh37.tab.gz")
 ```
 
 
