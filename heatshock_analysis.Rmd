@@ -51,6 +51,7 @@ library(reshape2)
 library(ggdendro)
 library(topGO)
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+library(plink2R)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -817,13 +818,13 @@ The GRCh37 coordinates for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142
 Bioconductor package [@Pages14].
 
 ```{r snpPos}
-snpPos <- read_tsv("tmp/hapmap_yri.smpl_flt2.bim", col_names=FALSE)
-snpPos <- dplyr::select(snpPos, 2, 1, 4)
-names(snpPos) <- c("snp", "chrom", "pos")
+geno <- read_plink("tmp/hapmap_yri.smpl_flt2")
+geno$bim <- dplyr::select(geno$bim, 2, 1, 4)
+names(geno$bim) <- c("snp", "chrom", "pos")
 ```
 
 ```{r snpPosUpdate}
-snpPos <- by(snpPos, snpPos$chrom, function(x){
+geno$bim <- by(geno$bim, geno$bim$$chrom, function(x){
   locs <- getSNPlocs(paste0("ch", x$chrom[1]), caching=FALSE)
   locs$RefSNP_id <- paste0("rs", locs$RefSNP_id)
   snps <- inner_join(x, locs, by=c(snp="RefSNP_id"))
@@ -833,13 +834,13 @@ snpPos <- by(snpPos, snpPos$chrom, function(x){
 ```
 
 ```{r snpPosComb}
-snpPos <- do.call(rbind, snpPos)
-snpPos$chrom <- paste0(snpPos$chrom)
-snpPos <- snpPos[order(snpPos$chrom, snpPos$loc),]
+geno$bim <- do.call(rbind, geno$bim)
+geno$bim$chrom <- paste0("chr", geno$bim$chrom)
+geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
 ```
 
 ```{r writeSNPpos, cache=FALSE}
-write.table(snpPos, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
+write.table(geno$bim, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/snp_loc_GRCh37.tab > tmp/snp_loc_GRCh37.tab.gz")
 ```
 
