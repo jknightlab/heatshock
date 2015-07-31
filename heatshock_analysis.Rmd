@@ -50,6 +50,7 @@ library(pander)
 library(reshape2)
 library(ggdendro)
 library(topGO)
+library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -803,7 +804,31 @@ rownames(probePos) <- selectedGenes$NuID
 write.table(probePos, file="/analysis/tmp/selected_probes_pos.tab", sep="\t", quote=FALSE)
 ```
 
+```{r snpPos}
+snpPos <- read_tsv("tmp/hapmap_yri.smpl_flt2.bim", col_names=FALSE)
+snpPos <- select(snpPos, 2, 1, 4)
+names(snpPos) <- c("snp", "chrom", "pos")
+```
 
+```{r snpPosUpdate}
+snpPos <- by(snpPos, snpPos$chrom, function(x){
+  locs <- getSNPlocs(paste0("ch", x$chrom[1]), caching=FALSE)
+  locs$RefSNP_id <- paste0("rs", locs$RefSNP_id)
+  snps <- inner_join(x, locs, by=c(snp="RefSNP_id"))
+  if(nrow(snps) < nrow(x)) warning("Dropped ", nrow(x) - nrow(snps), " from chromosome ", x$chrom[1])
+  select(snps, snp, chrom, loc)
+})
+```
+
+```{r snpPosComb}
+snpPos <- do.call(rbind, snpPos)
+snpPos$chrom <- paste0(snpPos$chrom)
+snpPos <- snpPos[order(snpPos$chrom, snpPos$loc),]
+```
+
+```{r writeSNPpos, cache=FALSE}
+write.table(snpPos, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
+```
 
 
 # Results
