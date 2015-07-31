@@ -813,6 +813,9 @@ rownames(probePos) <- selectedGenes$NuID
 write.table(probePos, file="/analysis/tmp/selected_probes_pos.tab", sep="\t", quote=FALSE)
 ```
 
+The GRCh37 coordinates for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142.GRCh37*
+Bioconductor package [@Pages14].
+
 ```{r snpPos}
 snpPos <- read_tsv("tmp/hapmap_yri.smpl_flt2.bim", col_names=FALSE)
 snpPos <- select(snpPos, 2, 1, 4)
@@ -824,7 +827,7 @@ snpPos <- by(snpPos, snpPos$chrom, function(x){
   locs <- getSNPlocs(paste0("ch", x$chrom[1]), caching=FALSE)
   locs$RefSNP_id <- paste0("rs", locs$RefSNP_id)
   snps <- inner_join(x, locs, by=c(snp="RefSNP_id"))
-  if(nrow(snps) < nrow(x)) warning("Dropped ", nrow(x) - nrow(snps), " from chromosome ", x$chrom[1])
+  if(nrow(snps) < nrow(x)) warning("Dropped ", nrow(x) - nrow(snps), " SNP(s) from chromosome ", x$chrom[1])
   select(snps, snp, chrom, loc)
 })
 ```
