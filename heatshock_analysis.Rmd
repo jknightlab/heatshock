@@ -789,7 +789,9 @@ colnames(selectedFC) <- str_extract(colnames(selectedFC), "NA[[:digit:]]+")
 rownames(selectedFC) <- selectedGenes$NuID
 ```
 
-
+```{r writeFcFile, cache=FALSE}
+write.table(selectedFC, file="/analysis/tmp/selected_probes_fc.tab", sep="\t", quote=FALSE)
+```
 
 # Results
 ## Differential expression analysis

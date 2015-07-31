@@ -28,7 +28,10 @@ data <- list(exprRaw=list(dir="/analysis/tmp", file="heatshock_expr_raw.tab.gz",
 				name="genotypes (PLINK)"),
     diffExpr=list(dir="/analysis/tmp", file="differential_expression.tab",
                   descr="Table of differntially expressed genes (tab delimited)",
-                  name="differential gene expression"))
+                  name="differential gene expression"),
+		probeFC=list(dir="/analysis/tmp", file="selected_probes_fc.tab",
+		             desc="Log2 fold change values for divverentially expressed probes (tab delimited)",
+		             name="fold change"))
 
 copyFiles <- function(files, dest){
 	if(!file.exists(dest)) dir.create(dest)
