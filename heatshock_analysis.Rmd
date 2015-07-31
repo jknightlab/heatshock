@@ -847,6 +847,10 @@ system("gzip -c tmp/snp_loc_GRCh37.tab > tmp/snp_loc_GRCh37.tab.gz")
 ```{r prepGeno}
 names(geno$bed) <- str_extract(names(geno$bed), "NA[[:digit:]]+")
 geno$bed <- geno$bed[geno$bim$snp, colnames(selectedFC)]
+flip <- rowSums(geno$bed) > ncol(geno$bed)
+if(any(flip)){
+  geno$bed[flip, ] <- -geno$bed[flip]+2
+}
 ```
 
 ```{r writeGeno, cache=FALSE}
