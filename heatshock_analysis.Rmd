@@ -43,6 +43,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(readr)
+library(stringr)
 library(illuminaHumanv3.db)
 library(knitr)
 library(pander)
@@ -755,6 +756,28 @@ tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, nodeSize=10,
 ```{r testTopGO}
 resultUp <- runTest(tgUp, algorithm="classic", statistic="fisher")
 resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
+```
+
+## Response QTL analysis
+All probes considered to be differentially expressed following heat shock 
+(FDR < `fdrCut` and fold change > `r 2^fcCut`) were further investigated for
+the presence of genetic variation that modulates their response to the stimulus.
+
+For each probe the observed response to the stimulus (as measured by the log~2~ 
+fold change) is tested for association with the genotypes within a 1 Mb window
+either side of the probe location. For this purpose only typed SNPs that passed
+QC were considered. Only genes and SNPs on autosomes were included in the 
+analysis.
+
+```{r selectGenes}
+exclChrom <- c("chrX", "chrY", "chrM")
+selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
+                                 !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
+selectedGenes <- select(selectedGenes, ArrayAddress, NuID, GenomicLocation)
+
+selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation, 
+                                             "chr[[:digit:]]{1,2}:[[:digit:]]+:[[:digit:]]+")
+selectedGenes <- dplyr::filter(selectedGenes, !is.na(GenomicLocation))
 ```
 
 
