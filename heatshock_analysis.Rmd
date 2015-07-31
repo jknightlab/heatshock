@@ -844,6 +844,15 @@ write.table(geno$bim, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/snp_loc_GRCh37.tab > tmp/snp_loc_GRCh37.tab.gz")
 ```
 
+```{r prepGeno}
+names(geno$bed) <- str_extract(names(geno$bed), "NA[[:digit:]]+")
+geno$bed <- geno$bed[geno$bim$snp, colnames(selectedFC)]
+```
+
+```{r writeGeno, cache=FALSE}
+write.table(geno$bed, file="genotypes_GRCh37.tab", quote=FALSE, sep="\t")
+system("gzip -c tmp/genotypes_GRh37.tab > tmp/genotypes_GRCh37.tab.gz")
+```
 
 # Results
 ## Differential expression analysis

@@ -38,7 +38,10 @@ matrixEQTL <- list(probePos=list(dir="/analysis/tmp", file="selected_probes_pos.
                                name="SNP positions"),
                    probeFC=list(dir="/analysis/tmp", file="selected_probes_fc.tab",
                                 desc="Log2 fold change values for divverentially expressed probes (tab delimited)",
-                                name="fold change")
+                                name="fold change"),
+                   geno=list(dir="/analysis/tmp", file="genotypes_GRCh37.tab.gz",
+                             desc="Genotypes for use with Matrix-eQTL",
+                             name="genotypes")
                    )
 
 copyFiles <- function(files, dest){
