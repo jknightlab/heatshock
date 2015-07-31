@@ -783,7 +783,7 @@ analysis.
 exclChrom <- c("chrX", "chrY", "chrM")
 selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
                                  !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
-selectedGenes <- select(selectedGenes, ArrayAddress, NuID, GenomicLocation)
+selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation)
 
 selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation, 
                                              "chr[[:digit:]]{1,2}:[[:digit:]]+:[[:digit:]]+")
@@ -818,7 +818,7 @@ Bioconductor package [@Pages14].
 
 ```{r snpPos}
 snpPos <- read_tsv("tmp/hapmap_yri.smpl_flt2.bim", col_names=FALSE)
-snpPos <- select(snpPos, 2, 1, 4)
+snpPos <- dplyr::select(snpPos, 2, 1, 4)
 names(snpPos) <- c("snp", "chrom", "pos")
 ```
 
@@ -828,7 +828,7 @@ snpPos <- by(snpPos, snpPos$chrom, function(x){
   locs$RefSNP_id <- paste0("rs", locs$RefSNP_id)
   snps <- inner_join(x, locs, by=c(snp="RefSNP_id"))
   if(nrow(snps) < nrow(x)) warning("Dropped ", nrow(x) - nrow(snps), " SNP(s) from chromosome ", x$chrom[1])
-  select(snps, snp, chrom, loc)
+  dplyr::select(snps, snp, chrom, loc)
 })
 ```
 
