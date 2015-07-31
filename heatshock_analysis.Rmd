@@ -55,6 +55,7 @@ opts_chunk$set(tidy=TRUE)
 opts_chunk$set(echo=TRUE)
 opts_chunk$set(cache=TRUE)
 opts_chunk$set(fig.width=8, fig.height=8, dpi=300)
+opts_chunk$set(collapse=TRUE, hold=TRUE)
 opts_chunk$set(bootstrap.type="button")
 opts_chunk$set(bootstrap.show.code=FALSE,
 		bootstrap.show.output=FALSE,
