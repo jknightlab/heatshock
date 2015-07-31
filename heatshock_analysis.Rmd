@@ -780,6 +780,16 @@ selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation,
 selectedGenes <- dplyr::filter(selectedGenes, !is.na(GenomicLocation))
 ```
 
+```{r probeFC}
+selectedExpr <- sig.data.norm[selectedGenes$ArrayAddress,]
+basalIdx <- grep("_Basal", colnames(selectedExpr))
+stimIdx <- grep("_Stim", colnames(selectedExpr))
+selectedFC <- selectedExpr[, stimIdx] - selectedExpr[, basalIdx]
+colnames(selectedFC) <- str_extract(colnames(selectedFC), "NA[[:digit:]]+")
+rownames(selectedFC) <- selectedGenes$NuID
+```
+
+
 
 # Results
 ## Differential expression analysis
