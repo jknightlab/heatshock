@@ -793,6 +793,19 @@ rownames(selectedFC) <- selectedGenes$NuID
 write.table(selectedFC, file="/analysis/tmp/selected_probes_fc.tab", sep="\t", quote=FALSE)
 ```
 
+```{r probeLoc}
+probePos <- str_split_fixed(selectedGenes$GenomicLocation, ":", 3)
+colnames(probePos) <- c("chrom", "start", "end")
+rownames(probePos) <- selectedGenes$NuID
+```
+
+```{r writeProbePos, cache=FALSE}
+write.table(probePos, file="/analysis/tmp/selected_probes_pos.tab", sep="\t", quote=FALSE)
+```
+
+
+
+
 # Results
 ## Differential expression analysis
 
