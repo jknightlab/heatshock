@@ -806,13 +806,15 @@ write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE
 ```
 
 ```{r probeLoc}
-probePos <- str_split_fixed(selectedGenes$GenomicLocation, ":", 3)
-colnames(probePos) <- c("chrom", "start", "end")
-rownames(probePos) <- selectedGenes$NuID
+probePos <- as.data.frame(str_split_fixed(selectedGenes$GenomicLocation, ":", 3), stringsAsFactors=FALSE)
+names(probePos) <- c("chrom", "start", "end")
+probePos <- cbind(id=selectedGenes$NuID, probePos, stringsAsFactors=FALSE)
+probePos$start <- as.integer(probePos$start)
+probePos$end <- as.integer(probePos$end)
 ```
 
 ```{r writeProbePos, cache=FALSE}
-write.table(probePos, file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE)
+write.table(probePos, file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, row.names=FALSE)
 ```
 
 The GRCh37 coordinates for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142.GRCh37*
@@ -913,7 +915,7 @@ covar$LoadFile("tmp/covariates.tab")
 ```
 
 ```{r runMatrixEQTL}
-me <- Matrix_eQTL_engine(
+me <- Matrix_eQTL_main(
     snps = snps,
     gene = pheno,
     cvrt = covar,
@@ -923,7 +925,7 @@ me <- Matrix_eQTL_engine(
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    geneos = probePos,
+    genepos = as.data.frame(probePos),
     cisDist = 1e6,
     verbose = TRUE,
     pvalue.hist = FALSE,
