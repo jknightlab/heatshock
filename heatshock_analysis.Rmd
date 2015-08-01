@@ -935,7 +935,7 @@ me <- Matrix_eQTL_main(
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = probePos,
-    cisDist = 5e5,
+    cisDist = 1e6,
     verbose = TRUE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -948,7 +948,7 @@ snpPos <- makeGRangesFromDataFrame(geno$bim, ignore.strand = TRUE, keep.extra.co
                                    start.field = "loc", end.field = "loc")
 geneSNPs <- do.call(GRangesList, mapply(
   function(x, chr, s, e) 
-    subset(x, seqnames == chr & start >= s - 5e5 & end <= e + 5e5), 
+    subset(x, seqnames == chr & start >= s - 1e6 & end <= e + 1e6), 
   as.character(seqnames(probePos)), start(probePos), end(probePos), 
   MoreArgs=list(x=snpPos), SIMPLIFY=FALSE))
 names(geneSNPs) <- probePos$id
