@@ -41,8 +41,10 @@ matrixEQTL <- list(probePos=list(dir="/analysis/tmp", file="selected_probes_pos.
                                 name="fold change"),
                    geno=list(dir="/analysis/tmp", file="genotypes_GRCh37.tab.gz",
                              desc="Genotypes for use with Matrix-eQTL",
-                             name="genotypes")
-                   )
+                             name="genotypes"),
+                   covar=list(dir="/analysis/tmp", file="covariates.tab.gz",
+                              desc="Covariates for use with Matrix-eQTL",
+                              name="covariates"))
 
 copyFiles <- function(files, dest){
 	if(!file.exists(dest)) dir.create(dest)
