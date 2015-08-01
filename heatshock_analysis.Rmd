@@ -309,7 +309,7 @@ cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse="<br>"))
 The heat shock response is a highly conserved mechanism responsible for the 
 maintenance of cellular function under stress. Originally identified as part of the 
 response to increased environmental temperatures [@Ritossa62] heat shock proteins (HSPs) 
-have since been implicated  in susceptability to infection [@Kee08], cancer risk [@Sfar10] 
+have since been implicated  in susceptibility to infection [@Kee08], cancer risk [@Sfar10] 
 and drug response [@Martin04]. Despite its obvious significance many details of the
 heat shock response still remain uncertain.
 
@@ -512,7 +512,7 @@ plink --bfile tmp/hapmap_yri.snp_flt --out tmp/hapmap_yri.smpl_flt --mind 0.1 --
 nnIBS <- readr::read_table("tmp/hapmap_yri.smpl_flt.nearest")
 ```
 
-The IBS nearest neighbour caculation shows that the majority of samples are quite
+The IBS nearest neighbour calculation shows that the majority of samples are quite
 similar with regard to the extend of genetic differences between them while a few
 show markedly increased sharing of alleles (see `r figRef("nnIBS")` and `r tabRef("nnIBS")`). 
 This is consistent with a population of largely unrelated individuals including a few 
@@ -859,6 +859,19 @@ write.table(geno$bed, file="genotypes_GRCh37.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/genotypes_GRh37.tab > tmp/genotypes_GRCh37.tab.gz")
 ```
 
+We tested for associations between genotype and heat shock response using
+Matrix-eQTL [@Shabalin12]. The analysis was carried out in two stages. The
+first stage served to identify genes that show evidence of being modulated 
+by local genetic variation. To this end determine the the minimum p-value 
+for each gene, adjusted for the number of SNPs tested for association
+with this gene using a Bonferroni correction. The resulting p-values are
+then corrected for the number of genes tested by computing the corresponding
+false discovery rate. The second stage served to examine the identified
+genes more closely by identifying individual SNPs that are associated
+with the change in expression observed for the gene in response to the stimulus.
+Only genes that were considered significant during the first stage were 
+examined and SNP p-values were corrected for multiple testing on a per gene
+basis.
 
 
 # Results
@@ -868,7 +881,7 @@ In total `r nrow(filter(limmaTable, adj.P.Val < fdrCut))` probes are identified
 as differentially expressed at an FDR threshold of `r fdrCut` (see `r tabRef("topTable")`
 for the top 20 results). Of these `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC > 0))` 
 are up and `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC < 0))` down regulated
-followig heat shock treatment. Further restricting this list by excluding all probes with a 
+following heat shock treatment. Further restricting this list by excluding all probes with a 
 fold change of less than `r 2^fcCut` leaves `r nrow(filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut))` 
 probes with `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut))` and 
 `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC < -fcCut))` up and down regulated respectively. 
@@ -911,11 +924,11 @@ ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) +
 ```
 
 ## GO enrichment analysis
-The GO analysis highlights several categories that are significantly enriched amongst
+The GO analysis highlights several categories that are significantly enriched among
 the up and down regulated genes (`r sum(score(resultUp) < 0.01)` and 
 `r sum(score(resultDown) < 0.01)` categories with a p-value < 0.01 respectively).
 Considering the top categories (`r tabRef("topGOUp")` and `r tabRef("topGODown")`)
-it appears that genes upregulated in response to heat shock are predominantly
+it appears that genes up regulated in response to heat shock are predominantly
 related to stress response (including *response to heat* [GO:0009408]) 
 and protein folding (including *response to unfolded protein* [GO:0006986] and 
 *protein refolding* [GO:0042026]) whereas down regulated genes
