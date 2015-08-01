@@ -884,7 +884,31 @@ write.table(geno$fam, file="tmp/covariates.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", internal=TRUE)
 ```
 
+```{r prepQTL}
+snps <- SlicedData$new();
+snps$fileDelimiter <- "\t"
+snps$fileOmitCharacters <- "NA"
+snps$fileSkipRows <- 1
+snps$fileSkipColumns <- 1
+snps$fileSliceSize <- 2000
+snps$LoadFile("tmp/genotypes_GRCh37.tab")
 
+pheno <- SlicedData$new();
+pheno$fileDelimiter <- "\t"
+pheno$fileOmitCharacters <- "NA"
+pheno$fileSkipRows <- 1
+pheno$fileSkipColumns <- 1
+pheno$fileSliceSize <- 2000
+pheno$LoadFile("tmp/selected_probes_fc.tab")
+
+covar <- SlicedData$new();
+covar$fileDelimiter <- "\t"
+covar$fileOmitCharacters <- "NA"
+covar$fileSkipRows <- 1
+covar$fileSkipColumns <- 1
+covar$fileSliceSize <- 2000
+covar$LoadFile("tmp/covariates.tab")
+```
 
 # Results
 ## Differential expression analysis
