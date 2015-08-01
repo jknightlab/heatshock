@@ -842,7 +842,7 @@ geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
 
 ```{r writeSNPpos, cache=FALSE}
 write.table(geno$bim, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
-system("gzip -c tmp/snp_loc_GRCh37.tab > tmp/snp_loc_GRCh37.tab.gz", internal=TRUE)
+system("gzip -c tmp/snp_loc_GRCh37.tab > tmp/snp_loc_GRCh37.tab.gz", intern=TRUE)
 ```
 
 ```{r prepGeno}
@@ -857,7 +857,7 @@ if(any(flip)){
 
 ```{r writeGeno, cache=FALSE}
 write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
-system("gzip -c tmp/genotypes_GRh37.tab > tmp/genotypes_GRCh37.tab.gz", internal=TRUE)
+system("gzip -c tmp/genotypes_GRh37.tab > tmp/genotypes_GRCh37.tab.gz", intern=TRUE)
 ```
 
 We tested for associations between genotype and heat shock response using
@@ -883,7 +883,7 @@ geno$fam <- geno$fam[, colnames(geno$bed)]
 
 ```{r writeCovar, cache=FALSE}
 write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, sep="\t")
-system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", internal=TRUE)
+system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", intern=TRUE)
 ```
 
 ```{r prepQTL}
