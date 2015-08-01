@@ -862,11 +862,19 @@ write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/genotypes_GRh37.tab > tmp/genotypes_GRCh37.tab.gz", intern=TRUE)
 ```
 
+```{r fc_pc}
+nPC <- 2
+pca <- prcomp(t(selectedFC), center=TRUE, scale = TRUE)
+pc <- pca$x
+```
+
 We tested for associations between genotype and heat shock response using
-Matrix-eQTL [@Shabalin12]. The analysis was carried out in two stages. The
-first stage served to identify genes that show evidence of being modulated 
-by local genetic variation. To this end determine the the minimum p-value 
-for each gene, adjusted for the number of SNPs tested for association
+a linear model as implemented in Matrix-eQTL [@Shabalin12], correcting for
+sex as well as the first `r nPC` principle components of the treatment response. 
+The analysis was carried out in two stages. The first stage served to identify genes that show 
+evidence of being modulated in their response to heat shock by local genetic 
+variation. To this end determine the the minimum p-value for each gene, adjusted 
+for the number of SNPs tested for association
 with this gene using a Bonferroni correction. The resulting p-values are
 then corrected for the number of genes tested by computing the corresponding
 false discovery rate. The second stage served to examine the identified
@@ -880,7 +888,8 @@ basis.
 geno$fam <- dplyr::filter(dplyr::select(geno$fam, 2, 5), V2 %in% colnames(geno$bed))
 geno$fam <- t(geno$fam)
 colnames(geno$fam) <- geno$fam[1,]
-geno$fam <- geno$fam[, colnames(geno$bed)]
+geno$fam <- geno$fam[, colnames(selectedFC)]
+geno$fam <- rbind(geno$fam, t(pc[, 1:nPC]))
 ```
 
 ```{r writeCovar, cache=FALSE, echo=FALSE}
