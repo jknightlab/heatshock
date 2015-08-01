@@ -912,6 +912,25 @@ covar$fileSliceSize <- 2000
 covar$LoadFile("tmp/covariates.tab")
 ```
 
+```{r runMatrixEQTL}
+me <- Matrix_eQTL_engine(
+    snps = snps,
+    gene = pheno,
+    cvrt = covar,
+    output_file_name.cis = "tmp/reQTL_analysis",
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1e-3,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    geneos = probePos,
+    cisDist = 1e6,
+    verbose = TRUE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+```
+
 # Results
 ## Differential expression analysis
 
