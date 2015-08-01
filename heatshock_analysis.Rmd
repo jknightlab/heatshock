@@ -926,11 +926,28 @@ me <- Matrix_eQTL_main(
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = probePos,
-    cisDist = 1e6,
+    cisDist = 5e5,
     verbose = TRUE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
     noFDRsaveMemory = FALSE)
+```
+
+```{r geneSNPs}
+probePos <- makeGRangesFromDataFrame(probePos, ignore.strand = TRUE, keep.extra.columns = TRUE)
+snpPos <- makeGRangesFromDataFrame(geno$bim, ignore.strand = TRUE, keep.extra.columns = TRUE, 
+                                   start.field = "loc", end.field = "loc")
+geneSNPs <- do.call(GRangesList, mapply(
+  function(x, chr, s, e) 
+    subset(x, seqnames == chr & start >= s - 5e5 & end <= e + 5e5), 
+  as.character(seqnames(probePos)), start(probePos), end(probePos), 
+  MoreArgs=list(x=snpPos), SIMPLIFY=FALSE))
+names(geneSNPs) <- probePos$id
+
+geneP <- me$cis$min.pv.gene * sapply(names(me$cis$min.pv.gene), 
+                                     function(x) length(geneSNPs[[x]]))
+geneP <- sapply(geneP, min, 1)
+geneP <- p.adjust(geneP, "BH")
 ```
 
 # Results
