@@ -52,6 +52,7 @@ library(ggdendro)
 library(topGO)
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 library(plink2R)
+library(MatrixEQTL)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -882,6 +883,7 @@ geno$fam <- t(geno$fam)
 write.table(geno$fam, file="tmp/covariates.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", internal=TRUE)
 ```
+
 
 
 # Results
