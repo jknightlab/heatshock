@@ -842,7 +842,7 @@ geno$bim$chrom <- paste0("chr", geno$bim$chrom)
 geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
 ```
 
-```{r writeSNPpos, cache=FALSE}
+```{r writeSNPpos, cache=FALSE, echo=FALSE}
 write.table(geno$bim, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/snp_loc_GRCh37.tab > tmp/snp_loc_GRCh37.tab.gz", intern=TRUE)
 ```
@@ -857,7 +857,7 @@ if(any(flip)){
 }
 ```
 
-```{r writeGeno, cache=FALSE}
+```{r writeGeno, cache=FALSE, echo=FALSE}
 write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/genotypes_GRh37.tab > tmp/genotypes_GRCh37.tab.gz", intern=TRUE)
 ```
@@ -883,7 +883,7 @@ colnames(geno$fam) <- geno$fam[1,]
 geno$fam <- geno$fam[, colnames(geno$bed)]
 ```
 
-```{r writeCovar, cache=FALSE}
+```{r writeCovar, cache=FALSE, echo=FALSE}
 write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", intern=TRUE)
 ```
