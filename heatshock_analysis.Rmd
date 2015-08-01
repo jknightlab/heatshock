@@ -770,8 +770,8 @@ resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
 ```
 
 ## Response QTL analysis
-All probes considered to be differentially expressed following heat shock 
-(FDR < `fdrCut` and fold change > `r 2^fcCut`) were further investigated for
+All probes considered to be differentially expressed following heat shock treatment
+(FDR < `r fdrCut` and fold change > `r 2^fcCut`) were further investigated for
 the presence of genetic variation that modulates their response to the stimulus.
 
 For each probe the observed response to the stimulus (as measured by the log~2~ 
@@ -858,6 +858,8 @@ if(any(flip)){
 write.table(geno$bed, file="genotypes_GRCh37.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/genotypes_GRh37.tab > tmp/genotypes_GRCh37.tab.gz")
 ```
+
+
 
 # Results
 ## Differential expression analysis
