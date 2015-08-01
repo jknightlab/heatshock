@@ -877,10 +877,12 @@ basis.
 ```{r covariates}
 geno$fam <- dplyr::filter(dplyr::select(geno$fam, 2, 5), V2 %in% colnames(geno$bed))
 geno$fam <- t(geno$fam)
+colnames(geno$fam) <- geno$fam[1,]
+geno$fam <- geno$fam[, colnames(geno$bed)]
 ```
 
 ```{r writeCovar, cache=FALSE}
-write.table(geno$fam, file="tmp/covariates.tab", quote=FALSE, sep="\t")
+write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", internal=TRUE)
 ```
 
