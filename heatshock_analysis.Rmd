@@ -925,7 +925,7 @@ me <- Matrix_eQTL_main(
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = as.data.frame(probePos),
+    genepos = probePos,
     cisDist = 1e6,
     verbose = TRUE,
     pvalue.hist = FALSE,
