@@ -486,7 +486,7 @@ in other samples, including reversal of fold change for strongly differentially 
 genes. This suggests a potential mislabelling of these samples, which were consequently excluded.
 
 ```{r extraExclusions}
-exclude$sample <- union(exclude$samle, c("NA18502", "NA18505"))
+exclude$sample <- union(exclude$sample, c("NA18502", "NA18505"))
 ```
 
 ### Genotype QC
