@@ -680,7 +680,7 @@ The remaining samples were normalised separately for each BeadChip and differenc
 between groups corrected with ComBat [@Johnson07;@SVA15], preserving differences due to 
 heat shock stimulation.
 
-```{r vsnBatch}
+```{r vsnBatch, cache.extra=exclude$sample}
 batch <- with(subset(info, !`Cell Line` %in% exclude$sample), 
 		data.frame(sample=sample, cluster=as.integer(factor(Sentrix_ID)), 
 			treatment=Treatment, stringsAsFactors=FALSE))
@@ -934,7 +934,7 @@ write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, 
 system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", intern=TRUE)
 ```
 
-```{r prepQTL, echo=FALSE}
+```{r prepQTL, echo=FALSE, cache=FALSE}
 snps <- SlicedData$new();
 snps$fileDelimiter <- "\t"
 snps$fileOmitCharacters <- "NA"
