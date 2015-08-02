@@ -219,6 +219,22 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
+filterSample <- function(sig, sig.raw, det, excl){
+  sig <- filter(sig, !sample %in% excl)
+  sig.raw <- filter(sig.raw, !sample %in% excl)
+  det <- filter(det, !sample %in% excl)
+  
+  return(sig=sig, sig.raw=sig.raw, det=det)
+}
+
+updateSampleList <- function(samples, sampleFile){
+  samples <- sub("_.", "", unique(samples))
+  sampleInfo <- readr::read_delim(sampleFile, delim=" ", 
+                                  col_names=c("Family", "Individual", "Father", "Mother", "Sex", "Phenotype"))
+  keepSamples <- dplyr::filter(dplyr::select(sampleInfo, Family, Individual), Individual %in% samples)
+  write.table(keepSamples, file="tmp/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
+}
+
 figRef <- local({
     tag <- numeric()
     created <- logical()
@@ -433,9 +449,10 @@ exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < sd.mi
 ```
 
 ```{r filterSample}
-sig.data.long <- filter(sig.data.long, !sample %in% exclude$sample)
-sig.data.raw.long <- filter(sig.data.raw.long, !sample %in% exclude$sample)
-det.data.long <- filter(det.data.long, !sample %in% exclude$sample)
+dat <- filterSample(sig.data.long, sig.data.raw.long, exclude$sample)
+sig.data.long <- dat$sig
+sig.data.raw.long <- dat$sig.raw
+det.data.long <- dat$det
 ```
 
 After filtering `r length(unique(sig.data.long$probe))` of `r nrow(sig.data.raw)`
@@ -487,16 +504,16 @@ genes. This suggests a potential mislabelling of these samples, which were conse
 
 ```{r extraExclusions}
 exclude$sample <- union(exclude$sample, c("NA18502", "NA18505"))
+dat <- filterSample(sig.data.long, sig.data.raw.long, exclude$sample)
+sig.data.long <- dat$sig
+sig.data.raw.long <- dat$sig.raw
+det.data.long <- dat$det
 ```
 
 ### Genotype QC
 
 ```{r sampleList, cache=FALSE}
-samples <- sub("_.", "", unique(sig.data.long$sample))
-sampleInfo <- readr::read_delim("data/hapmap_YRI_r23a_filtered.fam", delim=" ", 
-		col_names=c("Family", "Individual", "Father", "Mother", "Sex", "Phenotype"))
-keepSamples <- dplyr::filter(dplyr::select(sampleInfo, Family, Individual), Individual %in% samples)
-write.table(keepSamples, file="tmp/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
+updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
 ```
 
 ```{r plinkSNPs, engine="bash", cache=FALSE}
@@ -581,10 +598,15 @@ pander(dplyr::select(ibdHigh, IID1, IID2, PI_HAT, DST, RATIO))
 plot(ibsClust(ibdReport), main="", xlab="IBS", sub="")
 ```
 
-```{r filterSample2, ref.label="filterSample"}
+```{r filterSample2}
+dat <- filterSample(sig.data.long, sig.data.raw.long, eclude$sample)
+sig.data.long <- dat$sig
+sig.data.raw.long <- dat$sig.raw
+det.data.long <- dat$det
 ```
 
-```{r sampleList2, ref.label="sampleList", cache=FALSE}
+```{r sampleList2, cache=FALSE}
+updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
 ```
 
 ```{r plinkMdsPlot, cache=FALSE, engine="bash"}
@@ -642,10 +664,15 @@ obvious outliers, which were removed. In addition the few remaining samples from
 `r paste(excludeChip, collapse=", ")` 
 were removed as the entire chip appears to be suspect.
 
-```{r excludeOutliers, ref.label="filterSample", dependson="vsnOutliers", cache.extra=exclude$sample}
+```{r excludeOutliers, dependson="vsnOutliers", cache.extra=exclude$sample}
+dat <- filterSample(sig.data.long, sig.data.raw.long, eclude$sample)
+sig.data.long <- dat$sig
+sig.data.raw.long <- dat$sig.raw
+det.data.long <- dat$det
 ```
 
-```{r exclOutlGeno, ref.label="sampleList", cache=FALSE}
+```{r exclOutlGeno, cache=FALSE}
+updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
 ```
 
 The remaining samples were normalised separately for each BeadChip and differences 
