@@ -449,7 +449,7 @@ exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < sd.mi
 ```
 
 ```{r filterSample}
-dat <- filterSample(sig.data.long, sig.data.raw.long, exclude$sample)
+dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
 sig.data.long <- dat$sig
 sig.data.raw.long <- dat$sig.raw
 det.data.long <- dat$det
@@ -504,7 +504,7 @@ genes. This suggests a potential mislabelling of these samples, which were conse
 
 ```{r extraExclusions}
 exclude$sample <- union(exclude$samle, c("NA18502", "NA18505"))
-dat <- filterSample(sig.data.long, sig.data.raw.long, exclude$sample)
+dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
 sig.data.long <- dat$sig
 sig.data.raw.long <- dat$sig.raw
 det.data.long <- dat$det
@@ -599,7 +599,7 @@ plot(ibsClust(ibdReport), main="", xlab="IBS", sub="")
 ```
 
 ```{r filterSample2}
-dat <- filterSample(sig.data.long, sig.data.raw.long, eclude$sample)
+dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
 sig.data.long <- dat$sig
 sig.data.raw.long <- dat$sig.raw
 det.data.long <- dat$det
@@ -665,7 +665,7 @@ obvious outliers, which were removed. In addition the few remaining samples from
 were removed as the entire chip appears to be suspect.
 
 ```{r excludeOutliers, dependson="vsnOutliers", cache.extra=exclude$sample}
-dat <- filterSample(sig.data.long, sig.data.raw.long, eclude$sample)
+dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
 sig.data.long <- dat$sig
 sig.data.raw.long <- dat$sig.raw
 det.data.long <- dat$det
