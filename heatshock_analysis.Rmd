@@ -224,7 +224,7 @@ filterSample <- function(sig, sig.raw, det, excl){
   sig.raw <- filter(sig.raw, !sample %in% excl)
   det <- filter(det, !sample %in% excl)
   
-  return(sig=sig, sig.raw=sig.raw, det=det)
+  list(sig=sig, sig.raw=sig.raw, det=det)
 }
 
 updateSampleList <- function(samples, sampleFile){
