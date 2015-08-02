@@ -934,7 +934,7 @@ write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, 
 system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", intern=TRUE)
 ```
 
-```{r prepQTL}
+```{r prepQTL, echo=FALSE}
 snps <- SlicedData$new();
 snps$fileDelimiter <- "\t"
 snps$fileOmitCharacters <- "NA"
@@ -973,7 +973,7 @@ me <- Matrix_eQTL_main(
     snpspos = geno$bim,
     genepos = probePos,
     cisDist = 1e6,
-    verbose = TRUE,
+    verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
     noFDRsaveMemory = FALSE)
