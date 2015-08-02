@@ -233,6 +233,7 @@ updateSampleList <- function(samples, sampleFile){
                                   col_names=c("Family", "Individual", "Father", "Mother", "Sex", "Phenotype"))
   keepSamples <- dplyr::filter(dplyr::select(sampleInfo, Family, Individual), Individual %in% samples)
   write.table(keepSamples, file="tmp/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
+  invisible(keepSamples)
 }
 
 figRef <- local({
@@ -513,7 +514,7 @@ det.data.long <- dat$det
 ### Genotype QC
 
 ```{r sampleList, cache=FALSE}
-updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
+keepSamples <- updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
 ```
 
 ```{r plinkSNPs, engine="bash", cache=FALSE}
@@ -606,7 +607,7 @@ det.data.long <- dat$det
 ```
 
 ```{r sampleList2, cache=FALSE}
-updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
+keepSamples <- updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
 ```
 
 ```{r plinkMdsPlot, cache=FALSE, engine="bash"}
@@ -672,7 +673,7 @@ det.data.long <- dat$det
 ```
 
 ```{r exclOutlGeno, cache=FALSE}
-updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
+keepSamples <- updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
 ```
 
 The remaining samples were normalised separately for each BeadChip and differences 
