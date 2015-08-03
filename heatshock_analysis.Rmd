@@ -1009,7 +1009,7 @@ geneP <- dplyr::arrange(geneP, Gene.FDR, desc(abs(SNP.beta)))
 ```{r prepGeneMatrixEqtl, cache=FALSE}
 selGenes <- dplyr::filter(geneP, Gene.FDR < 1)
 for(i in 1:nrow(selGenes)){
-  selSNPs <- geno$bed[geneSNPs[[selGenes$NuID[i]]], ]
+  selSNPs <- geno$bed[geneSNPs[[selGenes$NuID[i]]]$snp, ]
   write.table(selSNPs, file=paste0("tmp/ genotypes_", selGenese$Symbol[i],".tab"), 
               quote=FALSE, sep="\t")
   write.table(selectedFC[selGenes$NuID[i], , drop=FALSE], 
