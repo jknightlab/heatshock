@@ -957,7 +957,7 @@ covar$fileSliceSize <- 2000
 covar$LoadFile("tmp/covariates.tab")
 ```
 
-```{r runMatrixEQTL}
+```{r runMatrixEQTL, results="hide"}
 me <- Matrix_eQTL_main(
     snps = snps,
     gene = pheno,
