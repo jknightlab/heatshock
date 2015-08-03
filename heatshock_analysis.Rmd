@@ -1160,7 +1160,7 @@ set.caption(tabRef("topGeneSNPs", paste("Possible Response QTL for", geneP$Symbo
 pander(head(meGene[[1]]$cis$eqtls, geneSNPcount[1]))
 ```
 
-```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype.")}
+```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype."))}
 snp <- as.character(meGene[[1]]$cis$eqtls$snps[1])
 gene <- geneP$Symbol[1]
 probe <- geneP$NuID[1]
