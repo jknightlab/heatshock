@@ -1160,6 +1160,16 @@ set.caption(tabRef("topGeneSNPs", paste("Possible Response QTL for", geneP$Symbo
 pander(head(meGene[[1]]$cis$eqtls, geneSNPcount[1]))
 ```
 
+```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype.")}
+snp <- as.character(meGene[[1]]$cis$eqtls$snps[1])
+gene <- geneP$Symbol[1]
+probe <- geneP$NuID[1]
+plotData <- data.frame(genotype=geno$bed[snp,], fold_change=selectedFC[probe, ])
+ggplot(plotData, aes(x=factor(genotype), y=fold_change)) + 
+  geom_point(position=position_jitter(width=0.1), size=2.5) +
+  geom_boxplot(alpha=0.4, outlier.colour="white", fill="grey") +
+  theme_bw() + xlab(snp) + ylab("log fold change")
+```
 
 # Appendix {-}
 ## Custom functions used
