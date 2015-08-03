@@ -879,7 +879,7 @@ geno$bim$chrom <- paste0("chr", geno$bim$chrom)
 geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
 ```
 
-```{r writeSNPpos, cache=FALSE, echo=FALSE}
+```{r writeSNPpos, cache=FALSE, results="hide"}
 write.table(geno$bim, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/snp_loc_GRCh37.tab > tmp/snp_loc_GRCh37.tab.gz", intern=TRUE)
 ```
@@ -894,7 +894,7 @@ if(any(flip)){
 }
 ```
 
-```{r writeGeno, cache=FALSE, echo=FALSE}
+```{r writeGeno, cache=FALSE, results="hide"}
 write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
 system("gzip -c tmp/genotypes_GRh37.tab > tmp/genotypes_GRCh37.tab.gz", intern=TRUE)
 ```
@@ -934,7 +934,7 @@ write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, 
 system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", intern=TRUE)
 ```
 
-```{r prepQTL, echo=FALSE, cache=FALSE}
+```{r prepQTL, results="hide", cache=FALSE}
 snps <- SlicedData$new();
 snps$fileDelimiter <- "\t"
 snps$fileOmitCharacters <- "NA"
@@ -1017,7 +1017,7 @@ for(i in 1:nrow(selGenes)){
 }
 ```
 
-```{r runGeneMatrixEqtl, cache=FALSE}
+```{r runGeneMatrixEqtl, cache=FALSE, results="hide"}
 meGene <- vector(mode="list", nrow(selGenes))
 names(meGene) <- selGenes$NuID
 for(i in 1:nrow(selGenes)){
