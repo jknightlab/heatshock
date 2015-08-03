@@ -917,9 +917,6 @@ then corrected for the number of genes tested by computing the corresponding
 false discovery rate. The second stage served to examine the identified
 genes more closely by identifying individual SNPs that are associated
 with the change in expression observed for the gene in response to the stimulus.
-Only genes that were considered significant during the first stage were 
-examined and SNP p-values were corrected for multiple testing on a per gene
-basis.
 
 ```{r covariates}
 geno$fam <- dplyr::filter(dplyr::select(geno$fam, 2, 5), V2 %in% colnames(geno$bed))
