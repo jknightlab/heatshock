@@ -1144,7 +1144,7 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
 
 ## Response QTL analysis
 
-```{r reQTLGeneTable}
+```{r reQTLGeneTable, cache=FALSE}
 set.caption(tabRef("reQTLgenes"), "List of genes with strongest evidence for response QTL.")
 pander(head(dplyr::select(geneP, -ArrayAddress, -NuID)))
 ```
