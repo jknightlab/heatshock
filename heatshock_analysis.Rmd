@@ -1047,7 +1047,7 @@ for(i in 1:nrow(selGenes)){
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = probePos,
+    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
     cisDist = 1e6,
     verbose = FALSE,
     pvalue.hist = FALSE,
