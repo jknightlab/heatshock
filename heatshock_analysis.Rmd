@@ -976,7 +976,7 @@ me <- Matrix_eQTL_main(
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
-    noFDRsaveMemory = TRUE)
+    noFDRsaveMemory = FALSE)
 ```
 
 ```{r geneSNPs}
