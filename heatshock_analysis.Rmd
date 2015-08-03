@@ -990,7 +990,7 @@ geneSNPs <- do.call(GRangesList, mapply(
   MoreArgs=list(x=snpPos), SIMPLIFY=FALSE))
 names(geneSNPs) <- probePos$id
 
-mainSNP <- dplyr::filter(me$cis$eqtl, !duplicated(gene))
+mainSNP <- dplyr::filter(me$cis$eqtls, !duplicated(gene))
 
 geneP <- me$cis$min.pv.gene * sapply(names(me$cis$min.pv.gene), 
                                      function(x) length(geneSNPs[[x]]))
