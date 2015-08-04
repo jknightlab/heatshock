@@ -1313,6 +1313,19 @@ ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
   theme_bw() + xlab(snp) + ylab("log fold change")
 ```
 
+
+## Analysis of eQTL in basal and stimulated cells
+
+```{r eQTLStimGeneTable, cache=FALSE}
+set.caption(tabRef("eQTLstimGenes", "List of genes with strongest evidence for genetic modulation of gene expression after heat shock treatment."))
+pander(head(dplyr::select(geneP_stim, -ArrayAddress, -NuID)))
+```
+
+```{r eQTLBasalGeneTable, cache=FALSE}
+set.caption(tabRef("eQTLbasalGenes", "List of genes with strongest evidence for genetic modulation of gene expression in basal state."))
+pander(head(dplyr::select(geneP_basal, -ArrayAddress, -NuID)))
+```
+
 # Appendix {-}
 ## Custom functions used
 ```{r, ref.label="functions", eval=FALSE, echo=TRUE}
