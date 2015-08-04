@@ -1297,6 +1297,18 @@ for(i in 1:nrow(selGenes_basal)){
 geneSNPcount_basal <- sapply(meGene_basal, function(x) sum(x$cis$eqtls$FDR < 0.01))
 ```
 
+The genes with significant associations (FDR < 0.05) in either condition are considered
+for significance in the other condition. Any gene with a significant association in 
+one condition and FDR > 0.5 in the other is considered to be specific to that condition.
+
+```{r compareGenes}
+stimGenes <- dplyr::filter(geneP_stim, Gene.FDR < 0.05 & 
+                             !Symbol %in% dplyr::filter(geneP_basal, Gene.FDR < 0.5)$Symbol)
+basalGenes <- dplyr::filter(geneP_basal, Gene.FDR < 0.05 & 
+                             !Symbol %in% dplyr::filter(geneP_stim, Gene.FDR < 0.5)$Symbol)
+```
+
+
 # Results
 ## Differential expression analysis
 
@@ -1417,14 +1429,34 @@ ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
 ## Analysis of eQTL in basal and stimulated cells
 
 ```{r eQTLStimGeneTable, cache=FALSE}
-set.caption(tabRef("eQTLstimGenes", "List of genes with strongest evidence for genetic modulation of gene expression after heat shock treatment."))
-pander(head(dplyr::select(geneP_stim, -ArrayAddress, -NuID)))
+set.caption(tabRef("eQTLstimGenes", "List of genes with strongest evidence for genetic modulation of gene expression after heat shock treatment. Significant associations only observed after heat shock treatment are highlight."))
+pander(head(dplyr::select(geneP_stim, -ArrayAddress, -NuID)), 
+       emphasize.rows=which(geneP_stim$Symbol %in% stimGenes$Symbol))
 ```
 
 ```{r eQTLBasalGeneTable, cache=FALSE}
-set.caption(tabRef("eQTLbasalGenes", "List of genes with strongest evidence for genetic modulation of gene expression in basal state."))
-pander(head(dplyr::select(geneP_basal, -ArrayAddress, -NuID)))
+set.caption(tabRef("eQTLbasalGenes", "List of genes with strongest evidence for genetic modulation of gene expression in basal state. Significant associations specific to the basal state are highlighted."))
+pander(head(dplyr::select(geneP_basal, -ArrayAddress, -NuID)),
+       emphasize.rows=which(geneP_basal$Symbol %in% basalGenes$Symbol))
 ```
+
+Condition specific associations were identified for `r nrow(stimGenes)` 
+gene`r if(nrow(stimGenes) > 1) "s" else ""` in the stimulated and for `r nrow(basalGenes)`
+in the basal state (`r tabRef("eQTLstimGenes")` and `r "eQTLbasalGenes"`). See `r tabRef("topGeneSNPs_stim")`
+and `r "topGeneSNPs_basal"` for a list of SNPs of interest for these top genes.
+
+```{r topGeneSNPs_stim, cache=FALSE}
+set.caption(tabRef("topGeneSNPs_stim", paste("Possible eQTL for", stimGenes$Symbol[1])))
+pander(head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, geneSNPcount_stim[1]))
+```
+
+```{r topGeneSNPs_basal, cache=FALSE}
+set.caption(tabRef("topGeneSNPs_basal", paste("Possible eQTL for", basalGenes$Symbol[1])))
+pander(head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, geneSNPcount_basal[1]))
+```
+
+
+
 
 # Appendix {-}
 ## Custom functions used
