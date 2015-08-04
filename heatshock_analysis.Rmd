@@ -1182,7 +1182,7 @@ geneP_stim <- dplyr::rename(geneP_stim, Symbol=SymbolReannotated, SNP=snps, SNP.
                        expression.FDR=adj.P.Val, SNP.beta=beta)
 geneP_stim <- dplyr::arrange(geneP_stim, Gene.FDR, desc(abs(SNP.beta)))
 
-geneP_basal <- meStim$cis$min.pv.gene * sapply(names(meStim$cis$min.pv.gene), 
+geneP_basal <- meBasal$cis$min.pv.gene * sapply(names(meBasal$cis$min.pv.gene), 
                                      function(x) length(geneSNPs[[x]]))
 geneP_basal <- sapply(geneP_basal, min, 1)
 geneP_basal <- p.adjust(geneP_basal, "BH")
