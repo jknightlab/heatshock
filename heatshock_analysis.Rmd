@@ -1027,7 +1027,7 @@ for(i in 1:nrow(selGenes)){
   snpsSub$fileSkipRows <- 1
   snpsSub$fileSkipColumns <- 1
   snpsSub$fileSliceSize <- 2000
-  snpsSub$LoadFile(paste0("tmp/ genotypes_", selGenes$Symbol[i],".tab"))
+  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"))
   
   pheno <- SlicedData$new();
   pheno$fileDelimiter <- "\t"
@@ -1196,6 +1196,106 @@ geneP_basal <- dplyr::rename(geneP_basal, Symbol=SymbolReannotated, SNP=snps, SN
 geneP_basal <- dplyr::arrange(geneP_basal, Gene.FDR, desc(abs(SNP.beta)))
 ```
 
+```{r prepGeneEqtl, cache=FALSE}
+selGenes_stim <- dplyr::filter(geneP_stim, Gene.FDR < 0.05)
+for(i in 1:nrow(selGenes_stim)){
+  selSNPs_stim <- geno$bed[geneSNPs[[selGenes_stim$NuID[i]]]$snp, ]
+  write.table(selSNPs_stim, file=paste0("tmp/genotypes_", selGenes_stim$Symbol[i],"_stim.tab"), 
+              quote=FALSE, sep="\t")
+  write.table(stimExpr[selGenes_stim$NuID[i], , drop=FALSE], 
+              file=paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"), sep="\t", quote=FALSE)
+}
+
+selGenes_basal <- dplyr::filter(geneP_basal, Gene.FDR < 0.05)
+for(i in 1:nrow(selGenes_basal)){
+  selSNPs_basal <- geno$bed[geneSNPs[[selGenes_basal$NuID[i]]]$snp, ]
+  write.table(selSNPs_basal, file=paste0("tmp/genotypes_", selGenes_basal$Symbol[i],"_basal.tab"), 
+              quote=FALSE, sep="\t")
+  write.table(basalExpr[selGenes_basal$NuID[i], , drop=FALSE], 
+              file=paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"), sep="\t", quote=FALSE)
+}
+
+```
+
+```{r runGeneEqtl, cache=FALSE, results="hide"}
+meGene_stim <- vector(mode="list", nrow(selGenes_stim))
+names(meGene_stim) <- selGenes_stim$NuID
+for(i in 1:nrow(selGenes_stim)){
+  snpsSub <- SlicedData$new();
+  snpsSub$fileDelimiter <- "\t"
+  snpsSub$fileOmitCharacters <- "NA"
+  snpsSub$fileSkipRows <- 1
+  snpsSub$fileSkipColumns <- 1
+  snpsSub$fileSliceSize <- 2000
+  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes_stim$Symbol[i],"_stim.tab"))
+  
+  pheno <- SlicedData$new();
+  pheno$fileDelimiter <- "\t"
+  pheno$fileOmitCharacters <- "NA"
+  pheno$fileSkipRows <- 1
+  pheno$fileSkipColumns <- 1
+  pheno$fileSliceSize <- 2000
+  pheno$LoadFile(paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"))
+  
+  meGene_stim[[selGenes_stim$NuID[i]]] <- Matrix_eQTL_main(
+    snps = snpsSub,
+    gene = pheno,
+    cvrt = covar,
+    output_file_name.cis = paste0("tmp/eQTL_", selGenes_stim$Symbol[i],"_stim_analysis"),
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    cisDist = 1e6,
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+}
+
+geneSNPcount_stim <- sapply(meGene_stim, function(x) sum(x$cis$eqtls$FDR < 0.01))
+
+meGene_basal <- vector(mode="list", nrow(selGenes_basal))
+names(meGene_basal) <- selGenes_basal$NuID
+for(i in 1:nrow(selGenes_basal)){
+  snpsSub <- SlicedData$new();
+  snpsSub$fileDelimiter <- "\t"
+  snpsSub$fileOmitCharacters <- "NA"
+  snpsSub$fileSkipRows <- 1
+  snpsSub$fileSkipColumns <- 1
+  snpsSub$fileSliceSize <- 2000
+  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes_basal$Symbol[i],"_basal.tab"))
+  
+  pheno <- SlicedData$new();
+  pheno$fileDelimiter <- "\t"
+  pheno$fileOmitCharacters <- "NA"
+  pheno$fileSkipRows <- 1
+  pheno$fileSkipColumns <- 1
+  pheno$fileSliceSize <- 2000
+  pheno$LoadFile(paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"))
+  
+  meGene_basal[[selGenes_basal$NuID[i]]] <- Matrix_eQTL_main(
+    snps = snpsSub,
+    gene = pheno,
+    cvrt = covar,
+    output_file_name.cis = paste0("tmp/eQTL_", selGenes_basal$Symbol[i],"_basal_analysis"),
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    cisDist = 1e6,
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+}
+
+geneSNPcount_basal <- sapply(meGene_basal, function(x) sum(x$cis$eqtls$FDR < 0.01))
+```
 
 # Results
 ## Differential expression analysis
