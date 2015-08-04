@@ -958,7 +958,7 @@ covar$fileSliceSize <- 2000
 covar$LoadFile("tmp/covariates.tab")
 ```
 
-```{r runMatrixEQTL, results="hide"}
+```{r runMatrixEQTL, results="hide", cache=FALSE}
 me <- Matrix_eQTL_main(
     snps = snps,
     gene = pheno,
@@ -1054,6 +1054,113 @@ for(i in 1:nrow(selGenes)){
 }
 
 geneSNPcount <- sapply(meGene, function(x) sum(x$cis$eqtls$FDR < 0.01))
+```
+
+## Analysis of eQTL in basal and stimulated cells
+
+To further investigate potential genetic modulators of gene expression for genes that
+play a role in heat shock response we carried out a cis eQTL analysis for all genes identified
+as differntially expressed in response to heat shock.
+
+```{r selectedExpr}
+stimExpr <- selectedExpr[, stimIdx]
+basalExpr <- selectedExpr[, basalIdx]
+colnames(stimExpr) <- str_extract(colnames(stimExpr), "NA[[:digit:]]+")
+colnames(basalExpr) <- str_extract(colnames(basalExpr), "NA[[:digit:]]+")
+rownames(stimExpr) <- rownames(basalExpr) <- selectedGenes$NuID
+```
+
+```{r writeSelExpr, cache=FALSE}
+write.table(stimExpr, file="tmp/selected_probes_stim_expr.tab", sep="\t", quote=FALSE)
+write.table(basalExpr, file="tmp/selected_probes_basal_expr.tab", sep="\t", quote=FALSE)
+```
+
+```{r expr_pc}
+nPC_expr <- 2
+pca_stim <- prcomp(t(stimExpr), center=TRUE, scale = TRUE)
+pc_stim <- pca_stim$x
+
+pca_basal <- prcomp(t(basalExpr), center=TRUE, scale = TRUE)
+pc_basal <- pca_basal$x
+```
+
+```{r writeExprCovar, cache=FALSE}
+write.table(t(pc_stim)[1:nPC_expr, ], file = "tmp/covar_expr_stim.tab", sep="\t", quote=FALSE)
+write.table(t(pc_basal)[1:nPC_expr, ], file = "tmp/covar_expr_basal.tab", sep="\t", quote=FALSE)
+```
+
+
+The analysis was carried out with Matrix-eQTL using an approach equivalent to the one
+used for the [response QTL analysis](#response-qtl-analysis).
+
+```{r prepEQTL, results="hide", cache=FALSE}
+phenoStim <- SlicedData$new();
+phenoStim$fileDelimiter <- "\t"
+phenoStim$fileOmitCharacters <- "NA"
+phenoStim$fileSkipRows <- 1
+phenoStim$fileSkipColumns <- 1
+phenoStim$fileSliceSize <- 2000
+phenoStim$LoadFile("tmp/selected_probes_stim_expr.tab")
+
+covarStim <- SlicedData$new();
+covarStim$fileDelimiter <- "\t"
+covarStim$fileOmitCharacters <- "NA"
+covarStim$fileSkipRows <- 1
+covarStim$fileSkipColumns <- 1
+covarStim$fileSliceSize <- 2000
+covarStim$LoadFile("tmp/covar_expr_stim.tab")
+
+phenoBasal <- SlicedData$new();
+phenoBasal$fileDelimiter <- "\t"
+phenoBasal$fileOmitCharacters <- "NA"
+phenoBasal$fileSkipRows <- 1
+phenoBasal$fileSkipColumns <- 1
+phenoBasal$fileSliceSize <- 2000
+phenoBasal$LoadFile("tmp/selected_probes_basal_expr.tab")
+
+covarBasal <- SlicedData$new();
+covarBasal$fileDelimiter <- "\t"
+covarBasal$fileOmitCharacters <- "NA"
+covarBasal$fileSkipRows <- 1
+covarBasal$fileSkipColumns <- 1
+covarBasal$fileSliceSize <- 2000
+covarBasal$LoadFile("tmp/covar_expr_basal.tab")
+```
+
+```{r runEQTL, cache=FALSE, result="hide"}
+meStim <- Matrix_eQTL_main(
+    snps = snps,
+    gene = phenoStim,
+    cvrt = covarStim,
+    output_file_name.cis = "tmp/eQTL_stim_analysis",
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1e-3,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = probePos,
+    cisDist = 1e6,
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+
+meBasal <- Matrix_eQTL_main(
+    snps = snps,
+    gene = phenoBasal,
+    cvrt = covarBasal,
+    output_file_name.cis = "tmp/eQTL_basal_analysis",
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1e-3,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = probePos,
+    cisDist = 1e6,
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
 ```
 
 # Results
