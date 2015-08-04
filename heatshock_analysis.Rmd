@@ -8,7 +8,9 @@ date: "`r format(Sys.time(), '%a %d %b %Y')`"
 output:
   pdf_document:
     includes:
-      in_header: include/captions.tex
+      in_header:
+        - include/captions.tex
+        - include/encoding.tex
     toc: true
     fig_caption: true
     highlight: tango
