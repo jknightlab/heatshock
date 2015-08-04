@@ -1138,7 +1138,7 @@ meStim <- Matrix_eQTL_main(
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = probePos,
+    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
     cisDist = 1e6,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1155,13 +1155,45 @@ meBasal <- Matrix_eQTL_main(
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = probePos,
+    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
     cisDist = 1e6,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
     noFDRsaveMemory = FALSE)
 ```
+
+```{r eGeneSNPs}
+mainSNP_stim <- dplyr::filter(meStim$cis$eqtls, !duplicated(gene))
+mainSNP_basal <- dplyr::filter(meBasal$cis$eqtls, !duplicated(gene))
+
+geneP_stim <- meStim$cis$min.pv.gene * sapply(names(meStim$cis$min.pv.gene), 
+                                     function(x) length(geneSNPs[[x]]))
+geneP_stim <- sapply(geneP_stim, min, 1)
+geneP_stim <- p.adjust(geneP_stim, "BH")
+geneP_stim <- data.frame(NuID=names(geneP_stim), Gene.FDR=geneP_stim, stringsAsFactors=FALSE)
+geneP_stim <- dplyr::left_join(geneP_stim, limmaTable, by="NuID")
+geneP_stim <- dplyr::left_join(geneP_stim, mainSNP, by=c(NuID="gene"))
+geneP_stim <- dplyr::select(geneP_stim, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
+                       pvalue, beta, logFC, adj.P.Val)
+geneP_stim <- dplyr::rename(geneP_stim, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
+                       expression.FDR=adj.P.Val, SNP.beta=beta)
+geneP_stim <- dplyr::arrange(geneP_stim, Gene.FDR, desc(abs(SNP.beta)))
+
+geneP_basal <- meStim$cis$min.pv.gene * sapply(names(meStim$cis$min.pv.gene), 
+                                     function(x) length(geneSNPs[[x]]))
+geneP_basal <- sapply(geneP_basal, min, 1)
+geneP_basal <- p.adjust(geneP_basal, "BH")
+geneP_basal <- data.frame(NuID=names(geneP_basal), Gene.FDR=geneP_basal, stringsAsFactors=FALSE)
+geneP_basal <- dplyr::left_join(geneP_basal, limmaTable, by="NuID")
+geneP_basal <- dplyr::left_join(geneP_basal, mainSNP, by=c(NuID="gene"))
+geneP_basal <- dplyr::select(geneP_basal, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
+                       pvalue, beta, logFC, adj.P.Val)
+geneP_basal <- dplyr::rename(geneP_basal, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
+                       expression.FDR=adj.P.Val, SNP.beta=beta)
+geneP_basal <- dplyr::arrange(geneP_basal, Gene.FDR, desc(abs(SNP.beta)))
+```
+
 
 # Results
 ## Differential expression analysis
