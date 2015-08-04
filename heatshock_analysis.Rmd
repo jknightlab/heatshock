@@ -1302,12 +1302,12 @@ for significance in the other condition. Any gene with a significant association
 one condition and FDR > 0.5 in the other is considered to be specific to that condition.
 
 ```{r compareGenes}
-stimGenes <- dplyr::filter(geneP_stim, Gene.FDR < 0.05 & 
-                             !Symbol %in% dplyr::filter(geneP_basal, Gene.FDR < 0.5)$Symbol)
-basalGenes <- dplyr::filter(geneP_basal, Gene.FDR < 0.05 & 
-                             !Symbol %in% dplyr::filter(geneP_stim, Gene.FDR < 0.5)$Symbol)
-```
+basal_extended <- dplyr::filter(geneP_basal, Gene.FDR < 0.5)$Symbol
+stim_extended <- dplyr::filter(geneP_stim, Gene.FDR < 0.5)$Symbol
 
+stimGenes <- dplyr::filter(geneP_stim, Gene.FDR < 0.05 & !Symbol %in% basal_extended)
+basalGenes <- dplyr::filter(geneP_basal, Gene.FDR < 0.05 & !Symbol %in% stim_extended)
+```
 
 # Results
 ## Differential expression analysis
@@ -1454,8 +1454,6 @@ pander(head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, geneSNPcount_stim[1]))
 set.caption(tabRef("topGeneSNPs_basal", paste("Possible eQTL for", basalGenes$Symbol[1])))
 pander(head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, geneSNPcount_basal[1]))
 ```
-
-
 
 
 # Appendix {-}
