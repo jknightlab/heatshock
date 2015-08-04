@@ -1085,8 +1085,8 @@ pc_basal <- pca_basal$x
 ```
 
 ```{r writeExprCovar, cache=FALSE}
-write.table(t(pc_stim)[1:nPC_expr, ], file = "tmp/covar_expr_stim.tab", sep="\t", quote=FALSE)
-write.table(t(pc_basal)[1:nPC_expr, ], file = "tmp/covar_expr_basal.tab", sep="\t", quote=FALSE)
+write.table(t(pc_stim)[1:nPC_expr, , drop=FALSE], file = "tmp/covar_expr_stim.tab", sep="\t", quote=FALSE)
+write.table(t(pc_basal)[1:nPC_expr, , drop=FALSE], file = "tmp/covar_expr_basal.tab", sep="\t", quote=FALSE)
 ```
 
 
