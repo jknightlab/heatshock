@@ -1129,7 +1129,7 @@ covarBasal$fileSliceSize <- 2000
 covarBasal$LoadFile("tmp/covar_expr_basal.tab")
 ```
 
-```{r runEQTL, cache=FALSE, result="hide"}
+```{r runEQTL, cache=FALSE, results="hide"}
 meStim <- Matrix_eQTL_main(
     snps = snps,
     gene = phenoStim,
