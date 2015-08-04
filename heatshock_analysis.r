@@ -30,6 +30,22 @@ data <- list(exprRaw=list(dir="/analysis/tmp", file="heatshock_expr_raw.tab.gz",
                   desc="Table of differntially expressed genes (tab delimited)",
                   name="differential gene expression"))
 
+matrixEQTL <- list(probePos=list(dir="/analysis/tmp", file="selected_probes_pos.tab",
+                                 desc="Genomic location of differntially expressed probes",
+                                 name="probe positions"),
+                   snpPos=list(dir="/analysis/tmp", file="snp_loc_GRCh37.tab.gz",
+                               desc="Genomic location of SNPs",
+                               name="SNP positions"),
+                   probeFC=list(dir="/analysis/tmp", file="selected_probes_fc.tab",
+                                desc="Log2 fold change values for divverentially expressed probes (tab delimited)",
+                                name="fold change"),
+                   geno=list(dir="/analysis/tmp", file="genotypes_GRCh37.tab.gz",
+                             desc="Genotypes for use with Matrix-eQTL",
+                             name="genotypes"),
+                   covar=list(dir="/analysis/tmp", file="covariates.tab.gz",
+                              desc="Covariates for use with Matrix-eQTL",
+                              name="covariates"))
+
 copyFiles <- function(files, dest){
 	if(!file.exists(dest)) dir.create(dest)
 	for(i in 1:length(files)){

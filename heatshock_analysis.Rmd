@@ -43,12 +43,16 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(readr)
+library(stringr)
 library(illuminaHumanv3.db)
 library(knitr)
 library(pander)
 library(reshape2)
 library(ggdendro)
 library(topGO)
+library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+library(plink2R)
+library(MatrixEQTL)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -216,6 +220,23 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
+filterSample <- function(sig, sig.raw, det, excl){
+  sig <- filter(sig, !sample %in% excl)
+  sig.raw <- filter(sig.raw, !sample %in% excl)
+  det <- filter(det, !sample %in% excl)
+  
+  list(sig=sig, sig.raw=sig.raw, det=det)
+}
+
+updateSampleList <- function(samples, sampleFile){
+  samples <- sub("_.", "", unique(samples))
+  sampleInfo <- readr::read_delim(sampleFile, delim=" ", 
+                                  col_names=c("Family", "Individual", "Father", "Mother", "Sex", "Phenotype"))
+  keepSamples <- dplyr::filter(dplyr::select(sampleInfo, Family, Individual), Individual %in% samples)
+  write.table(keepSamples, file="tmp/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
+  invisible(keepSamples)
+}
+
 figRef <- local({
     tag <- numeric()
     created <- logical()
@@ -285,6 +306,15 @@ desc <- sapply(data, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse="<br>"))
 ```
 
+#### Matrix-eQTL input
+
+```{r linkMEQTL, echo=FALSE, cache=FALSE, results="asis"}
+meqtlFiles <- sapply(matrixEQTL, linkFile, "data", "markdown")
+desc <- sapply(matrixEQTL, "[[", "desc")
+cat(paste0("<span title=\"", desc, "\">", meqtlFiles, "</span>", collapse="<br>"))
+```
+
+
 #### Log files
 
 ```{r linkLogs, echo=FALSE, cache=FALSE, results="asis"}
@@ -298,7 +328,7 @@ cat(paste0("<span title=\"", desc, "\">", logFiles, "</span>", collapse="<br>"))
 The heat shock response is a highly conserved mechanism responsible for the 
 maintenance of cellular function under stress. Originally identified as part of the 
 response to increased environmental temperatures [@Ritossa62] heat shock proteins (HSPs) 
-have since been implicated  in susceptability to infection [@Kee08], cancer risk [@Sfar10] 
+have since been implicated  in susceptibility to infection [@Kee08], cancer risk [@Sfar10] 
 and drug response [@Martin04]. Despite its obvious significance many details of the
 heat shock response still remain uncertain.
 
@@ -307,7 +337,7 @@ Here we study the genome-wide changes to gene expression induced by heat shock i
 involved in the human heat shock response. To further elucidate underlying mechanisms
 genetic variants modulating gene expression are mapped across all relevant genes.
 
-# Material and Methods
+# Methods
 
 ## Pre-processing and Quality Control
 
@@ -421,9 +451,10 @@ exclude$sample <- union(exclude$sample, filter(sampleSD, `sd(intensity)` < sd.mi
 ```
 
 ```{r filterSample}
-sig.data.long <- filter(sig.data.long, !sample %in% exclude$sample)
-sig.data.raw.long <- filter(sig.data.raw.long, !sample %in% exclude$sample)
-det.data.long <- filter(det.data.long, !sample %in% exclude$sample)
+dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
+sig.data.long <- dat$sig
+sig.data.raw.long <- dat$sig.raw
+det.data.long <- dat$det
 ```
 
 After filtering `r length(unique(sig.data.long$probe))` of `r nrow(sig.data.raw)`
@@ -468,14 +499,23 @@ A principle component analysis of the gene expression for the remaining samples 
 a clustering of samples from two RNA amplification batches in October 2009
 (`r figRef("pcaPlot")`). This batch effect is noted for later correction during the analysis.
 
+Further analysis of the gene expression response to heat shock revealed that two of the samples
+(NA18502 and NA18508) exhibit patterns of expression inconsistent with those observed
+in other samples, including reversal of fold change for strongly differentially expressed
+genes. This suggests a potential mislabelling of these samples, which were consequently excluded.
+
+```{r extraExclusions}
+exclude$sample <- union(exclude$sample, c("NA18502", "NA18508"))
+dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
+sig.data.long <- dat$sig
+sig.data.raw.long <- dat$sig.raw
+det.data.long <- dat$det
+```
+
 ### Genotype QC
 
 ```{r sampleList, cache=FALSE}
-samples <- sub("_.", "", unique(sig.data.long$sample))
-sampleInfo <- readr::read_delim("data/hapmap_YRI_r23a_filtered.fam", delim=" ", 
-		col_names=c("Family", "Individual", "Father", "Mother", "Sex", "Phenotype"))
-keepSamples <- dplyr::filter(dplyr::select(sampleInfo, Family, Individual), Individual %in% samples)
-write.table(keepSamples, file="tmp/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
+keepSamples <- updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
 ```
 
 ```{r plinkSNPs, engine="bash", cache=FALSE}
@@ -501,7 +541,7 @@ plink --bfile tmp/hapmap_yri.snp_flt --out tmp/hapmap_yri.smpl_flt --mind 0.1 --
 nnIBS <- readr::read_table("tmp/hapmap_yri.smpl_flt.nearest")
 ```
 
-The IBS nearest neighbour caculation shows that the majority of samples are quite
+The IBS nearest neighbour calculation shows that the majority of samples are quite
 similar with regard to the extend of genetic differences between them while a few
 show markedly increased sharing of alleles (see `r figRef("nnIBS")` and `r tabRef("nnIBS")`). 
 This is consistent with a population of largely unrelated individuals including a few 
@@ -560,10 +600,15 @@ pander(dplyr::select(ibdHigh, IID1, IID2, PI_HAT, DST, RATIO))
 plot(ibsClust(ibdReport), main="", xlab="IBS", sub="")
 ```
 
-```{r filterSample2, ref.label="filterSample"}
+```{r filterSample2}
+dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
+sig.data.long <- dat$sig
+sig.data.raw.long <- dat$sig.raw
+det.data.long <- dat$det
 ```
 
-```{r sampleList2, ref.label="sampleList", cache=FALSE}
+```{r sampleList2, cache=FALSE}
+keepSamples <- updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
 ```
 
 ```{r plinkMdsPlot, cache=FALSE, engine="bash"}
@@ -621,17 +666,22 @@ obvious outliers, which were removed. In addition the few remaining samples from
 `r paste(excludeChip, collapse=", ")` 
 were removed as the entire chip appears to be suspect.
 
-```{r excludeOutliers, ref.label="filterSample", dependson="vsnOutliers", cache.extra=exclude$sample}
+```{r excludeOutliers, dependson="vsnOutliers", cache.extra=exclude$sample}
+dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
+sig.data.long <- dat$sig
+sig.data.raw.long <- dat$sig.raw
+det.data.long <- dat$det
 ```
 
-```{r exclOutlGeno, ref.label="sampleList", cache=FALSE}
+```{r exclOutlGeno, cache=FALSE}
+keepSamples <- updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
 ```
 
 The remaining samples were normalised separately for each BeadChip and differences 
 between groups corrected with ComBat [@Johnson07;@SVA15], preserving differences due to 
 heat shock stimulation.
 
-```{r vsnBatch}
+```{r vsnBatch, cache.extra=exclude$sample}
 batch <- with(subset(info, !`Cell Line` %in% exclude$sample), 
 		data.frame(sample=sample, cluster=as.integer(factor(Sentrix_ID)), 
 			treatment=Treatment, stringsAsFactors=FALSE))
@@ -758,6 +808,253 @@ resultUp <- runTest(tgUp, algorithm="classic", statistic="fisher")
 resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
 ```
 
+## Response QTL analysis
+All probes considered to be differentially expressed following heat shock treatment
+(FDR < `r fdrCut` and fold change > `r 2^fcCut`) were further investigated for
+the presence of genetic variation that modulates their response to the stimulus.
+
+For each probe the observed response to the stimulus (as measured by the log~2~ 
+fold change) is tested for association with the genotypes within a 1 Mb window
+either side of the probe location. For this purpose only typed SNPs that passed
+QC were considered. Only genes and SNPs on autosomes were included in the 
+analysis.
+
+```{r selectGenes}
+exclChrom <- c("chrX", "chrY", "chrM")
+selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
+                                 !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
+selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation)
+
+selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation, 
+                                             "chr[[:digit:]]{1,2}:[[:digit:]]+:[[:digit:]]+")
+selectedGenes <- dplyr::filter(selectedGenes, !is.na(GenomicLocation))
+```
+
+```{r probeFC}
+selectedExpr <- sig.data.norm[selectedGenes$ArrayAddress,]
+basalIdx <- grep("_Basal", colnames(selectedExpr))
+stimIdx <- grep("_Stim", colnames(selectedExpr))
+selectedFC <- selectedExpr[, stimIdx] - selectedExpr[, basalIdx]
+colnames(selectedFC) <- str_extract(colnames(selectedFC), "NA[[:digit:]]+")
+rownames(selectedFC) <- selectedGenes$NuID
+```
+
+```{r writeFcFile, cache=FALSE}
+write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE)
+```
+
+```{r probeLoc}
+probePos <- as.data.frame(str_split_fixed(selectedGenes$GenomicLocation, ":", 3), stringsAsFactors=FALSE)
+names(probePos) <- c("chrom", "start", "end")
+probePos <- cbind(id=selectedGenes$NuID, probePos, stringsAsFactors=FALSE)
+probePos$start <- as.integer(probePos$start)
+probePos$end <- as.integer(probePos$end)
+```
+
+```{r writeProbePos, cache=FALSE}
+write.table(probePos, file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, row.names=FALSE)
+```
+
+The GRCh37 coordinates for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142.GRCh37*
+Bioconductor package [@Pages14].
+
+```{r snpPos}
+geno <- read_plink("tmp/hapmap_yri.smpl_flt2")
+geno$bim <- dplyr::select(geno$bim, 2, 1, 4)
+names(geno$bim) <- c("snp", "chrom", "pos")
+```
+
+```{r snpPosUpdate}
+geno$bim <- by(geno$bim, geno$bim$chrom, function(x){
+  locs <- getSNPlocs(paste0("ch", x$chrom[1]), caching=FALSE)
+  locs$RefSNP_id <- paste0("rs", locs$RefSNP_id)
+  snps <- inner_join(x, locs, by=c(snp="RefSNP_id"))
+  if(nrow(snps) < nrow(x)) warning("Dropped ", nrow(x) - nrow(snps), " SNP(s) from chromosome ", x$chrom[1])
+  dplyr::select(snps, snp, chrom, loc)
+})
+```
+
+```{r snpPosComb}
+geno$bim <- do.call(rbind, geno$bim)
+geno$bim$chrom <- paste0("chr", geno$bim$chrom)
+geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
+```
+
+```{r writeSNPpos, cache=FALSE, results="hide"}
+write.table(geno$bim, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
+system("gzip -c tmp/snp_loc_GRCh37.tab > tmp/snp_loc_GRCh37.tab.gz", intern=TRUE)
+```
+
+```{r prepGeno}
+rownames(geno$bed) <- str_extract(rownames(geno$bed), "NA[[:digit:]]+")
+geno$bed <- geno$bed[colnames(selectedFC), geno$bim$snp]
+geno$bed <- t(geno$bed)
+flip <- rowSums(geno$bed, na.rm=TRUE) > ncol(geno$bed)
+if(any(flip)){
+  geno$bed[flip, ] <- -geno$bed[flip]+2
+}
+```
+
+```{r writeGeno, cache=FALSE, results="hide"}
+write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
+system("gzip -c tmp/genotypes_GRh37.tab > tmp/genotypes_GRCh37.tab.gz", intern=TRUE)
+```
+
+```{r fc_pc}
+nPC <- 2
+pca <- prcomp(t(selectedFC), center=TRUE, scale = TRUE)
+pc <- pca$x
+```
+
+We tested for associations between genotype and heat shock response using
+a linear model as implemented in Matrix-eQTL [@Shabalin12], correcting for
+sex as well as the first `r nPC` principle components of the treatment response. 
+The analysis was carried out in two stages. The first stage served to identify genes that show 
+evidence of being modulated in their response to heat shock by local genetic 
+variation. To this end determine the the minimum p-value for each gene, adjusted 
+for the number of SNPs tested for association
+with this gene using a Bonferroni correction. The resulting p-values are
+then corrected for the number of genes tested by computing the corresponding
+false discovery rate. The second stage served to examine the identified
+genes more closely by identifying individual SNPs that are associated
+with the change in expression observed for the gene in response to the stimulus.
+
+```{r covariates}
+geno$fam <- dplyr::filter(dplyr::select(geno$fam, 2, 5), V2 %in% colnames(geno$bed))
+geno$fam <- t(geno$fam)
+colnames(geno$fam) <- geno$fam[1,]
+geno$fam <- geno$fam[, colnames(selectedFC)]
+geno$fam <- rbind(geno$fam, t(pc[, 1:nPC]))
+```
+
+```{r writeCovar, cache=FALSE, echo=FALSE}
+write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, sep="\t")
+system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", intern=TRUE)
+```
+
+```{r prepQTL, results="hide", cache=FALSE}
+snps <- SlicedData$new();
+snps$fileDelimiter <- "\t"
+snps$fileOmitCharacters <- "NA"
+snps$fileSkipRows <- 1
+snps$fileSkipColumns <- 1
+snps$fileSliceSize <- 2000
+snps$LoadFile("tmp/genotypes_GRCh37.tab")
+
+pheno <- SlicedData$new();
+pheno$fileDelimiter <- "\t"
+pheno$fileOmitCharacters <- "NA"
+pheno$fileSkipRows <- 1
+pheno$fileSkipColumns <- 1
+pheno$fileSliceSize <- 2000
+pheno$LoadFile("tmp/selected_probes_fc.tab")
+
+covar <- SlicedData$new();
+covar$fileDelimiter <- "\t"
+covar$fileOmitCharacters <- "NA"
+covar$fileSkipRows <- 1
+covar$fileSkipColumns <- 1
+covar$fileSliceSize <- 2000
+covar$LoadFile("tmp/covariates.tab")
+```
+
+```{r runMatrixEQTL, results="hide"}
+me <- Matrix_eQTL_main(
+    snps = snps,
+    gene = pheno,
+    cvrt = covar,
+    output_file_name.cis = "tmp/reQTL_analysis",
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1e-3,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = probePos,
+    cisDist = 1e6,
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+```
+
+```{r geneSNPs}
+probePos <- makeGRangesFromDataFrame(probePos, ignore.strand = TRUE, keep.extra.columns = TRUE)
+snpPos <- makeGRangesFromDataFrame(geno$bim, ignore.strand = TRUE, keep.extra.columns = TRUE, 
+                                   start.field = "loc", end.field = "loc")
+geneSNPs <- do.call(GRangesList, mapply(
+  function(x, chr, s, e) 
+    subset(x, seqnames == chr & start >= s - 1e6 & end <= e + 1e6), 
+  as.character(seqnames(probePos)), start(probePos), end(probePos), 
+  MoreArgs=list(x=snpPos), SIMPLIFY=FALSE))
+names(geneSNPs) <- probePos$id
+
+mainSNP <- dplyr::filter(me$cis$eqtls, !duplicated(gene))
+
+geneP <- me$cis$min.pv.gene * sapply(names(me$cis$min.pv.gene), 
+                                     function(x) length(geneSNPs[[x]]))
+geneP <- sapply(geneP, min, 1)
+geneP <- p.adjust(geneP, "BH")
+geneP <- data.frame(NuID=names(geneP), Gene.FDR=geneP, stringsAsFactors=FALSE)
+geneP <- dplyr::left_join(geneP, limmaTable, by="NuID")
+geneP <- dplyr::left_join(geneP, mainSNP, by=c(NuID="gene"))
+geneP <- dplyr::select(geneP, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
+                       pvalue, beta, logFC, adj.P.Val)
+geneP <- dplyr::rename(geneP, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
+                       expression.FDR=adj.P.Val, SNP.beta=beta)
+geneP <- dplyr::arrange(geneP, Gene.FDR, desc(abs(SNP.beta)))
+```
+
+```{r prepGeneMatrixEqtl, cache=FALSE}
+selGenes <- dplyr::filter(geneP, Gene.FDR < 1)
+for(i in 1:nrow(selGenes)){
+  selSNPs <- geno$bed[geneSNPs[[selGenes$NuID[i]]]$snp, ]
+  write.table(selSNPs, file=paste0("tmp/ genotypes_", selGenes$Symbol[i],".tab"), 
+              quote=FALSE, sep="\t")
+  write.table(selectedFC[selGenes$NuID[i], , drop=FALSE], 
+              file=paste0("tmp/", selGenes$Symbol[i], "_fc.tab"), sep="\t", quote=FALSE)
+}
+```
+
+```{r runGeneMatrixEqtl, cache=FALSE, results="hide"}
+meGene <- vector(mode="list", nrow(selGenes))
+names(meGene) <- selGenes$NuID
+for(i in 1:nrow(selGenes)){
+  snps <- SlicedData$new();
+  snps$fileDelimiter <- "\t"
+  snps$fileOmitCharacters <- "NA"
+  snps$fileSkipRows <- 1
+  snps$fileSkipColumns <- 1
+  snps$fileSliceSize <- 2000
+  snps$LoadFile(paste0("tmp/ genotypes_", selGenes$Symbol[i],".tab"))
+  
+  pheno <- SlicedData$new();
+  pheno$fileDelimiter <- "\t"
+  pheno$fileOmitCharacters <- "NA"
+  pheno$fileSkipRows <- 1
+  pheno$fileSkipColumns <- 1
+  pheno$fileSliceSize <- 2000
+  pheno$LoadFile(paste0("tmp/", selGenes$Symbol[i], "_fc.tab"))
+  
+  meGene[[selGenes$NuID[i]]] <- Matrix_eQTL_main(
+    snps = snps,
+    gene = pheno,
+    cvrt = covar,
+    output_file_name.cis = paste0("tmp/reQTL_", selGenes$Symbol[i],"analysis"),
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    cisDist = 1e6,
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+}
+
+geneSNPcount <- sapply(meGene, function(x) sum(x$cis$eqtls$FDR < 0.01))
+```
 
 # Results
 ## Differential expression analysis
@@ -766,7 +1063,7 @@ In total `r nrow(filter(limmaTable, adj.P.Val < fdrCut))` probes are identified
 as differentially expressed at an FDR threshold of `r fdrCut` (see `r tabRef("topTable")`
 for the top 20 results). Of these `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC > 0))` 
 are up and `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC < 0))` down regulated
-followig heat shock treatment. Further restricting this list by excluding all probes with a 
+following heat shock treatment. Further restricting this list by excluding all probes with a 
 fold change of less than `r 2^fcCut` leaves `r nrow(filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut))` 
 probes with `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut))` and 
 `r nrow(filter(limmaTable, adj.P.Val < fdrCut & logFC < -fcCut))` up and down regulated respectively. 
@@ -809,11 +1106,11 @@ ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) +
 ```
 
 ## GO enrichment analysis
-The GO analysis highlights several categories that are significantly enriched amongst
+The GO analysis highlights several categories that are significantly enriched among
 the up and down regulated genes (`r sum(score(resultUp) < 0.01)` and 
 `r sum(score(resultDown) < 0.01)` categories with a p-value < 0.01 respectively).
 Considering the top categories (`r tabRef("topGOUp")` and `r tabRef("topGODown")`)
-it appears that genes upregulated in response to heat shock are predominantly
+it appears that genes up regulated in response to heat shock are predominantly
 related to stress response (including *response to heat* [GO:0009408]) 
 and protein folding (including *response to unfolded protein* [GO:0006986] and 
 *protein refolding* [GO:0042026]) whereas down regulated genes
@@ -846,6 +1143,34 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
     theme_bw()
 ```
 
+## Response QTL analysis
+
+```{r reQTLGeneTable, cache=FALSE}
+set.caption(tabRef("reQTLgenes", "List of genes with strongest evidence for response QTL."))
+pander(head(dplyr::select(geneP, -ArrayAddress, -NuID)))
+```
+
+The association test designed to identify genetic modulators of gene expression response to 
+heat shock only uncovered very limited evidence for the presence of such effects
+(`r tabRef("reQTLgenes")`). A closer inspection of the potential cis associations for
+the highest ranked gene (`r geneP$Symbol[1]`) suggests `r geneSNPcount[1]`
+SNP`r if(geneSNPcount[1] > 1) "s" else ""` that may be of interest (`r tabRef("topGeneSNPs")`).
+
+```{r topGeneSNPs, cache=FALSE}
+set.caption(tabRef("topGeneSNPs", paste("Possible Response QTL for", geneP$Symbol[1])))
+pander(head(meGene[[1]]$cis$eqtls, geneSNPcount[1]))
+```
+
+```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype."))}
+snp <- as.character(meGene[[1]]$cis$eqtls$snps[1])
+gene <- geneP$Symbol[1]
+probe <- geneP$NuID[1]
+plotData <- data.frame(genotype=geno$bed[snp,], fold_change=selectedFC[probe, ])
+ggplot(plotData, aes(x=factor(genotype), y=fold_change)) + 
+  geom_point(position=position_jitter(width=0.1), size=2.5) +
+  geom_boxplot(alpha=0.4, outlier.colour="white", fill="grey") +
+  theme_bw() + xlab(snp) + ylab("log fold change")
+```
 
 # Appendix {-}
 ## Custom functions used
