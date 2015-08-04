@@ -1019,13 +1019,13 @@ for(i in 1:nrow(selGenes)){
 meGene <- vector(mode="list", nrow(selGenes))
 names(meGene) <- selGenes$NuID
 for(i in 1:nrow(selGenes)){
-  snps <- SlicedData$new();
-  snps$fileDelimiter <- "\t"
-  snps$fileOmitCharacters <- "NA"
-  snps$fileSkipRows <- 1
-  snps$fileSkipColumns <- 1
-  snps$fileSliceSize <- 2000
-  snps$LoadFile(paste0("tmp/ genotypes_", selGenes$Symbol[i],".tab"))
+  snpsSub <- SlicedData$new();
+  snpsSub$fileDelimiter <- "\t"
+  snpsSub$fileOmitCharacters <- "NA"
+  snpsSub$fileSkipRows <- 1
+  snpsSub$fileSkipColumns <- 1
+  snpsSub$fileSliceSize <- 2000
+  snpsSub$LoadFile(paste0("tmp/ genotypes_", selGenes$Symbol[i],".tab"))
   
   pheno <- SlicedData$new();
   pheno$fileDelimiter <- "\t"
@@ -1036,7 +1036,7 @@ for(i in 1:nrow(selGenes)){
   pheno$LoadFile(paste0("tmp/", selGenes$Symbol[i], "_fc.tab"))
   
   meGene[[selGenes$NuID[i]]] <- Matrix_eQTL_main(
-    snps = snps,
+    snps = snpsSub,
     gene = pheno,
     cvrt = covar,
     output_file_name.cis = paste0("tmp/reQTL_", selGenes$Symbol[i],"analysis"),
