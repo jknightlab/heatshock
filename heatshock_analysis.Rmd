@@ -1155,7 +1155,7 @@ heat shock only uncovered very limited evidence for the presence of such effects
 the highest ranked gene (`r geneP$Symbol[1]`) suggests `r geneSNPcount[1]`
 SNP`r if(geneSNPcount[1] > 1) "s" else ""` that may be of interest (`r tabRef("topGeneSNPs")`).
 
-```{r topGeneSNPs}
+```{r topGeneSNPs, cache=FALSE}
 set.caption(tabRef("topGeneSNPs", paste("Possible Response QTL for", geneP$Symbol[1])))
 pander(head(meGene[[1]]$cis$eqtls, geneSNPcount[1]))
 ```
