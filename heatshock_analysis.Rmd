@@ -1315,7 +1315,7 @@ basalGenes <- dplyr::filter(geneP_basal, Gene.FDR < 0.05 & !Symbol %in% stim_ext
 ```
 
 ```{r bundleEQTLinput, cache=FALSE, include=FALSE}
-system("tar -czf tmp/eQTL_input.tar.gz tmp/selected_probes_pos.tab tmp/snp_loc_GRCh37.tab tmp/selected_probes_stim_expr.tab tmp/selected_probes_basal_expr.tab tmp/covar_expr_stim.tab tmp/covar_expr_basal.tab)
+system("tar -czf tmp/eQTL_input.tar.gz tmp/selected_probes_pos.tab tmp/snp_loc_GRCh37.tab tmp/selected_probes_stim_expr.tab tmp/selected_probes_basal_expr.tab tmp/covar_expr_stim.tab tmp/covar_expr_basal.tab")
 ```
 
 
