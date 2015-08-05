@@ -26,25 +26,17 @@ data <- list(exprRaw=list(dir="/analysis/tmp", file="heatshock_expr_raw.tab.gz",
 		geno=list(dir="/analysis/tmp", file="yri_geno.tar.gz",
 				desc="Genotypes for all samples and SNPs that pass QC",
 				name="genotypes (PLINK)"),
-    diffExpr=list(dir="/analysis/tmp", file="differential_expression.tab",
-                  desc="Table of differntially expressed genes (tab delimited)",
-                  name="differential gene expression"))
+    reQTL=list(dir="/analysis/tmp", file="reQTL_input.tar.gz",
+               desc="Matrix-eQTL input files for reQTL analysis",
+               name="reQTL inputs"),
+		eQTL=list(dir="/analysis/tmp", file="eQTL_input.tar.gz",
+		           desc="Matrix-eQTL input files for eQTL analysis",
+		           name="eQTL inputs"))
 
-matrixEQTL <- list(probePos=list(dir="/analysis/tmp", file="selected_probes_pos.tab",
-                                 desc="Genomic location of differntially expressed probes",
-                                 name="probe positions"),
-                   snpPos=list(dir="/analysis/tmp", file="snp_loc_GRCh37.tab.gz",
-                               desc="Genomic location of SNPs",
-                               name="SNP positions"),
-                   probeFC=list(dir="/analysis/tmp", file="selected_probes_fc.tab",
-                                desc="Log2 fold change values for divverentially expressed probes (tab delimited)",
-                                name="fold change"),
-                   geno=list(dir="/analysis/tmp", file="genotypes_GRCh37.tab.gz",
-                             desc="Genotypes for use with Matrix-eQTL",
-                             name="genotypes"),
-                   covar=list(dir="/analysis/tmp", file="covariates.tab.gz",
-                              desc="Covariates for use with Matrix-eQTL",
-                              name="covariates"))
+results <- list(diffExpr=list(dir="/analysis/tmp", file="differential_expression.tab",
+                              desc="Table of differntially expressed genes (tab delimited)",
+                              name="differential gene expression")
+                )
 
 copyFiles <- function(files, dest){
 	if(!file.exists(dest)) dir.create(dest)
