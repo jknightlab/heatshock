@@ -1244,7 +1244,7 @@ for(i in 1:nrow(selGenes_stim)){
   meGene_stim[[selGenes_stim$NuID[i]]] <- Matrix_eQTL_main(
     snps = snpsSub,
     gene = pheno,
-    cvrt = covar,
+    cvrt = covarStim,
     output_file_name.cis = paste0("tmp/eQTL_", selGenes_stim$Symbol[i],"_stim_analysis"),
     pvOutputThreshold = 0,
     pvOutputThreshold.cis = 1,
@@ -1283,7 +1283,7 @@ for(i in 1:nrow(selGenes_basal)){
   meGene_basal[[selGenes_basal$NuID[i]]] <- Matrix_eQTL_main(
     snps = snpsSub,
     gene = pheno,
-    cvrt = covar,
+    cvrt = covarBasal,
     output_file_name.cis = paste0("tmp/eQTL_", selGenes_basal$Symbol[i],"_basal_analysis"),
     pvOutputThreshold = 0,
     pvOutputThreshold.cis = 1,
