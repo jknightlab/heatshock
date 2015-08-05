@@ -1177,7 +1177,7 @@ geneP_stim <- sapply(geneP_stim, min, 1)
 geneP_stim <- p.adjust(geneP_stim, "BH")
 geneP_stim <- data.frame(NuID=names(geneP_stim), Gene.FDR=geneP_stim, stringsAsFactors=FALSE)
 geneP_stim <- dplyr::left_join(geneP_stim, limmaTable, by="NuID")
-geneP_stim <- dplyr::left_join(geneP_stim, mainSNP, by=c(NuID="gene"))
+geneP_stim <- dplyr::left_join(geneP_stim, mainSNP_stim, by=c(NuID="gene"))
 geneP_stim <- dplyr::select(geneP_stim, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
                        pvalue, beta, logFC, adj.P.Val)
 geneP_stim <- dplyr::rename(geneP_stim, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
@@ -1190,7 +1190,7 @@ geneP_basal <- sapply(geneP_basal, min, 1)
 geneP_basal <- p.adjust(geneP_basal, "BH")
 geneP_basal <- data.frame(NuID=names(geneP_basal), Gene.FDR=geneP_basal, stringsAsFactors=FALSE)
 geneP_basal <- dplyr::left_join(geneP_basal, limmaTable, by="NuID")
-geneP_basal <- dplyr::left_join(geneP_basal, mainSNP, by=c(NuID="gene"))
+geneP_basal <- dplyr::left_join(geneP_basal, mainSNP_basal, by=c(NuID="gene"))
 geneP_basal <- dplyr::select(geneP_basal, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
                        pvalue, beta, logFC, adj.P.Val)
 geneP_basal <- dplyr::rename(geneP_basal, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
