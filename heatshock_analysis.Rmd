@@ -736,7 +736,7 @@ close(exprOut)
 ```
 
 ```{r compressData, cache=FALSE, include=FALSE}
-system("tar -czf yri_geno.tar.gz -C hapmap_yri.smpl_flt2.bed hapmap_yri.smpl_flt2.bim hapmap_yri.smpl_flt2.fam")
+system("tar -czf tmp/yri_geno.tar.gz -C hapmap_yri.smpl_flt2.bed hapmap_yri.smpl_flt2.bim hapmap_yri.smpl_flt2.fam")
 ```
 
 ## Differential expression analysis
@@ -817,7 +817,7 @@ write.table(GenTable(tgUp, up = resultUp, down = resultDown,
 write.table(GenTable(tgDown, up = resultUp, down = resultDown, 
                      topNodes = length(score(resultDown)), orderBy = "down"),
             file="tmp/topGO_downregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
-system("tar -czf topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulated.tab")
+system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulated.tab")
 ```
 
 ## Response QTL analysis
@@ -1066,7 +1066,7 @@ geneSNPcount <- sapply(meGene, function(x) sum(x$cis$eqtls$FDR < 0.01))
 ```
 
 ```{r bundleReQTLinput, cache=FALSE, include=FALSE}
-system("tar -czf reQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GRCh37.tab selected_probes_fc.tab genotypes_GRCh37.tab covariates.tab")
+system("tar -czf tmp/reQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GRCh37.tab selected_probes_fc.tab genotypes_GRCh37.tab covariates.tab")
 ```
 
 ## Analysis of eQTL in basal and stimulated cells
@@ -1325,7 +1325,7 @@ basalGenes <- dplyr::filter(geneP_basal, Gene.FDR < 0.05 & !Symbol %in% stim_ext
 ```
 
 ```{r bundleEQTLinput, cache=FALSE, include=FALSE}
-system("tar -czf eQTL_input.tar.gz -C tmp selected_probes_pos.tab tmp/snp_loc_GRCh37.tab selected_probes_stim_expr.tab selected_probes_basal_expr.tab covar_expr_stim.tab covar_expr_basal.tab")
+system("tar -czf tmp/eQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GRCh37.tab selected_probes_stim_expr.tab selected_probes_basal_expr.tab covar_expr_stim.tab covar_expr_basal.tab")
 ```
 
 
