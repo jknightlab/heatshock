@@ -39,10 +39,10 @@ results <- list(diffExpr=list(dir="/analysis/tmp", file="differential_expression
                 topGO=list(dir="/analysis/tmp", file="topGO.tar.gz",
                            desc="Table of enriched GO categories (tab delimited)",
                            name="GO enrichment"),
-                pngFig=list(dir="/analysis/tmp", file="figures_png.tar.gz",
+                pngFig=list(dir="/analysis/heatshock_analysis_files/figure-html", file="figures_png.tar.gz",
                             desc="Figures in PNG format",
                             name="Figures (png)"),
-                pdfFig=list(dir="/analysis/tmp", file="figures_pdf.tar.gz",
+                pdfFig=list(dir="/analysis/heatshock_analysis_files/figure-latex", file="figures_pdf.tar.gz",
                             desc="Figures in PDF format",
                             name="Figures (pdf)")
                 )
