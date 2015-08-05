@@ -1431,13 +1431,13 @@ ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
 ```{r eQTLStimGeneTable, cache=FALSE}
 set.caption(tabRef("eQTLstimGenes", "List of genes with strongest evidence for genetic modulation of gene expression after heat shock treatment. Significant associations only observed after heat shock treatment are highlight."))
 pander(dplyr::select(head(geneP_stim), -ArrayAddress, -NuID), 
-       emphasize.rows=which(head(geneP_stim)$Symbol %in% stimGenes$Symbol))
+       emphasize.strong.rows=which(head(geneP_stim)$Symbol %in% stimGenes$Symbol))
 ```
 
 ```{r eQTLBasalGeneTable, cache=FALSE}
 set.caption(tabRef("eQTLbasalGenes", "List of genes with strongest evidence for genetic modulation of gene expression in basal state. Significant associations specific to the basal state are highlighted."))
 pander(dplyr::select(head(geneP_basal), -ArrayAddress, -NuID),
-       emphasize.rows=which(head(geneP_basal)$Symbol %in% basalGenes$Symbol))
+       emphasize.strong.rows=which(head(geneP_basal)$Symbol %in% basalGenes$Symbol))
 ```
 
 Condition specific associations were identified for `r nrow(stimGenes)` 
