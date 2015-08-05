@@ -123,6 +123,7 @@ tryCatch(
       file.copy("heatshock_analysis_files", htmlRoot, recursive=TRUE)
 			copyFiles(logs, file.path(htmlRoot, "log"))
 			copyFiles(data, file.path(htmlRoot, "data"))
+			copyFiles(results, file.path(htmlRoot, "results"))
 			if(file.exists("heatshock_analysis.pdf")){
 				file.copy("heatshock_analysis.pdf", 
 						file.path(htmlRoot, "heatshock_analysis.pdf"),

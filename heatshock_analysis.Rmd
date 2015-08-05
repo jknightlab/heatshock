@@ -308,6 +308,15 @@ desc <- sapply(data, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse="<br>"))
 ```
 
+#### Results
+
+```{r linkResults, echo=FALSE, cache=FALSE, results="asis"}
+resultFiles <- sapply(results, linkFile, "results", "markdown")
+desc <- sapply(data, "[[", "desc")
+cat(paste0("<span title=\"", desc, "\">", resultFiles, "</span>", collapse="<br>"))
+```
+
+
 #### Log files
 
 ```{r linkLogs, echo=FALSE, cache=FALSE, results="asis"}
