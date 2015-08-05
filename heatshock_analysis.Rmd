@@ -1451,12 +1451,16 @@ and `r tabRef("topGeneSNPs_basal")` for a list of SNPs of interest for these top
 
 ```{r topGeneSNPs_stim, cache=FALSE}
 set.caption(tabRef("topGeneSNPs_stim", paste("Possible eQTL for", stimGenes$Symbol[1])))
-pander(head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, geneSNPcount_stim[1]))
+tab <- head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, geneSNPcount_stim[1])
+tab$gene <- stimGenes$Symbol[1]
+pander(tab)
 ```
 
 ```{r topGeneSNPs_basal, cache=FALSE}
 set.caption(tabRef("topGeneSNPs_basal", paste("Possible eQTL for", basalGenes$Symbol[1])))
-pander(head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, geneSNPcount_basal[1]))
+tab <- head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, geneSNPcount_basal[1])
+tab$gene <- basalGenes$Symbol[1]
+pander(tab)
 ```
 
 
