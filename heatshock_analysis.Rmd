@@ -1166,8 +1166,10 @@ meBasal <- Matrix_eQTL_main(
 ```
 
 ```{r eGeneSNPs}
-mainSNP_stim <- dplyr::filter(meStim$cis$eqtls, !duplicated(gene))
-mainSNP_basal <- dplyr::filter(meBasal$cis$eqtls, !duplicated(gene))
+mainSNP_stim <- do.call(rbind, by(meStim$cis$eqtls, meStim$cis$eqtls$gene, 
+                                  function(x) x[order(x$pvalue),][1,,drop=FALSE]))
+mainSNP_basal <- do.call(rbind, by(meBasal$cis$eqtls, meBasal$cis$eqtls$gene, 
+                                  function(x) x[order(x$pvalue),][1,,drop=FALSE]))
 
 geneP_stim <- meStim$cis$min.pv.gene * sapply(names(meStim$cis$min.pv.gene), 
                                      function(x) length(geneSNPs[[x]]))
