@@ -1464,6 +1464,32 @@ pander(tab)
 ```
 
 
+```{r topEgeneSNPplot, cache=FALSE, fig.cap=figRef("topEgeneSNP", paste("Gene expression by genotype for genes showing evidence of condition specific eQTL."))}
+snp <- as.character(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls$snps[1])
+gene <- stimGenes$Symbol[1]
+probe <- stimGenes$NuID[1]
+
+plotData <- data.frame(genotype=rep(geno$bed[snp,], 2), expression=c(stimExpr[probe, ], basalExpr[probe,]),
+                       condition=c(rep("stimulated", ncol(stimExpr)), rep("basal", ncol(basalExpr))))
+plotData <- dplyr::filter(plotData, !is.na(genotype))
+stimPlot <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
+  geom_boxplot(aes(fill=condition), alpha=0.4, outlier.colour="white", outlier.size=0) +
+  theme_bw() + xlab(snp) + ylab(paste(gene, "expression"))
+
+snp <- as.character(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls$snps[1])
+gene <- basalGenes$Symbol[1]
+probe <- basalGenes$NuID[1]
+
+plotData <- data.frame(genotype=rep(geno$bed[snp,], 2), expression=c(stimExpr[probe, ], basalExpr[probe,]),
+                       condition=c(rep("stimulated", ncol(stimExpr)), rep("basal", ncol(basalExpr))))
+plotData <- dplyr::filter(plotData, !is.na(genotype))
+basalPlot <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
+  geom_boxplot(aes(fill=condition), alpha=0.4, outlier.colour="white", outlier.size=0) +
+  theme_bw() + xlab(snp) + ylab(paste(gene, "expression"))
+
+multiplot(stimPlot, basalPlot)
+```
+
 # Appendix {-}
 ## Custom functions used
 ```{r, ref.label="functions", eval=FALSE, echo=TRUE}
