@@ -1446,7 +1446,7 @@ pander(dplyr::select(head(geneP_basal), -ArrayAddress, -NuID),
 
 Condition specific associations were identified for `r nrow(stimGenes)` 
 gene`r if(nrow(stimGenes) > 1) "s" else ""` in the stimulated and for `r nrow(basalGenes)`
-in the basal state (`r tabRef("eQTLstimGenes")` and `r "eQTLbasalGenes"`). See `r tabRef("topGeneSNPs_stim")`
+in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`). See `r tabRef("topGeneSNPs_stim")`
 and `r tabRef("topGeneSNPs_basal")` for a list of SNPs of interest for these top genes.
 
 ```{r topGeneSNPs_stim, cache=FALSE}
