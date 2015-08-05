@@ -35,7 +35,13 @@ data <- list(exprRaw=list(dir="/analysis/tmp", file="heatshock_expr_raw.tab.gz",
 
 results <- list(diffExpr=list(dir="/analysis/tmp", file="differential_expression.tab",
                               desc="Table of differntially expressed genes (tab delimited)",
-                              name="differential gene expression")
+                              name="differential gene expression"),
+                pngFig=list(dir="/analysis/tmp", file="figures_png.tar.gz",
+                            desc="Figures in PNG format",
+                            name="Figures (png)"),
+                pdfFig=list(dir="/analysis/tmp", file="figures_pdf.tar.gz",
+                            desc="Figures in PDF format",
+                            name="Figures (pdf)")
                 )
 
 copyFiles <- function(files, dest){

@@ -1516,6 +1516,16 @@ multiplot(stimPlot, basalPlot)
 ```
 
 # Appendix {-}
+
+```{r bundlePlots, include=FALSE, cache=FALSE}
+if(file.exists("heatshock_analysis_files/figure-html") && !file.exists("tmp/figures_png.tar.gz")){
+  system("tar -czf tmp/figures_png.tar.gz heatshock_analysis_files/figure-html/*")
+}
+if(file.exists("heatshock_analysis_files/figure-latex") && !file.exists("tmp/figures_pdf.tar.gz")){
+  system("tar -czf tmp/figures_pdf.tar.gz heatshock_analysis_files/figure-latex/*")
+}
+```
+
 ## Custom functions used
 ```{r, ref.label="functions", eval=FALSE, echo=TRUE}
 ```
