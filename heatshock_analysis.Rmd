@@ -810,6 +810,16 @@ resultUp <- runTest(tgUp, algorithm="classic", statistic="fisher")
 resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
 ```
 
+```{r writeTopGO, include=FALSE, cache=FALSE}
+write.table(GenTable(tgUp, up = resultUp, down = resultDown, 
+                     topNodes = length(score(resultUp)), orderBy = "up"),
+            file="tmp/topGO_upregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(GenTable(tgDown, up = resultUp, down = resultDown, 
+                     topNodes = length(score(resultDown)), orderBy = "down"),
+            file="tmp/topGO_downregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
+system("tar -czf tmp/topGO.tar.gz tmp/topGO_upregulated.tab tmp/topGO_downregulated.tab")
+```
+
 ## Response QTL analysis
 All probes considered to be differentially expressed following heat shock treatment
 (FDR < `r fdrCut` and fold change > `r 2^fcCut`) were further investigated for
