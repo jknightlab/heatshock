@@ -8,7 +8,9 @@ date: "`r format(Sys.time(), '%a %d %b %Y')`"
 output:
   pdf_document:
     includes:
-      in_header: include/captions.tex
+      in_header:
+        - include/captions.tex
+        - include/encoding.tex
     toc: true
     fig_caption: true
     highlight: tango
@@ -306,12 +308,12 @@ desc <- sapply(data, "[[", "desc")
 cat(paste0("<span title=\"", desc, "\">", dataFiles, "</span>", collapse="<br>"))
 ```
 
-#### Matrix-eQTL input
+#### Results
 
-```{r linkMEQTL, echo=FALSE, cache=FALSE, results="asis"}
-meqtlFiles <- sapply(matrixEQTL, linkFile, "data", "markdown")
-desc <- sapply(matrixEQTL, "[[", "desc")
-cat(paste0("<span title=\"", desc, "\">", meqtlFiles, "</span>", collapse="<br>"))
+```{r linkResults, echo=FALSE, cache=FALSE, results="asis"}
+resultFiles <- sapply(results, linkFile, "results", "markdown")
+desc <- sapply(data, "[[", "desc")
+cat(paste0("<span title=\"", desc, "\">", resultFiles, "</span>", collapse="<br>"))
 ```
 
 
@@ -733,8 +735,8 @@ write.table(sig.data.norm, file=exprOut, quote=FALSE)
 close(exprOut)
 ```
 
-```{r compressData, cache=FALSE}
-system("tar -czf tmp/yri_geno.tar.gz tmp/hapmap_yri.smpl_flt2.bed tmp/hapmap_yri.smpl_flt2.bim tmp/hapmap_yri.smpl_flt2.fam")
+```{r compressData, cache=FALSE, include=FALSE}
+system("tar -czf tmp/yri_geno.tar.gz -C tmp hapmap_yri.smpl_flt2.bed hapmap_yri.smpl_flt2.bim hapmap_yri.smpl_flt2.fam")
 ```
 
 ## Differential expression analysis
@@ -806,6 +808,16 @@ tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, nodeSize=10,
 ```{r testTopGO}
 resultUp <- runTest(tgUp, algorithm="classic", statistic="fisher")
 resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
+```
+
+```{r writeTopGO, include=FALSE, cache=FALSE}
+write.table(GenTable(tgUp, up = resultUp, down = resultDown, 
+                     topNodes = length(score(resultUp)), orderBy = "up"),
+            file="tmp/topGO_upregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(GenTable(tgDown, up = resultUp, down = resultDown, 
+                     topNodes = length(score(resultDown)), orderBy = "down"),
+            file="tmp/topGO_downregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
+system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulated.tab")
 ```
 
 ## Response QTL analysis
@@ -882,7 +894,6 @@ geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
 
 ```{r writeSNPpos, cache=FALSE, results="hide"}
 write.table(geno$bim, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
-system("gzip -c tmp/snp_loc_GRCh37.tab > tmp/snp_loc_GRCh37.tab.gz", intern=TRUE)
 ```
 
 ```{r prepGeno}
@@ -897,7 +908,6 @@ if(any(flip)){
 
 ```{r writeGeno, cache=FALSE, results="hide"}
 write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
-system("gzip -c tmp/genotypes_GRh37.tab > tmp/genotypes_GRCh37.tab.gz", intern=TRUE)
 ```
 
 ```{r fc_pc}
@@ -929,7 +939,6 @@ geno$fam <- rbind(geno$fam, t(pc[, 1:nPC]))
 
 ```{r writeCovar, cache=FALSE, echo=FALSE}
 write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, sep="\t")
-system("gzip -c tmp/covariates.tab > tmp/covariates.tab.gz", intern=TRUE)
 ```
 
 ```{r prepQTL, results="hide", cache=FALSE}
@@ -958,7 +967,7 @@ covar$fileSliceSize <- 2000
 covar$LoadFile("tmp/covariates.tab")
 ```
 
-```{r runMatrixEQTL, results="hide"}
+```{r runMatrixEQTL, results="hide", cache=FALSE}
 me <- Matrix_eQTL_main(
     snps = snps,
     gene = pheno,
@@ -1008,7 +1017,7 @@ geneP <- dplyr::arrange(geneP, Gene.FDR, desc(abs(SNP.beta)))
 selGenes <- dplyr::filter(geneP, Gene.FDR < 1)
 for(i in 1:nrow(selGenes)){
   selSNPs <- geno$bed[geneSNPs[[selGenes$NuID[i]]]$snp, ]
-  write.table(selSNPs, file=paste0("tmp/ genotypes_", selGenes$Symbol[i],".tab"), 
+  write.table(selSNPs, file=paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"), 
               quote=FALSE, sep="\t")
   write.table(selectedFC[selGenes$NuID[i], , drop=FALSE], 
               file=paste0("tmp/", selGenes$Symbol[i], "_fc.tab"), sep="\t", quote=FALSE)
@@ -1019,13 +1028,13 @@ for(i in 1:nrow(selGenes)){
 meGene <- vector(mode="list", nrow(selGenes))
 names(meGene) <- selGenes$NuID
 for(i in 1:nrow(selGenes)){
-  snps <- SlicedData$new();
-  snps$fileDelimiter <- "\t"
-  snps$fileOmitCharacters <- "NA"
-  snps$fileSkipRows <- 1
-  snps$fileSkipColumns <- 1
-  snps$fileSliceSize <- 2000
-  snps$LoadFile(paste0("tmp/ genotypes_", selGenes$Symbol[i],".tab"))
+  snpsSub <- SlicedData$new();
+  snpsSub$fileDelimiter <- "\t"
+  snpsSub$fileOmitCharacters <- "NA"
+  snpsSub$fileSkipRows <- 1
+  snpsSub$fileSkipColumns <- 1
+  snpsSub$fileSliceSize <- 2000
+  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"))
   
   pheno <- SlicedData$new();
   pheno$fileDelimiter <- "\t"
@@ -1036,7 +1045,7 @@ for(i in 1:nrow(selGenes)){
   pheno$LoadFile(paste0("tmp/", selGenes$Symbol[i], "_fc.tab"))
   
   meGene[[selGenes$NuID[i]]] <- Matrix_eQTL_main(
-    snps = snps,
+    snps = snpsSub,
     gene = pheno,
     cvrt = covar,
     output_file_name.cis = paste0("tmp/reQTL_", selGenes$Symbol[i],"analysis"),
@@ -1055,6 +1064,320 @@ for(i in 1:nrow(selGenes)){
 
 geneSNPcount <- sapply(meGene, function(x) sum(x$cis$eqtls$FDR < 0.01))
 ```
+
+```{r bundleReQTLinput, cache=FALSE, include=FALSE}
+system("tar -czf tmp/reQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GRCh37.tab selected_probes_fc.tab genotypes_GRCh37.tab covariates.tab")
+```
+
+## Analysis of eQTL in basal and stimulated cells
+
+To further investigate potential genetic modulators of gene expression for genes that
+play a role in heat shock response we carried out a cis eQTL analysis for all genes identified
+as differntially expressed in response to heat shock.
+
+```{r selectedExpr}
+stimExpr <- selectedExpr[, stimIdx]
+basalExpr <- selectedExpr[, basalIdx]
+colnames(stimExpr) <- str_extract(colnames(stimExpr), "NA[[:digit:]]+")
+colnames(basalExpr) <- str_extract(colnames(basalExpr), "NA[[:digit:]]+")
+rownames(stimExpr) <- rownames(basalExpr) <- selectedGenes$NuID
+```
+
+```{r writeSelExpr, cache=FALSE}
+write.table(stimExpr, file="tmp/selected_probes_stim_expr.tab", sep="\t", quote=FALSE)
+write.table(basalExpr, file="tmp/selected_probes_basal_expr.tab", sep="\t", quote=FALSE)
+```
+
+```{r expr_pc}
+nPC_expr <- 2
+pca_stim <- prcomp(t(stimExpr), center=TRUE, scale = TRUE)
+pc_stim <- pca_stim$x
+
+pca_basal <- prcomp(t(basalExpr), center=TRUE, scale = TRUE)
+pc_basal <- pca_basal$x
+```
+
+```{r writeExprCovar, cache=FALSE}
+write.table(t(pc_stim)[1:nPC_expr, , drop=FALSE], file = "tmp/covar_expr_stim.tab", sep="\t", quote=FALSE)
+write.table(t(pc_basal)[1:nPC_expr, , drop=FALSE], file = "tmp/covar_expr_basal.tab", sep="\t", quote=FALSE)
+```
+
+
+The analysis was carried out with Matrix-eQTL using an approach equivalent to the one
+used for the [response QTL analysis](#response-qtl-analysis).
+
+```{r prepEQTL, results="hide", cache=FALSE}
+phenoStim <- SlicedData$new();
+phenoStim$fileDelimiter <- "\t"
+phenoStim$fileOmitCharacters <- "NA"
+phenoStim$fileSkipRows <- 1
+phenoStim$fileSkipColumns <- 1
+phenoStim$fileSliceSize <- 2000
+phenoStim$LoadFile("tmp/selected_probes_stim_expr.tab")
+
+covarStim <- SlicedData$new();
+covarStim$fileDelimiter <- "\t"
+covarStim$fileOmitCharacters <- "NA"
+covarStim$fileSkipRows <- 1
+covarStim$fileSkipColumns <- 1
+covarStim$fileSliceSize <- 2000
+covarStim$LoadFile("tmp/covar_expr_stim.tab")
+
+phenoBasal <- SlicedData$new();
+phenoBasal$fileDelimiter <- "\t"
+phenoBasal$fileOmitCharacters <- "NA"
+phenoBasal$fileSkipRows <- 1
+phenoBasal$fileSkipColumns <- 1
+phenoBasal$fileSliceSize <- 2000
+phenoBasal$LoadFile("tmp/selected_probes_basal_expr.tab")
+
+covarBasal <- SlicedData$new();
+covarBasal$fileDelimiter <- "\t"
+covarBasal$fileOmitCharacters <- "NA"
+covarBasal$fileSkipRows <- 1
+covarBasal$fileSkipColumns <- 1
+covarBasal$fileSliceSize <- 2000
+covarBasal$LoadFile("tmp/covar_expr_basal.tab")
+```
+
+```{r runEQTL, cache=FALSE, results="hide"}
+meStim <- Matrix_eQTL_main(
+    snps = snps,
+    gene = phenoStim,
+    cvrt = covarStim,
+    output_file_name.cis = "tmp/eQTL_stim_analysis",
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1e-3,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    cisDist = 1e6,
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+
+meBasal <- Matrix_eQTL_main(
+    snps = snps,
+    gene = phenoBasal,
+    cvrt = covarBasal,
+    output_file_name.cis = "tmp/eQTL_basal_analysis",
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1e-3,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    cisDist = 1e6,
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+```
+
+```{r eGeneSNPs}
+mainSNP_stim <- do.call(rbind, by(meStim$cis$eqtls, meStim$cis$eqtls$gene, 
+                                  function(x) x[order(x$pvalue),][1,,drop=FALSE]))
+mainSNP_stim <- dplyr::arrange(mainSNP_stim, pvalue)
+mainSNP_basal <- do.call(rbind, by(meBasal$cis$eqtls, meBasal$cis$eqtls$gene, 
+                                  function(x) x[order(x$pvalue),][1,,drop=FALSE]))
+mainSNP_basal <- dplyr::arrange(mainSNP_basal, pvalue)
+
+geneP_stim <- meStim$cis$min.pv.gene * sapply(names(meStim$cis$min.pv.gene), 
+                                     function(x) length(geneSNPs[[x]]))
+geneP_stim <- sapply(geneP_stim, min, 1)
+geneP_stim <- p.adjust(geneP_stim, "BH")
+geneP_stim <- data.frame(NuID=names(geneP_stim), Gene.FDR=geneP_stim, stringsAsFactors=FALSE)
+geneP_stim <- dplyr::left_join(geneP_stim, limmaTable, by="NuID")
+geneP_stim <- dplyr::left_join(geneP_stim, mainSNP_stim, by=c(NuID="gene"))
+geneP_stim <- dplyr::select(geneP_stim, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
+                       pvalue, beta, logFC, adj.P.Val)
+geneP_stim <- dplyr::rename(geneP_stim, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
+                       expression.FDR=adj.P.Val, SNP.beta=beta)
+geneP_stim <- dplyr::arrange(geneP_stim, Gene.FDR, desc(abs(SNP.beta)))
+
+geneP_basal <- meBasal$cis$min.pv.gene * sapply(names(meBasal$cis$min.pv.gene), 
+                                     function(x) length(geneSNPs[[x]]))
+geneP_basal <- sapply(geneP_basal, min, 1)
+geneP_basal <- p.adjust(geneP_basal, "BH")
+geneP_basal <- data.frame(NuID=names(geneP_basal), Gene.FDR=geneP_basal, stringsAsFactors=FALSE)
+geneP_basal <- dplyr::left_join(geneP_basal, limmaTable, by="NuID")
+geneP_basal <- dplyr::left_join(geneP_basal, mainSNP_basal, by=c(NuID="gene"))
+geneP_basal <- dplyr::select(geneP_basal, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
+                       pvalue, beta, logFC, adj.P.Val)
+geneP_basal <- dplyr::rename(geneP_basal, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
+                       expression.FDR=adj.P.Val, SNP.beta=beta)
+geneP_basal <- dplyr::arrange(geneP_basal, Gene.FDR, desc(abs(SNP.beta)))
+```
+
+```{r prepGeneEqtl, cache=FALSE}
+selGenes_stim <- dplyr::filter(geneP_stim, Gene.FDR < 0.05)
+for(i in 1:nrow(selGenes_stim)){
+  selSNPs_stim <- geno$bed[geneSNPs[[selGenes_stim$NuID[i]]]$snp, ]
+  write.table(selSNPs_stim, file=paste0("tmp/genotypes_", selGenes_stim$Symbol[i],"_stim.tab"), 
+              quote=FALSE, sep="\t")
+  write.table(stimExpr[selGenes_stim$NuID[i], , drop=FALSE], 
+              file=paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"), sep="\t", quote=FALSE)
+}
+
+selGenes_basal <- dplyr::filter(geneP_basal, Gene.FDR < 0.05)
+for(i in 1:nrow(selGenes_basal)){
+  selSNPs_basal <- geno$bed[geneSNPs[[selGenes_basal$NuID[i]]]$snp, ]
+  write.table(selSNPs_basal, file=paste0("tmp/genotypes_", selGenes_basal$Symbol[i],"_basal.tab"), 
+              quote=FALSE, sep="\t")
+  write.table(basalExpr[selGenes_basal$NuID[i], , drop=FALSE], 
+              file=paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"), sep="\t", quote=FALSE)
+}
+
+```
+
+```{r runGeneEqtl, cache=FALSE, results="hide"}
+meGene_stim <- vector(mode="list", nrow(selGenes_stim))
+names(meGene_stim) <- selGenes_stim$NuID
+for(i in 1:nrow(selGenes_stim)){
+  snpsSub <- SlicedData$new();
+  snpsSub$fileDelimiter <- "\t"
+  snpsSub$fileOmitCharacters <- "NA"
+  snpsSub$fileSkipRows <- 1
+  snpsSub$fileSkipColumns <- 1
+  snpsSub$fileSliceSize <- 2000
+  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes_stim$Symbol[i],"_stim.tab"))
+  
+  pheno <- SlicedData$new();
+  pheno$fileDelimiter <- "\t"
+  pheno$fileOmitCharacters <- "NA"
+  pheno$fileSkipRows <- 1
+  pheno$fileSkipColumns <- 1
+  pheno$fileSliceSize <- 2000
+  pheno$LoadFile(paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"))
+  
+  meGene_stim[[selGenes_stim$NuID[i]]] <- Matrix_eQTL_main(
+    snps = snpsSub,
+    gene = pheno,
+    cvrt = covarStim,
+    output_file_name.cis = paste0("tmp/eQTL_", selGenes_stim$Symbol[i],"_stim_analysis"),
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    cisDist = 1e6,
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+}
+
+geneSNPcount_stim <- sapply(meGene_stim, function(x) sum(x$cis$eqtls$FDR < 0.01))
+
+meGene_basal <- vector(mode="list", nrow(selGenes_basal))
+names(meGene_basal) <- selGenes_basal$NuID
+for(i in 1:nrow(selGenes_basal)){
+  snpsSub <- SlicedData$new();
+  snpsSub$fileDelimiter <- "\t"
+  snpsSub$fileOmitCharacters <- "NA"
+  snpsSub$fileSkipRows <- 1
+  snpsSub$fileSkipColumns <- 1
+  snpsSub$fileSliceSize <- 2000
+  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes_basal$Symbol[i],"_basal.tab"))
+  
+  pheno <- SlicedData$new();
+  pheno$fileDelimiter <- "\t"
+  pheno$fileOmitCharacters <- "NA"
+  pheno$fileSkipRows <- 1
+  pheno$fileSkipColumns <- 1
+  pheno$fileSliceSize <- 2000
+  pheno$LoadFile(paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"))
+  
+  meGene_basal[[selGenes_basal$NuID[i]]] <- Matrix_eQTL_main(
+    snps = snpsSub,
+    gene = pheno,
+    cvrt = covarBasal,
+    output_file_name.cis = paste0("tmp/eQTL_", selGenes_basal$Symbol[i],"_basal_analysis"),
+    pvOutputThreshold = 0,
+    pvOutputThreshold.cis = 1,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    cisDist = 1e6,
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+}
+
+geneSNPcount_basal <- sapply(meGene_basal, function(x) sum(x$cis$eqtls$FDR < 0.01))
+```
+
+The genes with significant associations (FDR < 0.05) in either condition are considered
+for significance in the other condition. Any gene with a significant association in 
+one condition and FDR > 0.5 in the other is considered to be specific to that condition.
+
+```{r compareGenes}
+basal_extended <- dplyr::filter(geneP_basal, Gene.FDR < 0.5)$Symbol
+stim_extended <- dplyr::filter(geneP_stim, Gene.FDR < 0.5)$Symbol
+
+stimGenes <- dplyr::filter(geneP_stim, Gene.FDR < 0.05 & !Symbol %in% basal_extended)
+basalGenes <- dplyr::filter(geneP_basal, Gene.FDR < 0.05 & !Symbol %in% stim_extended)
+```
+
+```{r bundleEQTLinput, cache=FALSE, include=FALSE}
+system("tar -czf tmp/eQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GRCh37.tab selected_probes_stim_expr.tab selected_probes_basal_expr.tab covar_expr_stim.tab covar_expr_basal.tab")
+```
+
+## Trans associations for SNPs upstream of HSF1 and HSF2
+
+```{r hsfWindow}
+genePos <- data.frame(chrom=c("chr8", "chr6"), start=c(145515270, 122720696), end=c(145538385, 122754264), 
+                      gene=c("HSF1", "HSF2"), stringsAsFactors=FALSE)
+window <- 1e6
+idx <- mapply(function(x, chr, s, e, w) which(x$chrom == chr & x$loc >= s - w & x$loc <= e), 
+              chr=genePos$chrom, s=genePos$start, e=genePos$end, MoreArgs=list(x=geno$bim, w=window),
+              SIMPLIFY=FALSE)
+idx <- Reduce(union, idx)
+targetSNPs <- geno$bim[idx, ]
+targetGeno <- geno$bed[targetSNPs$snp, ]
+```
+
+```{r writeHSFsnps, cache=FALSE}
+write.table(targetGeno, file="tmp/genotypes_hsf.tab", sep="\t", quote=FALSE)
+```
+
+```{r runHSFtrans, cache=FALSE, results="hide"}
+snpsHSF <- SlicedData$new();
+snpsHSF$fileDelimiter <- "\t"
+snpsHSF$fileOmitCharacters <- "NA"
+snpsHSF$fileSkipRows <- 1
+snpsHSF$fileSkipColumns <- 1
+snpsHSF$fileSliceSize <- 2000
+snpsHSF$LoadFile(paste0("tmp/genotypes_hsf.tab"))
+
+pheno <- SlicedData$new();
+pheno$fileDelimiter <- "\t"
+pheno$fileOmitCharacters <- "NA"
+pheno$fileSkipRows <- 1
+pheno$fileSkipColumns <- 1
+pheno$fileSliceSize <- 2000
+pheno$LoadFile("tmp/selected_probes_fc.tab")
+
+me <- Matrix_eQTL_main(
+    snps = snpsHSF,
+    gene = pheno,
+    cvrt = covar,
+    output_file_name.cis = "tmp/reQTL_hsf_analysis",
+    pvOutputThreshold = 1e-5,
+    pvOutputThreshold.cis = 0,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+```
+
 
 # Results
 ## Differential expression analysis
@@ -1161,18 +1484,112 @@ set.caption(tabRef("topGeneSNPs", paste("Possible Response QTL for", geneP$Symbo
 pander(head(meGene[[1]]$cis$eqtls, geneSNPcount[1]))
 ```
 
-```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype."))}
+```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype. Fold changes were corrected for the effect of covariates."))}
 snp <- as.character(meGene[[1]]$cis$eqtls$snps[1])
 gene <- geneP$Symbol[1]
 probe <- geneP$NuID[1]
-plotData <- data.frame(genotype=geno$bed[snp,], fold_change=selectedFC[probe, ])
+
+fit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covar[[1]]))
+offset <- colSums(fit$coefficients[-(1:2)]*covar[[1]])
+
+plotData <- data.frame(genotype=geno$bed[snp,], fold_change=selectedFC[probe, ]-offset)
 ggplot(plotData, aes(x=factor(genotype), y=fold_change)) + 
   geom_point(position=position_jitter(width=0.1), size=2.5) +
   geom_boxplot(alpha=0.4, outlier.colour="white", fill="grey") +
   theme_bw() + xlab(snp) + ylab("log fold change")
 ```
 
+
+## Analysis of eQTL in basal and stimulated cells
+
+```{r eQTLStimGeneTable, cache=FALSE}
+set.caption(tabRef("eQTLstimGenes", "List of genes with strongest evidence for genetic modulation of gene expression after heat shock treatment. Significant associations only observed after heat shock treatment are highlight."))
+pander(dplyr::select(head(geneP_stim), -ArrayAddress, -NuID), 
+       emphasize.strong.rows=which(head(geneP_stim)$Symbol %in% stimGenes$Symbol))
+```
+
+```{r eQTLBasalGeneTable, cache=FALSE}
+set.caption(tabRef("eQTLbasalGenes", "List of genes with strongest evidence for genetic modulation of gene expression in basal state. Significant associations specific to the basal state are highlighted."))
+pander(dplyr::select(head(geneP_basal), -ArrayAddress, -NuID),
+       emphasize.strong.rows=which(head(geneP_basal)$Symbol %in% basalGenes$Symbol))
+```
+
+Condition specific associations were identified for `r nrow(stimGenes)` 
+gene`r if(nrow(stimGenes) > 1) "s" else ""` in the stimulated and for `r nrow(basalGenes)`
+in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`). See `r tabRef("topGeneSNPs_stim")`
+and `r tabRef("topGeneSNPs_basal")` for a list of SNPs of interest for these top genes.
+
+```{r topGeneSNPs_stim, cache=FALSE}
+set.caption(tabRef("topGeneSNPs_stim", paste("Possible eQTL for", stimGenes$Symbol[1])))
+tab <- head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, geneSNPcount_stim[1])
+tab$gene <- stimGenes$Symbol[1]
+pander(tab)
+```
+
+```{r topGeneSNPs_basal, cache=FALSE}
+set.caption(tabRef("topGeneSNPs_basal", paste("Possible eQTL for", basalGenes$Symbol[1])))
+tab <- head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, geneSNPcount_basal[1])
+tab$gene <- basalGenes$Symbol[1]
+pander(tab)
+```
+
+
+```{r topEgeneSNPplot, cache=FALSE, fig.cap=figRef("topEgeneSNP", paste("Gene expression by genotype for genes showing evidence of condition specific eQTL. Gene expression estimates were corrected for the effect of covariates."))}
+snp <- as.character(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls$snps[1])
+gene <- stimGenes$Symbol[1]
+probe <- stimGenes$NuID[1]
+
+stimFit <- lm(stimExpr[probe, ] ~ geno$bed[snp,] + t(covarStim[[1]]))
+stimOffset <- colSums(stimFit$coefficients[-(1:2)]*covarStim[[1]])
+
+basalFit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
+basalOffset <- colSums(basalFit$coefficients[-(1:2)]*covarBasal[[1]])
+
+
+plotData <- data.frame(genotype=rep(geno$bed[snp,], 2), 
+                       expression=c(stimExpr[probe, ]-stimOffset, basalExpr[probe,]-basalOffset),
+                       condition=c(rep("stimulated", ncol(stimExpr)), rep("basal", ncol(basalExpr))))
+plotData <- dplyr::filter(plotData, !is.na(genotype))
+stimPlot <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
+  geom_boxplot(aes(fill=condition), alpha=0.4, outlier.colour="white", outlier.size=0) +
+  theme_bw() + xlab(snp) + ylab(paste(gene, "expression"))
+
+snp <- as.character(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls$snps[1])
+gene <- basalGenes$Symbol[1]
+probe <- basalGenes$NuID[1]
+
+stimFit <- lm(stimExpr[probe, ] ~ geno$bed[snp,] + t(covarStim[[1]]))
+stimOffset <- colSums(stimFit$coefficients[-(1:2)]*covarStim[[1]])
+
+basalFit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
+basalOffset <- colSums(basalFit$coefficients[-(1:2)]*covarBasal[[1]])
+
+plotData <- data.frame(genotype=rep(geno$bed[snp,], 2), 
+                       expression=c(stimExpr[probe, ]-stimOffset, basalExpr[probe,]-basalOffset),
+                       condition=c(rep("stimulated", ncol(stimExpr)), rep("basal", ncol(basalExpr))))
+plotData <- dplyr::filter(plotData, !is.na(genotype))
+basalPlot <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
+  geom_boxplot(aes(fill=condition), alpha=0.4, outlier.colour="white", outlier.size=0) +
+  theme_bw() + xlab(snp) + ylab(paste(gene, "expression"))
+
+multiplot(stimPlot, basalPlot)
+```
+
 # Appendix {-}
+
+```{r bundlePlots, include=FALSE, cache=FALSE}
+pngDir <- "heatshock_analysis_files/figure-html"
+pdfDir <- "heatshock_analysis_files/figure-latex"
+if(file.exists(pngDir) && length(dir(pngDir, "*.png")) &&
+     !file.exists(file.path(pngDir, "figures_png.tar.gz"))){
+  system("(cd heatshock_analysis_files/figure-html && tar -czf figures_png.tar.gz *.png)")
+}
+if(file.exists(pdfDir) && length(dir(pdfDir, "*.pdf")) &&
+     !file.exists(file.path(pdfDir, "figures_pdf.tar.gz"))){
+  system("(cd heatshock_analysis_files/figure-latex && tar -czf figures_pdf.tar.gz *.pdf)")
+}
+```
+
 ## Custom functions used
 ```{r, ref.label="functions", eval=FALSE, echo=TRUE}
 ```
