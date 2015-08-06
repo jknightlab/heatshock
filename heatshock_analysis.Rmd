@@ -1571,7 +1571,7 @@ treatAvg <- data.frame(do.call(rbind, by(dplyr::select(sig.pc, PC2, PC4), sig.pc
 treatAvg$Treatment <- rownames(treatAvg)
 treatAvg[["Cell Line"]] <- "avg"
 perp <- rev(treatAvg[2,1:2] - treatAvg[1, 1:2]) * c(-1,1)
-slope <- perp[2]/perp[1]
+slope <- (perp[2]/perp[1])[[1]]
 ggplot(sig.pc, aes(x=PC2, y=PC4, colour=Treatment, group=`Cell Line`)) + 
   geom_point(data=treatAvg, size=5) +
   geom_line(data=treatAvg, colour="black",  line.width=2,
@@ -1579,7 +1579,7 @@ ggplot(sig.pc, aes(x=PC2, y=PC4, colour=Treatment, group=`Cell Line`)) +
   geom_line(colour="darkgrey", alpha=0.7,
             arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20)) + 
   geom_point(size=2.5, alpha=0.5) +  
-  geom_abline(data=data.frame(slope=slope), slope=slope, intercept=0, colour="lightgrey") + 
+  geom_abline(slope=slope, intercept=0, colour="black", linetype="dashed") + 
   scale_colour_manual(values=c(Basal="blue", Stim="red")) +
   theme_bw()
 ```
