@@ -1658,7 +1658,7 @@ tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
 
 ```{r transGeneTable, cache=FALSE}
 set.caption(tabRef("transGenes", "List of genes with strongest evidence for trans associations between heat shock response and SNPs upstream of HSF1 and HSF2."))
-pander(head(tab, 10))
+if(nrow(tab)) pander(head(tab, 10))
 ```
 
 ```{r prepTransStimTable}
@@ -1669,7 +1669,7 @@ tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
 
 ```{r transStimGeneTable, cache=FALSE}
 set.caption(tabRef("transStimGenes", "List of genes with strongest evidence for trans associations between gene expression following heat shock and SNPs upstream of HSF1 and HSF2."))
-pander(head(tab, 10))
+if(nrow(tab)) pander(head(tab, 10))
 ```
 
 ```{r prepTransBasalTable}
@@ -1680,7 +1680,7 @@ tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
 
 ```{r transBasalGeneTable, cache=FALSE}
 set.caption(tabRef("transBasalGenes", "List of genes with strongest evidence for trans associations between gene expression in the basal state and SNPs upstream of HSF1 and HSF2."))
-pander(head(tab, 10))
+if(nrow(tab)) pander(head(tab, 10))
 ```
 
 
