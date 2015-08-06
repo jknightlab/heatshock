@@ -1528,13 +1528,15 @@ multiplot(stimPlot, basalPlot)
 # Appendix {-}
 
 ```{r bundlePlots, include=FALSE, cache=FALSE}
-if(file.exists("heatshock_analysis_files/figure-html") && 
-     !file.exists("heatshock_analysis_files/figure-html/figures_png.tar.gz")){
-  system("(cd heatshock_analysis_files/figure-html && tar -czf figures_png.tar.gz *)")
+pngDir <- "heatshock_analysis_files/figure-html"
+pdfDir <- "heatshock_analysis_files/figure-latex"
+if(file.exists(pngDir) && length(dir(pngDir, "*.png")) &&
+     !file.exists(file.path(pngDir, "figures_png.tar.gz"))){
+  system("(cd heatshock_analysis_files/figure-html && tar -czf figures_png.tar.gz *.png)")
 }
-if(file.exists("heatshock_analysis_files/figure-latex") && 
-     !file.exists("heatshock_analysis_files/figures_pdf.tar.gz")){
-  system("(cd heatshock_analysis_files/figure-latex && tar -czf figures_pdf.tar.gz *)")
+if(file.exists(pdfDir) && length(dir(pdfDir, "*.pdf")) &&
+     !file.exists(file.path(pdfDir, "figures_pdf.tar.gz"))){
+  system("(cd heatshock_analysis_files/figure-latex && tar -czf figures_pdf.tar.gz *.pdf)")
 }
 ```
 
