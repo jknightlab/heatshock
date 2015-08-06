@@ -1354,7 +1354,20 @@ targetGeno <- geno$bed[targetSNPs$snp, ]
 write.table(targetGeno, file="tmp/genotypes_hsf.tab", sep="\t", quote=FALSE)
 ```
 
-```{r runHSFtrans, cache=FALSE, results="hide"}
+```{r runHSFtransFC, cache=FALSE, results="hide"}
+nPC_hsf <- 1
+write.table(geno$fam[2:(2+nPC_hsf), , drop=FALSE], 
+            fie="tmp/covar_hsf_fc.tab", sep="\t", quote=FALSE)
+
+covarHSF <- SlicedData$new();
+covarHSF$fileDelimiter <- "\t"
+covarHSF$fileOmitCharacters <- "NA"
+covarHSF$fileSkipRows <- 1
+covarHSF$fileSkipColumns <- 1
+covarHSF$fileSliceSize <- 2000
+covarHSF$LoadFile(paste0("tmp/covar_hsf_fc.tab"))
+ 
+
 snpsHSF <- SlicedData$new();
 snpsHSF$fileDelimiter <- "\t"
 snpsHSF$fileOmitCharacters <- "NA"
@@ -1371,12 +1384,12 @@ pheno$fileSkipColumns <- 1
 pheno$fileSliceSize <- 2000
 pheno$LoadFile("tmp/selected_probes_fc.tab")
 
-me <- Matrix_eQTL_main(
+meHSF <- Matrix_eQTL_main(
     snps = snpsHSF,
     gene = pheno,
     cvrt = covar,
     output_file_name = "tmp/reQTL_hsf_analysis",
-    pvOutputThreshold = 1e-5,
+    pvOutputThreshold = 1e-3,
     pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
@@ -1385,6 +1398,58 @@ me <- Matrix_eQTL_main(
     min.pv.by.genesnp = TRUE,
     noFDRsaveMemory = FALSE)
 ```
+
+```{r runHSFtransExpr, cache=FALSE, results="hide"}
+nPC_hsf_expr <- 1
+write.table(t(pc_stim)[1:nPC_hsf_expr, , drop=FALSE], file = "tmp/covar_hsf_expr_stim.tab", sep="\t", quote=FALSE)
+write.table(t(pc_basal)[1:nPC_hsf_expr, , drop=FALSE], file = "tmp/covar_hsf_expr_basal.tab", sep="\t", quote=FALSE)
+
+covarHSFstim <- SlicedData$new();
+covarHSFstim$fileDelimiter <- "\t"
+covarHSFstim$fileOmitCharacters <- "NA"
+covarHSFstim$fileSkipRows <- 1
+covarHSFstim$fileSkipColumns <- 1
+covarHSFstim$fileSliceSize <- 2000
+covarHSFstim$LoadFile("tmp/covar_hsf_expr_stim.tab")
+
+covarHSFbasal <- SlicedData$new();
+covarHSFbasal$fileDelimiter <- "\t"
+covarHSFbasal$fileOmitCharacters <- "NA"
+covarHSFbasal$fileSkipRows <- 1
+covarHSFbasal$fileSkipColumns <- 1
+covarHSFbasal$fileSliceSize <- 2000
+covarHSFbasal$LoadFile("tmp/covar_hsf_expr_basal.tab")
+
+meHSFstim <- Matrix_eQTL_main(
+    snps = snpsHSF,
+    gene = phenoStim,
+    cvrt = covarHSFstim,
+    output_file_name = "tmp/eQTL_hsf_stim_analysis",
+    pvOutputThreshold = 1e-3,
+    pvOutputThreshold.cis = 0,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+
+meHSFbasal <- Matrix_eQTL_main(
+    snps = snpsHSF,
+    gene = phenoBasal,
+    cvrt = covarHSFbasal,
+    output_file_name = "tmp/eQTL_hsf_basal_analysis",
+    pvOutputThreshold = 1e-5,
+    pvOutputThreshold.cis = 0,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+
+```
+
 
 
 # Results
