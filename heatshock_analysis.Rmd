@@ -1648,6 +1648,42 @@ basalPlot <- ggplot(plotData, aes(x=factor(genotype), y=expression)) +
 multiplot(stimPlot, basalPlot)
 ```
 
+## Trans associations for SNPs upstream of HSF1 and HSF2
+
+```{r prepTransTable}
+tab <- dplyr::left_join(meHSF$all$eqtls, limmaTable, by=c(gene="NuID"))
+tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
+tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
+```
+
+```{r transGeneTable, cache=FALSE}
+set.caption(tabRef("transGenes", "List of genes with strongest evidence for trans associations between heat shock response and SNPs upstream of HSF1 and HSF2."))
+pander(tab)
+```
+
+```{r prepTransStimTable}
+tab <- dplyr::left_join(meHSFstim$all$eqtls, limmaTable, by=c(gene="NuID"))
+tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
+tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
+```
+
+```{r transStimGeneTable, cache=FALSE}
+set.caption(tabRef("transStimGenes", "List of genes with strongest evidence for trans associations between gene expression following heat shock and SNPs upstream of HSF1 and HSF2."))
+pander(tab)
+```
+
+```{r prepTransBasalTable}
+tab <- dplyr::left_join(meHSFbasal$all$eqtls, limmaTable, by=c(gene="NuID"))
+tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
+tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
+```
+
+```{r transBasalGeneTable, cache=FALSE}
+set.caption(tabRef("transStimGenes", "List of genes with strongest evidence for trans associations between gene expression in the basal state and SNPs upstream of HSF1 and HSF2."))
+pander(tab)
+```
+
+
 # Appendix {-}
 
 ```{r bundlePlots, include=FALSE, cache=FALSE}
