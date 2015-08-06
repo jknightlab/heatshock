@@ -736,7 +736,7 @@ close(exprOut)
 ```
 
 ```{r compressData, cache=FALSE, include=FALSE}
-system("tar -czf tmp/yri_geno.tar.gz -C hapmap_yri.smpl_flt2.bed hapmap_yri.smpl_flt2.bim hapmap_yri.smpl_flt2.fam")
+system("tar -czf tmp/yri_geno.tar.gz -C tmp hapmap_yri.smpl_flt2.bed hapmap_yri.smpl_flt2.bim hapmap_yri.smpl_flt2.fam")
 ```
 
 ## Differential expression analysis
