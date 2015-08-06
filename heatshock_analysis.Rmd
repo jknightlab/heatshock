@@ -1328,6 +1328,56 @@ basalGenes <- dplyr::filter(geneP_basal, Gene.FDR < 0.05 & !Symbol %in% stim_ext
 system("tar -czf tmp/eQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GRCh37.tab selected_probes_stim_expr.tab selected_probes_basal_expr.tab covar_expr_stim.tab covar_expr_basal.tab")
 ```
 
+## Trans associations for SNPs upstream of HSF1 and HSF2
+
+```{r hsfWindow}
+genePos <- data.frame(chrom=c("chr8", "chr6"), start=c(145515270, 122720696), end=c(145538385, 122754264), 
+                      gene=c("HSF1", "HSF2"), stringsAsFactors=FALSE)
+window <- 1e6
+idx <- mapply(function(x, chr, s, e, w) which(x$chrom == chr & x$loc >= s - w & x$loc <= e), 
+              chr=genePos$chrom, s=genePos$start, e=genePos$end, MoreArgs=list(x=geno$bim, w=window),
+              SIMPLIFY=FALSE)
+idx <- Reduce(union, idx)
+targetSNPs <- geno$bim[idx, ]
+targetGeno <- geno$bed[targetSNPs$snp, ]
+```
+
+```{r writeHSFsnps, cache=FALSE}
+write.table(targetGeno, file="tmp/genotypes_hsf.tab", sep="\t", quote=FALSE)
+```
+
+```{r runHSFtrans, cache=FALSE, results="hide"}
+snpsHSF <- SlicedData$new();
+snpsHSF$fileDelimiter <- "\t"
+snpsHSF$fileOmitCharacters <- "NA"
+snpsHSF$fileSkipRows <- 1
+snpsHSF$fileSkipColumns <- 1
+snpsHSF$fileSliceSize <- 2000
+snpsHSF$LoadFile(paste0("tmp/genotypes_hsf.tab"))
+
+pheno <- SlicedData$new();
+pheno$fileDelimiter <- "\t"
+pheno$fileOmitCharacters <- "NA"
+pheno$fileSkipRows <- 1
+pheno$fileSkipColumns <- 1
+pheno$fileSliceSize <- 2000
+pheno$LoadFile("tmp/selected_probes_fc.tab")
+
+me <- Matrix_eQTL_main(
+    snps = snpsHSF,
+    gene = pheno,
+    cvrt = covar,
+    output_file_name.cis = "tmp/reQTL_hsf_analysis",
+    pvOutputThreshold = 1e-5,
+    pvOutputThreshold.cis = 0,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+```
+
 
 # Results
 ## Differential expression analysis
