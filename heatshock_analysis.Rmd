@@ -1375,7 +1375,7 @@ me <- Matrix_eQTL_main(
     snps = snpsHSF,
     gene = pheno,
     cvrt = covar,
-    output_file_name.cis = "tmp/reQTL_hsf_analysis",
+    output_file_name = "tmp/reQTL_hsf_analysis",
     pvOutputThreshold = 1e-5,
     pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
