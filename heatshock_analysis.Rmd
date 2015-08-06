@@ -820,6 +820,21 @@ write.table(GenTable(tgDown, up = resultUp, down = resultDown,
 system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulated.tab")
 ```
 
+## Global heat shock response
+
+To assess the magnitude of the global difference in gene expression induced by heat shock
+we initially consider the principle components of the gene expression data. We reasoned that
+a substantial, global change in gene expression is likely to be well represented by the first
+few principle components. To determine which of these best capture the change we carried out
+a logistic regression with the treatment state (basal or stimulated) as response that included
+the first four principle components as predictors.
+
+```{r pcaFit}
+pcaFit <- glm(factor(Treatment) ~ PC1 + PC2 + PC3 + PC4, data=sig.pc, family = binomial())
+selPC <- names(sort(coef(pcaFit)[-1], decreasing=TRUE))[1:2]
+```
+
+
 ## Response QTL analysis
 All probes considered to be differentially expressed following heat shock treatment
 (FDR < `r fdrCut` and fold change > `r 2^fcCut`) were further investigated for
@@ -1538,6 +1553,37 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
     scale_shape_manual(values=c(up=24, down=25)) +
     theme_bw()
 ```
+
+## Global heat shock response
+
+```{r pcaModelTable, cache=FALSE}
+set.caption(tabRef("pcaFit", "Logistic regression fit"))
+pander(pcaFit)
+```
+
+Based on the logistic regression fit (`r tabRef("pcaFit")`) `r paste(selPC, collapse=" and ")` 
+were selected as subspace in which to visualise the data (`r figRef("treatPCA")`). While this
+shows an overall consitent change in gene expression across samples it also highlights
+variability beween individuals.
+
+```{r treatPCAplot, cache=FALSE, fig.cap=figRef("treatPCA", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock.")}
+treatAvg <- data.frame(do.call(rbind, by(dplyr::select(sig.pc, PC2, PC4), sig.pc$Treat, colMeans)))
+treatAvg$Treatment <- rownames(treatAvg)
+treatAvg[["Cell Line"]] <- "avg"
+perp <- rev(treatAvg[2,1:2] - treatAvg[1, 1:2]) * c(-1,1)
+slope <- perp[2]/perp[1]
+ggplot(sig.pc, aes(x=PC2, y=PC4, colour=Treatment, group=`Cell Line`)) + 
+  geom_point(data=treatAvg, size=5) +
+  geom_line(data=treatAvg, colour="black",  line.width=2,
+            arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20)) +
+  geom_line(colour="darkgrey", alpha=0.7,
+            arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20)) + 
+  geom_point(size=2.5, alpha=0.5) +  
+  geom_abline(data=data.frame(slope=slope), slope=slope, intercept=0, colour="lightgrey") + 
+  scale_colour_manual(values=c(Basal="blue", Stim="red")) +
+  theme_bw()
+```
+
 
 ## Response QTL analysis
 
