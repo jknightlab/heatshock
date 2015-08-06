@@ -1331,7 +1331,7 @@ system("tar -czf tmp/eQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GR
 ## Trans associations for SNPs upstream of HSF1 and HSF2
 
 Strong associations between SNPs in the promoter region of a HSF1 homolog and the
-expression of heat shock proteins are known to exist in rats [@Dumas]. We therefore
+expression of heat shock proteins are known to exist in rats [@Dumas00]. We therefore
 thought to investigate wether similar effects can be observed for the differentially
 expressed genes we identified. To this end we tested all genotyped SNPs that passed QC
 within a window including the gene body and 1MB upstream of the transcription start site
