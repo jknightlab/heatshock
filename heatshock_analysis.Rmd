@@ -504,7 +504,7 @@ a clustering of samples from two RNA amplification batches in October 2009
 Further analysis of the gene expression response to heat shock revealed that two of the samples
 (NA18502 and NA18508) exhibit patterns of expression inconsistent with those observed
 in other samples, including reversal of fold change for strongly differentially expressed
-genes. This suggests a potential mislabelling of these samples, which were consequently excluded.
+genes. This suggests a potential mislabeling of these samples, which were consequently excluded.
 
 ```{r extraExclusions}
 exclude$sample <- union(exclude$sample, c("NA18502", "NA18508"))
