@@ -504,7 +504,7 @@ a clustering of samples from two RNA amplification batches in October 2009
 Further analysis of the gene expression response to heat shock revealed that two of the samples
 (NA18502 and NA18508) exhibit patterns of expression inconsistent with those observed
 in other samples, including reversal of fold change for strongly differentially expressed
-genes. This suggests a potential mislabelling of these samples, which were consequently excluded.
+genes. This suggests a potential mislabeling of these samples, which were consequently excluded.
 
 ```{r extraExclusions}
 exclude$sample <- union(exclude$sample, c("NA18502", "NA18508"))
@@ -1330,6 +1330,14 @@ system("tar -czf tmp/eQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GR
 
 ## Trans associations for SNPs upstream of HSF1 and HSF2
 
+Strong associations between SNPs in the promoter region of a HSF1 homolog and the
+expression of heat shock proteins are known to exist in rats [@Dumas00]. We therefore
+thought to investigate wether similar effects can be observed for the differentially
+expressed genes we identified. To this end we tested all genotyped SNPs that passed QC
+within a window including the gene body and 1MB upstream of the transcription start site
+of HSF1 and HSF2 for associations with the heat shock response (log fold change) as well
+as with gene expression in basal and stimulated cells.
+
 ```{r hsfWindow}
 genePos <- data.frame(chrom=c("chr8", "chr6"), start=c(145515270, 122720696), end=c(145538385, 122754264), 
                       gene=c("HSF1", "HSF2"), stringsAsFactors=FALSE)
@@ -1346,7 +1354,20 @@ targetGeno <- geno$bed[targetSNPs$snp, ]
 write.table(targetGeno, file="tmp/genotypes_hsf.tab", sep="\t", quote=FALSE)
 ```
 
-```{r runHSFtrans, cache=FALSE, results="hide"}
+```{r runHSFtransFC, cache=FALSE, results="hide"}
+nPC_hsf <- 1
+write.table(geno$fam[2:(2+nPC_hsf), , drop=FALSE], 
+            file="tmp/covar_hsf_fc.tab", sep="\t", quote=FALSE)
+
+covarHSF <- SlicedData$new();
+covarHSF$fileDelimiter <- "\t"
+covarHSF$fileOmitCharacters <- "NA"
+covarHSF$fileSkipRows <- 1
+covarHSF$fileSkipColumns <- 1
+covarHSF$fileSliceSize <- 2000
+covarHSF$LoadFile(paste0("tmp/covar_hsf_fc.tab"))
+ 
+
 snpsHSF <- SlicedData$new();
 snpsHSF$fileDelimiter <- "\t"
 snpsHSF$fileOmitCharacters <- "NA"
@@ -1363,12 +1384,12 @@ pheno$fileSkipColumns <- 1
 pheno$fileSliceSize <- 2000
 pheno$LoadFile("tmp/selected_probes_fc.tab")
 
-me <- Matrix_eQTL_main(
+meHSF <- Matrix_eQTL_main(
     snps = snpsHSF,
     gene = pheno,
     cvrt = covar,
-    output_file_name.cis = "tmp/reQTL_hsf_analysis",
-    pvOutputThreshold = 1e-5,
+    output_file_name = "tmp/reQTL_hsf_analysis",
+    pvOutputThreshold = 1e-3,
     pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
@@ -1377,6 +1398,58 @@ me <- Matrix_eQTL_main(
     min.pv.by.genesnp = TRUE,
     noFDRsaveMemory = FALSE)
 ```
+
+```{r runHSFtransExpr, cache=FALSE, results="hide"}
+nPC_hsf_expr <- 1
+write.table(t(pc_stim)[1:nPC_hsf_expr, , drop=FALSE], file = "tmp/covar_hsf_expr_stim.tab", sep="\t", quote=FALSE)
+write.table(t(pc_basal)[1:nPC_hsf_expr, , drop=FALSE], file = "tmp/covar_hsf_expr_basal.tab", sep="\t", quote=FALSE)
+
+covarHSFstim <- SlicedData$new();
+covarHSFstim$fileDelimiter <- "\t"
+covarHSFstim$fileOmitCharacters <- "NA"
+covarHSFstim$fileSkipRows <- 1
+covarHSFstim$fileSkipColumns <- 1
+covarHSFstim$fileSliceSize <- 2000
+covarHSFstim$LoadFile("tmp/covar_hsf_expr_stim.tab")
+
+covarHSFbasal <- SlicedData$new();
+covarHSFbasal$fileDelimiter <- "\t"
+covarHSFbasal$fileOmitCharacters <- "NA"
+covarHSFbasal$fileSkipRows <- 1
+covarHSFbasal$fileSkipColumns <- 1
+covarHSFbasal$fileSliceSize <- 2000
+covarHSFbasal$LoadFile("tmp/covar_hsf_expr_basal.tab")
+
+meHSFstim <- Matrix_eQTL_main(
+    snps = snpsHSF,
+    gene = phenoStim,
+    cvrt = covarHSFstim,
+    output_file_name = "tmp/eQTL_hsf_stim_analysis",
+    pvOutputThreshold = 1e-3,
+    pvOutputThreshold.cis = 0,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+
+meHSFbasal <- Matrix_eQTL_main(
+    snps = snpsHSF,
+    gene = phenoBasal,
+    cvrt = covarHSFbasal,
+    output_file_name = "tmp/eQTL_hsf_basal_analysis",
+    pvOutputThreshold = 1e-5,
+    pvOutputThreshold.cis = 0,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    min.pv.by.genesnp = TRUE,
+    noFDRsaveMemory = FALSE)
+
+```
+
 
 
 # Results
@@ -1574,6 +1647,42 @@ basalPlot <- ggplot(plotData, aes(x=factor(genotype), y=expression)) +
 
 multiplot(stimPlot, basalPlot)
 ```
+
+## Trans associations for SNPs upstream of HSF1 and HSF2
+
+```{r prepTransTable}
+tab <- dplyr::left_join(meHSF$all$eqtls, limmaTable, by=c(gene="NuID"))
+tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
+tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
+```
+
+```{r transGeneTable, cache=FALSE}
+set.caption(tabRef("transGenes", "List of genes with strongest evidence for trans associations between heat shock response and SNPs upstream of HSF1 and HSF2."))
+if(nrow(tab)) pander(head(tab, 10))
+```
+
+```{r prepTransStimTable}
+tab <- dplyr::left_join(meHSFstim$all$eqtls, limmaTable, by=c(gene="NuID"))
+tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
+tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
+```
+
+```{r transStimGeneTable, cache=FALSE}
+set.caption(tabRef("transStimGenes", "List of genes with strongest evidence for trans associations between gene expression following heat shock and SNPs upstream of HSF1 and HSF2."))
+if(nrow(tab)) pander(head(tab, 10))
+```
+
+```{r prepTransBasalTable}
+tab <- dplyr::left_join(meHSFbasal$all$eqtls, limmaTable, by=c(gene="NuID"))
+tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
+tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
+```
+
+```{r transBasalGeneTable, cache=FALSE}
+set.caption(tabRef("transBasalGenes", "List of genes with strongest evidence for trans associations between gene expression in the basal state and SNPs upstream of HSF1 and HSF2."))
+if(nrow(tab)) pander(head(tab, 10))
+```
+
 
 # Appendix {-}
 
