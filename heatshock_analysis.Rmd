@@ -1639,18 +1639,21 @@ pander(dplyr::select(head(geneP_basal), -ArrayAddress, -NuID),
 ```
 
 Condition specific associations were identified for `r nrow(stimGenes)` 
-gene`r if(nrow(stimGenes) > 1) "s" else ""` in the stimulated and for `r nrow(basalGenes)`
-in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`). See `r tabRef("topGeneSNPs_stim")`
-and `r tabRef("topGeneSNPs_basal")` for a list of SNPs of interest for these top genes.
+gene`r if(nrow(stimGenes) != 1) "s" else ""` in the stimulated and for `r nrow(basalGenes)`
+in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`). See 
+`r if(geneSNPcount_stim[1] > 0) tabRef("topGeneSNPs_stim") else ""` 
+`r if(geneSNPcount_stim[1] > 0 && geneSNPcount_basal[1] > 0) "and" else ""`
+`r if(geneSNPcount_basal[1] > 0) tabRef("topGeneSNPs_basal") else ""` 
+for a list of SNPs of interest for these genes.
 
-```{r topGeneSNPs_stim, cache=FALSE}
+```{r topGeneSNPs_stim, cache=FALSE, include=geneSNPcount_stim[1] > 0, eval=geneSNPcount_stim[1] > 0}
 set.caption(tabRef("topGeneSNPs_stim", paste("Top eSNPs for", stimGenes$Symbol[1], "following heat shock.")))
 tab <- head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_stim[1], 20))
 tab$gene <- stimGenes$Symbol[1]
 pander(tab)
 ```
 
-```{r topGeneSNPs_basal, cache=FALSE}
+```{r topGeneSNPs_basal, cache=FALSE, include=geneSNPcount_basal[1] > 0, eval=geneSNPcount_basal[1] > 0}
 set.caption(tabRef("topGeneSNPs_basal", paste("Top eSNPs for", basalGenes$Symbol[1], "in basal state.")))
 tab <- head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_basal[1], 20))
 tab$gene <- basalGenes$Symbol[1]
