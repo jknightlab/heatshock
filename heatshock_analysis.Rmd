@@ -502,12 +502,12 @@ a clustering of samples from two RNA amplification batches in October 2009
 (`r figRef("pcaPlot")`). This batch effect is noted for later correction during the analysis.
 
 Further analysis of the gene expression response to heat shock revealed that four of the samples
-(NA18502, NA18508, NA18522 and NA18553) exhibit patterns of expression inconsistent with those observed
+(NA18502, NA18508, NA18522 and NA18853) exhibit patterns of expression inconsistent with those observed
 in other samples, including reversal of fold change for strongly differentially expressed
 genes. This suggests a potential mislabeling of these samples, which were consequently excluded.
 
 ```{r extraExclusions}
-exclude$sample <- union(exclude$sample, c("NA18502", "NA18508", "NA18522", "NA18553"))
+exclude$sample <- union(exclude$sample, c("NA18502", "NA18508", "NA18522", "NA18853"))
 dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
 sig.data.long <- dat$sig
 sig.data.raw.long <- dat$sig.raw
