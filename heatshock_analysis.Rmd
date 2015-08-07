@@ -55,6 +55,7 @@ library(topGO)
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 library(plink2R)
 library(MatrixEQTL)
+library(plsdepot)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -501,13 +502,13 @@ A principle component analysis of the gene expression for the remaining samples 
 a clustering of samples from two RNA amplification batches in October 2009
 (`r figRef("pcaPlot")`). This batch effect is noted for later correction during the analysis.
 
-Further analysis of the gene expression response to heat shock revealed that two of the samples
-(NA18502 and NA18508) exhibit patterns of expression inconsistent with those observed
+Further analysis of the gene expression response to heat shock revealed that four of the samples
+(NA18502, NA18508, NA18522 and NA18853) exhibit patterns of expression inconsistent with those observed
 in other samples, including reversal of fold change for strongly differentially expressed
 genes. This suggests a potential mislabeling of these samples, which were consequently excluded.
 
 ```{r extraExclusions}
-exclude$sample <- union(exclude$sample, c("NA18502", "NA18508"))
+exclude$sample <- union(exclude$sample, c("NA18502", "NA18508", "NA18522", "NA18853"))
 dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
 sig.data.long <- dat$sig
 sig.data.raw.long <- dat$sig.raw
