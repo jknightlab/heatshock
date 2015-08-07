@@ -1654,47 +1654,55 @@ pander(tab)
 ```
 
 
-```{r topEgeneSNPplot, cache=FALSE, fig.cap=figRef("topEgeneSNP", paste("Gene expression by genotype for genes showing evidence of condition specific eQTL. Gene expression estimates were corrected for the effect of covariates."))}
-snp <- as.character(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls$snps[1])
-gene <- stimGenes$Symbol[1]
-probe <- stimGenes$NuID[1]
+```{r topEgeneSNPplot, cache=FALSE, fig.cap=figRef("topEgeneSNP", paste("Gene expression by genotype for genes showing evidence of condition specific eQTL. Gene expression estimates were corrected for the effect of covariates.")), include=nrow(basalGenes) + nrow(stimGenes) > 0, eval=nrow(basalGenes) + nrow(stimGenes) > 0}
 
-stimFit <- lm(stimExpr[probe, ] ~ geno$bed[snp,] + t(covarStim[[1]]))
-stimOffset <- colSums(stimFit$coefficients[-(1:2)]*covarStim[[1]])
+stimPlot <- NULL
+if(nrow(stimGenes)){
+  snp <- as.character(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls$snps[1])
+  gene <- stimGenes$Symbol[1]
+  probe <- stimGenes$NuID[1]
+  
+  stimFit <- lm(stimExpr[probe, ] ~ geno$bed[snp,] + t(covarStim[[1]]))
+  stimOffset <- colSums(stimFit$coefficients[-(1:2)]*covarStim[[1]])
+  
+  basalFit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
+  basalOffset <- colSums(basalFit$coefficients[-(1:2)]*covarBasal[[1]])
+  
+  
+  plotData <- data.frame(genotype=rep(geno$bed[snp,], 2), 
+                         expression=c(stimExpr[probe, ]-stimOffset, basalExpr[probe,]-basalOffset),
+                         condition=c(rep("stimulated", ncol(stimExpr)), rep("basal", ncol(basalExpr))))
+  plotData <- dplyr::filter(plotData, !is.na(genotype))
+  stimPlot <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
+    geom_boxplot(aes(fill=condition), alpha=0.4, outlier.colour="white", outlier.size=0) +
+    theme_bw() + xlab(snp) + ylab(paste(gene, "expression"))
+}
 
-basalFit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
-basalOffset <- colSums(basalFit$coefficients[-(1:2)]*covarBasal[[1]])
+basalPlot <- NULL
+if(nrow(basalGenes)){
+  snp <- as.character(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls$snps[1])
+  gene <- basalGenes$Symbol[1]
+  probe <- basalGenes$NuID[1]
+  
+  stimFit <- lm(stimExpr[probe, ] ~ geno$bed[snp,] + t(covarStim[[1]]))
+  stimOffset <- colSums(stimFit$coefficients[-(1:2)]*covarStim[[1]])
+  
+  basalFit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
+  basalOffset <- colSums(basalFit$coefficients[-(1:2)]*covarBasal[[1]])
+  
+  plotData <- data.frame(genotype=rep(geno$bed[snp,], 2), 
+                         expression=c(stimExpr[probe, ]-stimOffset, basalExpr[probe,]-basalOffset),
+                         condition=c(rep("stimulated", ncol(stimExpr)), rep("basal", ncol(basalExpr))))
+  plotData <- dplyr::filter(plotData, !is.na(genotype))
+  basalPlot <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
+    geom_boxplot(aes(fill=condition), alpha=0.4, outlier.colour="white", outlier.size=0) +
+    theme_bw() + xlab(snp) + ylab(paste(gene, "expression"))
+}
 
-
-plotData <- data.frame(genotype=rep(geno$bed[snp,], 2), 
-                       expression=c(stimExpr[probe, ]-stimOffset, basalExpr[probe,]-basalOffset),
-                       condition=c(rep("stimulated", ncol(stimExpr)), rep("basal", ncol(basalExpr))))
-plotData <- dplyr::filter(plotData, !is.na(genotype))
-stimPlot <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
-  geom_boxplot(aes(fill=condition), alpha=0.4, outlier.colour="white", outlier.size=0) +
-  theme_bw() + xlab(snp) + ylab(paste(gene, "expression"))
-
-snp <- as.character(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls$snps[1])
-gene <- basalGenes$Symbol[1]
-probe <- basalGenes$NuID[1]
-
-stimFit <- lm(stimExpr[probe, ] ~ geno$bed[snp,] + t(covarStim[[1]]))
-stimOffset <- colSums(stimFit$coefficients[-(1:2)]*covarStim[[1]])
-
-basalFit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
-basalOffset <- colSums(basalFit$coefficients[-(1:2)]*covarBasal[[1]])
-
-plotData <- data.frame(genotype=rep(geno$bed[snp,], 2), 
-                       expression=c(stimExpr[probe, ]-stimOffset, basalExpr[probe,]-basalOffset),
-                       condition=c(rep("stimulated", ncol(stimExpr)), rep("basal", ncol(basalExpr))))
-plotData <- dplyr::filter(plotData, !is.na(genotype))
-basalPlot <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
-  geom_boxplot(aes(fill=condition), alpha=0.4, outlier.colour="white", outlier.size=0) +
-  theme_bw() + xlab(snp) + ylab(paste(gene, "expression"))
-
-multiplot(stimPlot, basalPlot)
+plots <- list(stimPlot, basalPlot)
+plots <- plots[!sapply(plots, is.null)]
+multiplot(plotlist=plots)
 ```
-
 ## Trans associations for SNPs upstream of HSF1 and HSF2
 
 ```{r prepTransTable}
