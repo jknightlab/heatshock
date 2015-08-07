@@ -1594,7 +1594,9 @@ SNP`r if(geneSNPcount[1] > 1) "s" else ""` that may be of interest (`r tabRef("t
 
 ```{r topGeneSNPs, cache=FALSE}
 set.caption(tabRef("topGeneSNPs", paste("Possible Response QTL for", geneP$Symbol[1])))
-pander(head(meGene[[1]]$cis$eqtls, geneSNPcount[1]))
+tab <- head(meGene[[1]]$cis$eqtls, geneSNPcount[1])
+tab$gene <- geneP$Symbol[1]
+pander(tab)
 ```
 
 ```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype. Fold changes were corrected for the effect of covariates."))}
@@ -1617,31 +1619,36 @@ ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
 
 ```{r eQTLStimGeneTable, cache=FALSE}
 set.caption(tabRef("eQTLstimGenes", "List of genes with strongest evidence for genetic modulation of gene expression after heat shock treatment. Significant associations only observed after heat shock treatment are highlight."))
+highlight <- which(head(geneP_stim)$Symbol %in% stimGenes$Symbol)
 pander(dplyr::select(head(geneP_stim), -ArrayAddress, -NuID), 
-       emphasize.strong.rows=which(head(geneP_stim)$Symbol %in% stimGenes$Symbol))
+       emphasize.strong.rows=if(length(highlight)) highlight else NULL)
 ```
 
 ```{r eQTLBasalGeneTable, cache=FALSE}
 set.caption(tabRef("eQTLbasalGenes", "List of genes with strongest evidence for genetic modulation of gene expression in basal state. Significant associations specific to the basal state are highlighted."))
+highlight <- which(head(geneP_basal)$Symbol %in% basalGenes$Symbol)
 pander(dplyr::select(head(geneP_basal), -ArrayAddress, -NuID),
-       emphasize.strong.rows=which(head(geneP_basal)$Symbol %in% basalGenes$Symbol))
+       emphasize.strong.rows=if(length(highlight)) highlight else NULL)
 ```
 
 Condition specific associations were identified for `r nrow(stimGenes)` 
-gene`r if(nrow(stimGenes) > 1) "s" else ""` in the stimulated and for `r nrow(basalGenes)`
-in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`). See `r tabRef("topGeneSNPs_stim")`
-and `r tabRef("topGeneSNPs_basal")` for a list of SNPs of interest for these top genes.
+gene`r if(nrow(stimGenes) != 1) "s" else ""` in the stimulated and for `r nrow(basalGenes)`
+in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`). See 
+`r if(geneSNPcount_stim[1] > 0) tabRef("topGeneSNPs_stim") else ""` 
+`r if(geneSNPcount_stim[1] > 0 && geneSNPcount_basal[1] > 0) "and" else ""`
+`r if(geneSNPcount_basal[1] > 0) tabRef("topGeneSNPs_basal") else ""` 
+for a list of SNPs of interest for these genes.
 
-```{r topGeneSNPs_stim, cache=FALSE}
-set.caption(tabRef("topGeneSNPs_stim", paste("Possible eQTL for", stimGenes$Symbol[1])))
-tab <- head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, geneSNPcount_stim[1])
+```{r topGeneSNPs_stim, cache=FALSE, include=geneSNPcount_stim[1] > 0, eval=geneSNPcount_stim[1] > 0}
+set.caption(tabRef("topGeneSNPs_stim", paste("Top eSNPs for", stimGenes$Symbol[1], "following heat shock.")))
+tab <- head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_stim[1], 20))
 tab$gene <- stimGenes$Symbol[1]
 pander(tab)
 ```
 
-```{r topGeneSNPs_basal, cache=FALSE}
-set.caption(tabRef("topGeneSNPs_basal", paste("Possible eQTL for", basalGenes$Symbol[1])))
-tab <- head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, geneSNPcount_basal[1])
+```{r topGeneSNPs_basal, cache=FALSE, include=geneSNPcount_basal[1] > 0, eval=geneSNPcount_basal[1] > 0}
+set.caption(tabRef("topGeneSNPs_basal", paste("Top eSNPs for", basalGenes$Symbol[1], "in basal state.")))
+tab <- head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_basal[1], 20))
 tab$gene <- basalGenes$Symbol[1]
 pander(tab)
 ```
