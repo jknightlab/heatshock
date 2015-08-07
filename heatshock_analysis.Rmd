@@ -55,6 +55,7 @@ library(topGO)
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 library(plink2R)
 library(MatrixEQTL)
+library(plsdepot)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
