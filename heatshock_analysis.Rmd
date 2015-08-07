@@ -1644,15 +1644,15 @@ in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`
 and `r tabRef("topGeneSNPs_basal")` for a list of SNPs of interest for these top genes.
 
 ```{r topGeneSNPs_stim, cache=FALSE}
-set.caption(tabRef("topGeneSNPs_stim", paste("Possible eQTL for", stimGenes$Symbol[1])))
-tab <- head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, geneSNPcount_stim[1])
+set.caption(tabRef("topGeneSNPs_stim", paste("Top eSNPs for", stimGenes$Symbol[1], "following heat shock.")))
+tab <- head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_stim[1], 20))
 tab$gene <- stimGenes$Symbol[1]
 pander(tab)
 ```
 
 ```{r topGeneSNPs_basal, cache=FALSE}
-set.caption(tabRef("topGeneSNPs_basal", paste("Possible eQTL for", basalGenes$Symbol[1])))
-tab <- head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, geneSNPcount_basal[1])
+set.caption(tabRef("topGeneSNPs_basal", paste("Top eSNPs for", basalGenes$Symbol[1], "in basal state.")))
+tab <- head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_basal[1], 20))
 tab$gene <- basalGenes$Symbol[1]
 pander(tab)
 ```
