@@ -959,6 +959,8 @@ write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, 
 ```
 
 ```{r prepQTL, results="hide", cache=FALSE}
+cisWindow <- 1e4
+
 snps <- SlicedData$new();
 snps$fileDelimiter <- "\t"
 snps$fileOmitCharacters <- "NA"
@@ -996,7 +998,7 @@ me <- Matrix_eQTL_main(
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = probePos,
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1009,10 +1011,11 @@ snpPos <- makeGRangesFromDataFrame(geno$bim, ignore.strand = TRUE, keep.extra.co
                                    start.field = "loc", end.field = "loc")
 geneSNPs <- do.call(GRangesList, mapply(
   function(x, chr, s, e) 
-    subset(x, seqnames == chr & start >= s - 1e6 & end <= e + 1e6), 
+    subset(x, seqnames == chr & start >= s - cisWindow & end <= e + cisWindow), 
   as.character(seqnames(probePos)), start(probePos), end(probePos), 
   MoreArgs=list(x=snpPos), SIMPLIFY=FALSE))
 names(geneSNPs) <- probePos$id
+noSNP <- probePos$id[sapply(geneSNPs, function(x) length(x) == 0)]
 
 mainSNP <- dplyr::filter(me$cis$eqtls, !duplicated(gene))
 
@@ -1023,6 +1026,7 @@ geneP <- p.adjust(geneP, "BH")
 geneP <- data.frame(NuID=names(geneP), Gene.FDR=geneP, stringsAsFactors=FALSE)
 geneP <- dplyr::left_join(geneP, limmaTable, by="NuID")
 geneP <- dplyr::left_join(geneP, mainSNP, by=c(NuID="gene"))
+geneP <- dplyr::filter(geneP, !NuID %in% noSNP)
 geneP <- dplyr::select(geneP, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
                        pvalue, beta, logFC, adj.P.Val)
 geneP <- dplyr::rename(geneP, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
@@ -1032,13 +1036,19 @@ geneP <- dplyr::arrange(geneP, Gene.FDR, desc(abs(SNP.beta)))
 
 ```{r prepGeneMatrixEqtl, cache=FALSE}
 selGenes <- dplyr::filter(geneP, Gene.FDR < 1)
+emptySel <- character()
 for(i in 1:nrow(selGenes)){
   selSNPs <- geno$bed[geneSNPs[[selGenes$NuID[i]]]$snp, ]
-  write.table(selSNPs, file=paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"), 
-              quote=FALSE, sep="\t")
-  write.table(selectedFC[selGenes$NuID[i], , drop=FALSE], 
-              file=paste0("tmp/", selGenes$Symbol[i], "_fc.tab"), sep="\t", quote=FALSE)
+  if(nrow(selSNPs)){
+    write.table(selSNPs, file=paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"), 
+                quote=FALSE, sep="\t")
+    write.table(selectedFC[selGenes$NuID[i], , drop=FALSE], 
+                file=paste0("tmp/", selGenes$Symbol[i], "_fc.tab"), sep="\t", quote=FALSE)
+    } else {
+      emptySel <- c(emptySel, selGenes$NuID[i])
+    }
 }
+selGenes <- dplyr::filter(selGenes, !NuID %in% emptySel)
 ```
 
 ```{r runGeneMatrixEqtl, cache=FALSE, results="hide"}
@@ -1072,7 +1082,7 @@ for(i in 1:nrow(selGenes)){
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1169,7 +1179,7 @@ meStim <- Matrix_eQTL_main(
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1186,7 +1196,7 @@ meBasal <- Matrix_eQTL_main(
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1208,6 +1218,7 @@ geneP_stim <- p.adjust(geneP_stim, "BH")
 geneP_stim <- data.frame(NuID=names(geneP_stim), Gene.FDR=geneP_stim, stringsAsFactors=FALSE)
 geneP_stim <- dplyr::left_join(geneP_stim, limmaTable, by="NuID")
 geneP_stim <- dplyr::left_join(geneP_stim, mainSNP_stim, by=c(NuID="gene"))
+geneP_stim <- dplyr::filter(geneP_stim, !NuID %in% noSNP)
 geneP_stim <- dplyr::select(geneP_stim, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
                        pvalue, beta, logFC, adj.P.Val)
 geneP_stim <- dplyr::rename(geneP_stim, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
@@ -1221,6 +1232,7 @@ geneP_basal <- p.adjust(geneP_basal, "BH")
 geneP_basal <- data.frame(NuID=names(geneP_basal), Gene.FDR=geneP_basal, stringsAsFactors=FALSE)
 geneP_basal <- dplyr::left_join(geneP_basal, limmaTable, by="NuID")
 geneP_basal <- dplyr::left_join(geneP_basal, mainSNP_basal, by=c(NuID="gene"))
+geneP_basal <- dplyr::filter(geneP_basal, !NuID %in% noSNP)
 geneP_basal <- dplyr::select(geneP_basal, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
                        pvalue, beta, logFC, adj.P.Val)
 geneP_basal <- dplyr::rename(geneP_basal, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
@@ -1230,23 +1242,34 @@ geneP_basal <- dplyr::arrange(geneP_basal, Gene.FDR, desc(abs(SNP.beta)))
 
 ```{r prepGeneEqtl, cache=FALSE}
 selGenes_stim <- dplyr::filter(geneP_stim, Gene.FDR < 0.05)
+emptySel <- character()
 for(i in 1:nrow(selGenes_stim)){
   selSNPs_stim <- geno$bed[geneSNPs[[selGenes_stim$NuID[i]]]$snp, ]
-  write.table(selSNPs_stim, file=paste0("tmp/genotypes_", selGenes_stim$Symbol[i],"_stim.tab"), 
-              quote=FALSE, sep="\t")
-  write.table(stimExpr[selGenes_stim$NuID[i], , drop=FALSE], 
-              file=paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"), sep="\t", quote=FALSE)
+  if(nrow(selSNPs_stim)){
+    write.table(selSNPs_stim, file=paste0("tmp/genotypes_", selGenes_stim$Symbol[i],"_stim.tab"), 
+                quote=FALSE, sep="\t")
+    write.table(stimExpr[selGenes_stim$NuID[i], , drop=FALSE], 
+                file=paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"), sep="\t", quote=FALSE)
+  } else {
+    emptySel <- c(emptySel, selGenes_stim$NuID[i])
+  }
 }
+selGenes_stim <- dplyr::filter(selGenes_stim, !NuID %in% emptySel)
 
 selGenes_basal <- dplyr::filter(geneP_basal, Gene.FDR < 0.05)
+emptySel <- character()
 for(i in 1:nrow(selGenes_basal)){
   selSNPs_basal <- geno$bed[geneSNPs[[selGenes_basal$NuID[i]]]$snp, ]
-  write.table(selSNPs_basal, file=paste0("tmp/genotypes_", selGenes_basal$Symbol[i],"_basal.tab"), 
-              quote=FALSE, sep="\t")
-  write.table(basalExpr[selGenes_basal$NuID[i], , drop=FALSE], 
-              file=paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"), sep="\t", quote=FALSE)
+  if(nrow(selSNPs_basal)){
+    write.table(selSNPs_basal, file=paste0("tmp/genotypes_", selGenes_basal$Symbol[i],"_basal.tab"), 
+                quote=FALSE, sep="\t")
+    write.table(basalExpr[selGenes_basal$NuID[i], , drop=FALSE], 
+                file=paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"), sep="\t", quote=FALSE)
+  } else {
+    emptySel <- c(emptySel, selGenes_basal$NuID[i])
+  }
 }
-
+selGenes_basal <- dplyr::filter(selGenes_basal, !NuID %in% emptySel)
 ```
 
 ```{r runGeneEqtl, cache=FALSE, results="hide"}
@@ -1280,7 +1303,7 @@ for(i in 1:nrow(selGenes_stim)){
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1319,7 +1342,7 @@ for(i in 1:nrow(selGenes_basal)){
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1358,9 +1381,8 @@ as with gene expression in basal and stimulated cells.
 ```{r hsfWindow}
 genePos <- data.frame(chrom=c("chr8", "chr6"), start=c(145515270, 122720696), end=c(145538385, 122754264), 
                       gene=c("HSF1", "HSF2"), stringsAsFactors=FALSE)
-window <- 1e6
 idx <- mapply(function(x, chr, s, e, w) which(x$chrom == chr & x$loc >= s - w & x$loc <= e), 
-              chr=genePos$chrom, s=genePos$start, e=genePos$end, MoreArgs=list(x=geno$bim, w=window),
+              chr=genePos$chrom, s=genePos$start, e=genePos$end, MoreArgs=list(x=geno$bim, w=cisWindow),
               SIMPLIFY=FALSE)
 idx <- Reduce(union, idx)
 targetSNPs <- geno$bim[idx, ]
