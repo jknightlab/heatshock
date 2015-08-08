@@ -1245,7 +1245,6 @@ for(i in 1:nrow(selGenes_stim)){
                 quote=FALSE, sep="\t")
     write.table(stimExpr[selGenes_stim$NuID[i], , drop=FALSE], 
                 file=paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"), sep="\t", quote=FALSE)
-    }
   } else {
     emptySel <- c(emptySel, selGenes_stim$NuID[i])
   }
@@ -1262,8 +1261,8 @@ for(i in 1:nrow(selGenes_basal)){
     write.table(basalExpr[selGenes_basal$NuID[i], , drop=FALSE], 
                 file=paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"), sep="\t", quote=FALSE)
   } else {
-      emptySel <- c(emptySel, selGenes_basal$NuID[i])
-    }
+    emptySel <- c(emptySel, selGenes_basal$NuID[i])
+  }
 }
 selGenes_basal <- dplyr::filter(selGenes_basal, !NuID %in% emptySel)
 ```
