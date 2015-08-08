@@ -1014,6 +1014,7 @@ geneSNPs <- do.call(GRangesList, mapply(
   as.character(seqnames(probePos)), start(probePos), end(probePos), 
   MoreArgs=list(x=snpPos), SIMPLIFY=FALSE))
 names(geneSNPs) <- probePos$id
+noSNP <- probePos$id[sapply(geneSNPs, function(x) length(x) == 0)]
 
 mainSNP <- dplyr::filter(me$cis$eqtls, !duplicated(gene))
 
@@ -1024,6 +1025,7 @@ geneP <- p.adjust(geneP, "BH")
 geneP <- data.frame(NuID=names(geneP), Gene.FDR=geneP, stringsAsFactors=FALSE)
 geneP <- dplyr::left_join(geneP, limmaTable, by="NuID")
 geneP <- dplyr::left_join(geneP, mainSNP, by=c(NuID="gene"))
+geneP <- dplyr::filter(geneP, !NuID %in% noSNP)
 geneP <- dplyr::select(geneP, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
                        pvalue, beta, logFC, adj.P.Val)
 geneP <- dplyr::rename(geneP, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
@@ -1215,6 +1217,7 @@ geneP_stim <- p.adjust(geneP_stim, "BH")
 geneP_stim <- data.frame(NuID=names(geneP_stim), Gene.FDR=geneP_stim, stringsAsFactors=FALSE)
 geneP_stim <- dplyr::left_join(geneP_stim, limmaTable, by="NuID")
 geneP_stim <- dplyr::left_join(geneP_stim, mainSNP_stim, by=c(NuID="gene"))
+geneP_stim <- dplyr::filter(geneP_stim, !NuID %in% noSNP)
 geneP_stim <- dplyr::select(geneP_stim, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
                        pvalue, beta, logFC, adj.P.Val)
 geneP_stim <- dplyr::rename(geneP_stim, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
@@ -1228,6 +1231,7 @@ geneP_basal <- p.adjust(geneP_basal, "BH")
 geneP_basal <- data.frame(NuID=names(geneP_basal), Gene.FDR=geneP_basal, stringsAsFactors=FALSE)
 geneP_basal <- dplyr::left_join(geneP_basal, limmaTable, by="NuID")
 geneP_basal <- dplyr::left_join(geneP_basal, mainSNP_basal, by=c(NuID="gene"))
+geneP_basal <- dplyr::filter(geneP_basal, !NuID %in% noSNP)
 geneP_basal <- dplyr::select(geneP_basal, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
                        pvalue, beta, logFC, adj.P.Val)
 geneP_basal <- dplyr::rename(geneP_basal, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
