@@ -958,6 +958,8 @@ write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, 
 ```
 
 ```{r prepQTL, results="hide", cache=FALSE}
+cisWindow <- 1e4
+
 snps <- SlicedData$new();
 snps$fileDelimiter <- "\t"
 snps$fileOmitCharacters <- "NA"
@@ -995,7 +997,7 @@ me <- Matrix_eQTL_main(
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = probePos,
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1008,7 +1010,7 @@ snpPos <- makeGRangesFromDataFrame(geno$bim, ignore.strand = TRUE, keep.extra.co
                                    start.field = "loc", end.field = "loc")
 geneSNPs <- do.call(GRangesList, mapply(
   function(x, chr, s, e) 
-    subset(x, seqnames == chr & start >= s - 1e6 & end <= e + 1e6), 
+    subset(x, seqnames == chr & start >= s - cisWindow & end <= e + cisWindow), 
   as.character(seqnames(probePos)), start(probePos), end(probePos), 
   MoreArgs=list(x=snpPos), SIMPLIFY=FALSE))
 names(geneSNPs) <- probePos$id
@@ -1071,7 +1073,7 @@ for(i in 1:nrow(selGenes)){
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1168,7 +1170,7 @@ meStim <- Matrix_eQTL_main(
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1185,7 +1187,7 @@ meBasal <- Matrix_eQTL_main(
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1279,7 +1281,7 @@ for(i in 1:nrow(selGenes_stim)){
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1318,7 +1320,7 @@ for(i in 1:nrow(selGenes_basal)){
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
-    cisDist = 1e6,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
@@ -1357,9 +1359,8 @@ as with gene expression in basal and stimulated cells.
 ```{r hsfWindow}
 genePos <- data.frame(chrom=c("chr8", "chr6"), start=c(145515270, 122720696), end=c(145538385, 122754264), 
                       gene=c("HSF1", "HSF2"), stringsAsFactors=FALSE)
-window <- 1e6
 idx <- mapply(function(x, chr, s, e, w) which(x$chrom == chr & x$loc >= s - w & x$loc <= e), 
-              chr=genePos$chrom, s=genePos$start, e=genePos$end, MoreArgs=list(x=geno$bim, w=window),
+              chr=genePos$chrom, s=genePos$start, e=genePos$end, MoreArgs=list(x=geno$bim, w=cisWindow),
               SIMPLIFY=FALSE)
 idx <- Reduce(union, idx)
 targetSNPs <- geno$bim[idx, ]
