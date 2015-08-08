@@ -1580,24 +1580,25 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
 
 ## Global heat shock response
 
-```{r treatPSLplot, cache=FALSE, fig.cap=figRef("treatPCA", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock.")}
-treatAvg <- data.frame(do.call(rbind, by(dplyr::select(pslComp, t1, t2), pslComp$Treatment, colMeans)))
-treatAvg$Treatment <- rownames(treatAvg)
-treatAvg[["Cell Line"]] <- "avg"
+
+```{r treatPLSplot, cache=FALSE, fig.cap=figRef("treatPCA", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock.")}
+treatAvg <- data.frame(do.call(rbind, by(dplyr::select(plsComp, t1, t2), plsComp$treatment, colMeans)))
+treatAvg$treatment <- rownames(treatAvg)
+treatAvg$sample <- "avg"
 perp <- rev(treatAvg[2,1:2] - treatAvg[1, 1:2]) * c(-1,1)
 slope <- (perp[2]/perp[1])[[1]]
 intersect <- colMeans(treatAvg[ , 1:2])
 intercept <- intersect[2] - slope*intersect[1]
-ggplot(sig.pc, aes(x=PC2, y=PC4, colour=Treatment, group=`Cell Line`)) +
+ggplot(plsComp, aes(x=t1, y=t2, colour=treatment, group=sample)) +
   geom_abline(slope=slope, intercept=intercept, colour="black", linetype="dashed") + 
   geom_point(data=treatAvg, size=5) +
   geom_line(data=treatAvg, colour="black",  line.width=2,
             arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20)) +
   geom_line(colour="darkgrey", alpha=0.7,
             arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20)) + 
-  geom_point(size=2.5, alpha=0.5) +   
+  geom_point(size=3, alpha=0.4) + geom_point(size=3, shape=1) +
   scale_colour_manual(values=c(Basal="blue", Stim="red")) +
-  theme_bw()
+  theme_bw() + xlab("Component 1") + ylab("Component 2")
 ```
 
 
