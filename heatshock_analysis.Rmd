@@ -1237,7 +1237,7 @@ geneP_basal <- dplyr::arrange(geneP_basal, Gene.FDR, desc(abs(SNP.beta)))
 
 ```{r prepGeneEqtl, cache=FALSE}
 selGenes_stim <- dplyr::filter(geneP_stim, Gene.FDR < 0.05)
-emptySel <- charater()
+emptySel <- character()
 for(i in 1:nrow(selGenes_stim)){
   selSNPs_stim <- geno$bed[geneSNPs[[selGenes_stim$NuID[i]]]$snp, ]
   if(nrow(selSNPs_stim)){
@@ -1252,7 +1252,7 @@ for(i in 1:nrow(selGenes_stim)){
 selGenes_stim <- dplyr::filter(selGenes_stim, !NuID %in% emptySel)
 
 selGenes_basal <- dplyr::filter(geneP_basal, Gene.FDR < 0.05)
-emptySel <- charater()
+emptySel <- character()
 for(i in 1:nrow(selGenes_basal)){
   selSNPs_basal <- geno$bed[geneSNPs[[selGenes_basal$NuID[i]]]$snp, ]
   if(nrow(selSNPs_basal)){
