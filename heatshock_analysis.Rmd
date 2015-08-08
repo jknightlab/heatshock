@@ -1237,23 +1237,35 @@ geneP_basal <- dplyr::arrange(geneP_basal, Gene.FDR, desc(abs(SNP.beta)))
 
 ```{r prepGeneEqtl, cache=FALSE}
 selGenes_stim <- dplyr::filter(geneP_stim, Gene.FDR < 0.05)
+emptySel <- charater()
 for(i in 1:nrow(selGenes_stim)){
   selSNPs_stim <- geno$bed[geneSNPs[[selGenes_stim$NuID[i]]]$snp, ]
-  write.table(selSNPs_stim, file=paste0("tmp/genotypes_", selGenes_stim$Symbol[i],"_stim.tab"), 
-              quote=FALSE, sep="\t")
-  write.table(stimExpr[selGenes_stim$NuID[i], , drop=FALSE], 
-              file=paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"), sep="\t", quote=FALSE)
+  if(nrow(selSNPs_stim)){
+    write.table(selSNPs_stim, file=paste0("tmp/genotypes_", selGenes_stim$Symbol[i],"_stim.tab"), 
+                quote=FALSE, sep="\t")
+    write.table(stimExpr[selGenes_stim$NuID[i], , drop=FALSE], 
+                file=paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"), sep="\t", quote=FALSE)
+    }
+  } else {
+    emptySel <- c(emptySel, selGenes_stim$NuID[i])
+  }
 }
+selGenes_stim <- dplyr::filter(selGenes_stim, !NuID %in% emptySel)
 
 selGenes_basal <- dplyr::filter(geneP_basal, Gene.FDR < 0.05)
+emptySel <- charater()
 for(i in 1:nrow(selGenes_basal)){
   selSNPs_basal <- geno$bed[geneSNPs[[selGenes_basal$NuID[i]]]$snp, ]
-  write.table(selSNPs_basal, file=paste0("tmp/genotypes_", selGenes_basal$Symbol[i],"_basal.tab"), 
-              quote=FALSE, sep="\t")
-  write.table(basalExpr[selGenes_basal$NuID[i], , drop=FALSE], 
-              file=paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"), sep="\t", quote=FALSE)
+  if(nrow(selSNPs_basal)){
+    write.table(selSNPs_basal, file=paste0("tmp/genotypes_", selGenes_basal$Symbol[i],"_basal.tab"), 
+                quote=FALSE, sep="\t")
+    write.table(basalExpr[selGenes_basal$NuID[i], , drop=FALSE], 
+                file=paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"), sep="\t", quote=FALSE)
+  } else {
+      emptySel <- c(emptySel, selGenes_basal$NuID[i])
+    }
 }
-
+selGenes_basal <- dplyr::filter(selGenes_basal, !NuID %in% emptySel)
 ```
 
 ```{r runGeneEqtl, cache=FALSE, results="hide"}
