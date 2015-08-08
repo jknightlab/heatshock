@@ -958,7 +958,7 @@ write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, 
 ```
 
 ```{r prepQTL, results="hide", cache=FALSE}
-cisWindow <- 2e4
+cisWindow <- 1e4
 
 snps <- SlicedData$new();
 snps$fileDelimiter <- "\t"
