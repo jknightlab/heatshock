@@ -837,6 +837,12 @@ plsComp$sample <- sapply(names, "[[", 1)
 plsComp$treatment <- treat
 ```
 
+To explore to what extend this response is modulated by genetic variation we used
+the length and direction of the response vector, i.e. the vector between the basal
+and stimulated sample for each individual in the space spanned by the first two PLS 
+components, as a (bivariate) phenotype. This was then tested for association with
+genotypes for SNPs close to differentially expressed genes.
+
 ## Response QTL analysis
 All probes considered to be differentially expressed following heat shock treatment
 (FDR < `r fdrCut` and fold change > `r 2^fcCut`) were further investigated for
