@@ -923,7 +923,7 @@ write.table(fam, file="tmp/hapmap_yri.smpl_flt2.fam", row.names=FALSE, col.names
 ```
 
 ```{r plinkSubsetSNPs, engine='bash', cache=FALSE}
-plink --bfile tmp/hapmap_yri.smpl_flt2 --out tmp/hapmap_yri.cis --prune --extract tmp/cisRanges --recode oxford gen-gz
+plink --bfile tmp/hapmap_yri.smpl_flt2 --out tmp/hapmap_yri.cis --prune --extract tmp/cisRanges --recode oxford gen-gz > log/extract_cis_geno.log
 ```
 
 
