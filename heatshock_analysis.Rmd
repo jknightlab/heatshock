@@ -878,6 +878,17 @@ selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation,
                                              "chr[[:digit:]]{1,2}:[[:digit:]]+:[[:digit:]]+")
 selectedGenes <- dplyr::filter(selectedGenes, !is.na(GenomicLocation) & !is.na(EntrezReannotated))
 
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+txTable <- select(txdb, keys=selectedGenes$EntrezReannotated, 
+                  columns=c("TXID", "TXCHROM", "TXSTART", "TXEND"),
+                  keytype="GENEID")
+txTable <- dplyr::filter(txTable, !is.na(TXCHROM) & !str_detect(TXCHROM, "_"))
+txTable <- by(txTable, txTable$GENEID, function(x) data.frame(entrez=x[["GENEID"]][1], 
+                                                              chrom=x[["TXCHROM"]][1], 
+                                                              start=min(x[["TXSTART"]]),
+                                                              end=max(x[["TXEND"]])))
+txTable <- do.call(rbind, txTable)
+selectedGenes <- dplyr::right_join(selectedGenes, txTable, by=c(EntrezReannotated="entrez"))
 
 probePos <- dplyr::select(selectedGenes, NuID, chrom, start, end)
 probePos <- dplyr::arrange(probePos, chrom, start)
@@ -904,22 +915,6 @@ fold change) is tested for association with the genotypes within a `r cisWindow`
 either side of the probe location. For this purpose only typed SNPs that passed
 QC were considered. Only genes and SNPs on autosomes were included in the 
 analysis.
-
-```{r selectGenes}
-## Add transcript coordinates
-## Using maximum extend of transcripts to define gen boundaries
-txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
-txTable <- select(txdb, keys=selectedGenes$EntrezReannotated, 
-                  columns=c("TXID", "TXCHROM", "TXSTART", "TXEND"),
-                  keytype="GENEID")
-txTable <- dplyr::filter(txTable, !is.na(TXCHROM) & !str_detect(TXCHROM, "_"))
-txTable <- by(txTable, txTable$GENEID, function(x) data.frame(entrez=x[["GENEID"]][1], 
-                                                              chrom=x[["TXCHROM"]][1], 
-                                                              start=min(x[["TXSTART"]]),
-                                                              end=max(x[["TXEND"]])))
-txTable <- do.call(rbind, txTable)
-selectedGenes <- dplyr::right_join(selectedGenes, txTable, by=c(EntrezReannotated="entrez"))
-```
 
 ```{r probeFC}
 selectedExpr <- sig.data.norm[selectedGenes$ArrayAddress,]
