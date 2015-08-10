@@ -877,7 +877,7 @@ txTable <- by(txTable, txTable$GENEID, function(x) data.frame(entrez=x[["GENEID"
                                                               start=min(x[["TXSTART"]]),
                                                               end=max(x[["TXEND"]])))
 txTable <- do.call(rbind, txTable)
-selectedGenes <- dplyr::left_join(selectedGenes, txTable, by=c(EntrezReannotated="entrez"))
+selectedGenes <- dplyr::right_join(selectedGenes, txTable, by=c(EntrezReannotated="entrez"))
 ```
 
 ```{r probeFC}
