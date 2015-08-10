@@ -871,12 +871,12 @@ txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 txTable <- select(txdb, keys=selectedGenes$EntrezReannotated, 
                   columns=c("TXID", "TXCHROM", "TXSTART", "TXEND"),
                   keytype="GENEID")
-txTable <- dplyr::filter(txTable, !str_detect(txTable$TXCHROM, "_"))
+txTable <- dplyr::filter(txTable, !is.na(TXCHROM) & !str_detect(TXCHROM, "_"))
 txTable <- by(txTable, txTable$GENEID, function(x) data.frame(entrez=x[["GENEID"]][1], 
                                                               chrom=x[["TXCHROM"]][1], 
                                                               start=min(x[["TXSTART"]]),
                                                               end=max(x[["TXEND"]])))
-txTable <- do.call(rbind, txTable) 
+txTable <- do.call(rbind, txTable)
 selectedGenes <- dplyr::left_join(selectedGenes, txTable, by=c(EntrezReannotated="entrez"))
 ```
 
