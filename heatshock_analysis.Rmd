@@ -842,20 +842,33 @@ To explore to what extend this response is modulated by genetic variation we use
 the length and direction of the response vector, i.e. the vector between the basal
 and stimulated sample for each individual in the space spanned by the first two PLS 
 components, as a (bivariate) phenotype. This was then tested for association with
-genotypes for SNPs close to differentially expressed genes.
+genotypes for SNPs close to differentially expressed genes. The GRCh37 coordinates 
+for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142.GRCh37*
+Bioconductor package [@Pages14] and gene coordinates via the 
+*TxDb.Hsapiens.UCSC.hg19.knownGene* package [@Carlson15].
 
-## Response QTL analysis
-All probes considered to be differentially expressed following heat shock treatment
-(FDR < `r fdrCut` and fold change > `r 2^fcCut`) were further investigated for
-the presence of genetic variation that modulates their response to the stimulus.
 
-For each probe the observed response to the stimulus (as measured by the log~2~ 
-fold change) is tested for association with the genotypes within a 1 Mb window
-either side of the probe location. For this purpose only typed SNPs that passed
-QC were considered. Only genes and SNPs on autosomes were included in the 
-analysis.
+```{r snpPosUpdate}
+geno <- read_plink("tmp/hapmap_yri.smpl_flt2")
+geno$bim <- dplyr::select(geno$bim, 2, 1, 4)
+names(geno$bim) <- c("snp", "chrom", "pos")
 
-```{r selectGenes}
+geno$bim <- by(geno$bim, geno$bim$chrom, function(x){
+  locs <- getSNPlocs(paste0("ch", x$chrom[1]), caching=FALSE)
+  locs$RefSNP_id <- paste0("rs", locs$RefSNP_id)
+  snps <- inner_join(x, locs, by=c(snp="RefSNP_id"))
+  if(nrow(snps) < nrow(x)) warning("Dropped ", nrow(x) - nrow(snps), " SNP(s) from chromosome ", x$chrom[1])
+  dplyr::select(snps, snp, chrom, loc)
+})
+
+geno$bim <- do.call(rbind, geno$bim)
+geno$bim$chrom <- paste0("chr", geno$bim$chrom)
+geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
+```
+
+```{r cisSNPs}
+cisWindow <- 1e4
+
 exclChrom <- c("chrX", "chrY", "chrM")
 selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
                                  !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
@@ -865,6 +878,34 @@ selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation,
                                              "chr[[:digit:]]{1,2}:[[:digit:]]+:[[:digit:]]+")
 selectedGenes <- dplyr::filter(selectedGenes, !is.na(GenomicLocation) & !is.na(EntrezReannotated))
 
+
+probePos <- dplyr::select(selectedGenes, NuID, chrom, start, end)
+probePos <- dplyr::arrange(probePos, chrom, start)
+
+probePosGR <- makeGRangesFromDataFrame(probePos, ignore.strand = TRUE, keep.extra.columns = TRUE)
+snpPosGR <- makeGRangesFromDataFrame(geno$bim, ignore.strand = TRUE, keep.extra.columns = TRUE, 
+                                   start.field = "loc", end.field = "loc")
+geneSNPs <- do.call(GRangesList, mapply(
+  function(x, chr, s, e) 
+    subset(x, seqnames == chr & start >= s - cisWindow & end <= e + cisWindow), 
+  as.character(seqnames(probePosGR)), start(probePosGR), end(probePosGR), 
+  MoreArgs=list(x=snpPosGR), SIMPLIFY=FALSE))
+names(geneSNPs) <- probePos$NuID
+noSNP <- probePos$NuID[sapply(geneSNPs, function(x) length(x) == 0)]
+```
+
+## Response QTL analysis
+All probes considered to be differentially expressed following heat shock treatment
+(FDR < `r fdrCut` and fold change > `r 2^fcCut`) were further investigated for
+the presence of genetic variation that modulates their response to the stimulus.
+
+For each probe the observed response to the stimulus (as measured by the log~2~ 
+fold change) is tested for association with the genotypes within a `r cisWindow`bp window
+either side of the probe location. For this purpose only typed SNPs that passed
+QC were considered. Only genes and SNPs on autosomes were included in the 
+analysis.
+
+```{r selectGenes}
 ## Add transcript coordinates
 ## Using maximum extend of transcripts to define gen boundaries
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
@@ -893,38 +934,8 @@ rownames(selectedFC) <- selectedGenes$NuID
 write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE)
 ```
 
-```{r probeLoc}
-probePos <- dplyr::select(selectedGenes, NuID, chrom, start, end)
-probePos <- dplyr::arrange(probePos, chrom, start)
-```
-
 ```{r writeProbePos, cache=FALSE}
 write.table(probePos, file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, row.names=FALSE)
-```
-
-The GRCh37 coordinates for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142.GRCh37*
-Bioconductor package [@Pages14].
-
-```{r snpPos}
-geno <- read_plink("tmp/hapmap_yri.smpl_flt2")
-geno$bim <- dplyr::select(geno$bim, 2, 1, 4)
-names(geno$bim) <- c("snp", "chrom", "pos")
-```
-
-```{r snpPosUpdate}
-geno$bim <- by(geno$bim, geno$bim$chrom, function(x){
-  locs <- getSNPlocs(paste0("ch", x$chrom[1]), caching=FALSE)
-  locs$RefSNP_id <- paste0("rs", locs$RefSNP_id)
-  snps <- inner_join(x, locs, by=c(snp="RefSNP_id"))
-  if(nrow(snps) < nrow(x)) warning("Dropped ", nrow(x) - nrow(snps), " SNP(s) from chromosome ", x$chrom[1])
-  dplyr::select(snps, snp, chrom, loc)
-})
-```
-
-```{r snpPosComb}
-geno$bim <- do.call(rbind, geno$bim)
-geno$bim$chrom <- paste0("chr", geno$bim$chrom)
-geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
 ```
 
 ```{r writeSNPpos, cache=FALSE, results="hide"}
@@ -977,8 +988,6 @@ write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, 
 ```
 
 ```{r prepQTL, results="hide", cache=FALSE}
-cisWindow <- 1e4
-
 snps <- SlicedData$new();
 snps$fileDelimiter <- "\t"
 snps$fileOmitCharacters <- "NA"
@@ -1024,17 +1033,6 @@ me <- Matrix_eQTL_main(
 ```
 
 ```{r geneSNPs}
-probePos <- makeGRangesFromDataFrame(probePos, ignore.strand = TRUE, keep.extra.columns = TRUE)
-snpPos <- makeGRangesFromDataFrame(geno$bim, ignore.strand = TRUE, keep.extra.columns = TRUE, 
-                                   start.field = "loc", end.field = "loc")
-geneSNPs <- do.call(GRangesList, mapply(
-  function(x, chr, s, e) 
-    subset(x, seqnames == chr & start >= s - cisWindow & end <= e + cisWindow), 
-  as.character(seqnames(probePos)), start(probePos), end(probePos), 
-  MoreArgs=list(x=snpPos), SIMPLIFY=FALSE))
-names(geneSNPs) <- probePos$NuID
-noSNP <- probePos$NuID[sapply(geneSNPs, function(x) length(x) == 0)]
-
 mainSNP <- dplyr::filter(me$cis$eqtls, !duplicated(gene))
 
 geneP <- me$cis$min.pv.gene * sapply(names(me$cis$min.pv.gene), 
@@ -1099,7 +1097,7 @@ for(i in 1:nrow(selGenes)){
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), NuID, seqnames, start, end),
+    genepos = probePos,
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1196,7 +1194,7 @@ meStim <- Matrix_eQTL_main(
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), NuID, seqnames, start, end),
+    genepos = probePos,
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1213,7 +1211,7 @@ meBasal <- Matrix_eQTL_main(
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), NuID, seqnames, start, end),
+    genepos = probePos,
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1320,7 +1318,7 @@ for(i in 1:nrow(selGenes_stim)){
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), NuID, seqnames, start, end),
+    genepos = probePos,
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1359,7 +1357,7 @@ for(i in 1:nrow(selGenes_basal)){
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), NuID, seqnames, start, end),
+    genepos = probePos,
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1496,7 +1494,7 @@ meHSFbasal <- Matrix_eQTL_main(
     gene = phenoBasal,
     cvrt = covarHSFbasal,
     output_file_name = "tmp/eQTL_hsf_basal_analysis",
-    pvOutputThreshold = 1e-5,
+    pvOutputThreshold = 1e-3,
     pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
