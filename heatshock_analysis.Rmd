@@ -1032,8 +1032,8 @@ geneSNPs <- do.call(GRangesList, mapply(
     subset(x, seqnames == chr & start >= s - cisWindow & end <= e + cisWindow), 
   as.character(seqnames(probePos)), start(probePos), end(probePos), 
   MoreArgs=list(x=snpPos), SIMPLIFY=FALSE))
-names(geneSNPs) <- probePos$id
-noSNP <- probePos$id[sapply(geneSNPs, function(x) length(x) == 0)]
+names(geneSNPs) <- probePos$NuID
+noSNP <- probePos$NuID[sapply(geneSNPs, function(x) length(x) == 0)]
 
 mainSNP <- dplyr::filter(me$cis$eqtls, !duplicated(gene))
 
@@ -1099,7 +1099,7 @@ for(i in 1:nrow(selGenes)){
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    genepos = dplyr::select(as.data.frame(probePos), NuID, seqnames, start, end),
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1196,7 +1196,7 @@ meStim <- Matrix_eQTL_main(
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    genepos = dplyr::select(as.data.frame(probePos), NuID, seqnames, start, end),
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1213,7 +1213,7 @@ meBasal <- Matrix_eQTL_main(
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    genepos = dplyr::select(as.data.frame(probePos), NuID, seqnames, start, end),
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1320,7 +1320,7 @@ for(i in 1:nrow(selGenes_stim)){
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    genepos = dplyr::select(as.data.frame(probePos), NuID, seqnames, start, end),
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1359,7 +1359,7 @@ for(i in 1:nrow(selGenes_basal)){
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    genepos = dplyr::select(as.data.frame(probePos), NuID, seqnames, start, end),
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
