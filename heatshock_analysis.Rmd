@@ -903,12 +903,11 @@ geneSNPs <- do.call(GRangesList, mapply(
   MoreArgs=list(x=snpPosGR), SIMPLIFY=FALSE))
 names(geneSNPs) <- probePos$NuID
 noSNP <- probePos$NuID[sapply(geneSNPs, function(x) length(x) == 0)]
-snpRange <- sapply(geneSNPs, function(x) paste(x$snp[1], x$snp[length(x)], sep="-"))
-snpRange <- paste(snpRange, collapse=",")
+snpRange <- unlist(lapply(geneSNPs, function(x) x$snp))
 ```
 
 ```{r updatePheno, cache=FALSE}
-writeLines(snpRange, con="tmp/cisRanges", sep="")
+writeLines(snpRange, con="tmp/cisRanges")
 stimComp <- dplyr::filter(plsComp, treatment=="Stim")
 basalComp <- dplyr::filter(plsComp, treatment=="Basal")
 globalPheno <- data.frame(sample=stimComp$sample,
@@ -917,12 +916,14 @@ globalPheno <- data.frame(sample=stimComp$sample,
 fam <- as.data.frame(geno$fam[,-ncol(geno$fam)])
 names(fam) <- c("family", "individual", "father", "mother", "sex")
 fam <- dplyr::left_join(fam, globalPheno, by=c(individual="sample"))
+fam$t1[is.na(fam$t1)] <- -9
+fam$t1[is.na(fam$t2)] <- -9
 write.table(fam, file="tmp/hapmap_yri.smpl_flt2.fam", row.names=FALSE, col.names=FALSE, 
             quote=FALSE, sep=" ")
 ```
 
 ```{r plinkSubsetSNPs, engine='bash', cache=FALSE}
-plink --bfile tmp/hapmap_yri.smpl_flt2 --out tmp/hapmap_yri.cis --snps $(cat tmp/cisRanges) --recode oxford gen-gz
+plink --bfile tmp/hapmap_yri.smpl_flt2 --out tmp/hapmap_yri.cis --prune --extract tmp/cisRanges --recode oxford gen-gz
 ```
 
 
