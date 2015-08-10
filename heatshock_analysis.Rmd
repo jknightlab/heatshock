@@ -905,7 +905,7 @@ names(geneSNPs) <- probePos$NuID
 noSNP <- probePos$NuID[sapply(geneSNPs, function(x) length(x) == 0)]
 snpRange <- sapply(geneSNPs, function(x) paste(x$snp[1], x$snp[length(x)], sep="-"))
 snpRange <- paste(snpRange, collapse=",")
-writeLines(snpRange, file="tmp/cisRanges", sep="")
+writeLines(snpRange, con="tmp/cisRanges", sep="")
 ```
 
 ```{r updatePheno, cache=FALSE}
