@@ -53,6 +53,7 @@ library(reshape2)
 library(ggdendro)
 library(topGO)
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(plink2R)
 library(MatrixEQTL)
 library(plsdepot)
@@ -858,11 +859,25 @@ analysis.
 exclChrom <- c("chrX", "chrY", "chrM")
 selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
                                  !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
-selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation)
+selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation, EntrezReannotated)
 
 selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation, 
                                              "chr[[:digit:]]{1,2}:[[:digit:]]+:[[:digit:]]+")
-selectedGenes <- dplyr::filter(selectedGenes, !is.na(GenomicLocation))
+selectedGenes <- dplyr::filter(selectedGenes, !is.na(GenomicLocation) & !is.na(EntrezReannotated))
+
+## Add transcript coordinates
+## Using maximum extend of transcripts to define gen boundaries
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+txTable <- select(txdb, keys=selectedGenes$EntrezReannotated, 
+                  columns=c("TXID", "TXCHROM", "TXSTART", "TXEND"),
+                  keytype="GENEID")
+txTable <- dplyr::filter(txTable, !str_detect(txTable$TXCHROM, "_"))
+txTable <- by(txTable, txTable$GENEID, function(x) data.frame(entrez=x[["GENEID"]][1], 
+                                                              chrom=x[["TXCHROM"]][1], 
+                                                              start=min(x[["TXSTART"]]),
+                                                              end=max(x[["TXEND"]])))
+txTable <- do.call(rbind, txTable) 
+selectedGenes <- dplyr::left_join(selectedGenes, txTable, by=c(EntrezReannotated="entrez"))
 ```
 
 ```{r probeFC}
@@ -879,11 +894,8 @@ write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE
 ```
 
 ```{r probeLoc}
-probePos <- as.data.frame(str_split_fixed(selectedGenes$GenomicLocation, ":", 3), stringsAsFactors=FALSE)
-names(probePos) <- c("chrom", "start", "end")
-probePos <- cbind(id=selectedGenes$NuID, probePos, stringsAsFactors=FALSE)
-probePos$start <- as.integer(probePos$start)
-probePos$end <- as.integer(probePos$end)
+probePos <- dplyr::select(selectedGenes, NuID, chrom, start, end)
+probePos <- dplyr::arrange(probePos, chrom, start)
 ```
 
 ```{r writeProbePos, cache=FALSE}

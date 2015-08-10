@@ -18,7 +18,7 @@ RUN cd /tmp && wget -q http://www.well.ox.ac.uk/~cfreeman/software/gwas/gtool_v0
 RUN cd /tmp && wget -q http://www.well.ox.ac.uk/~gav/resources/snptest_v2.5.2_linux_x86_64_static.tgz && tar -xzf snptest_v2.5.2_linux_x86_64_static.tgz && cp snptest_v2.5.2_linux_x86_64_static/snptest_v2.5.2 /usr/local/bin
 
 ## Install additional R packages
-RUN Rscript -e "biocLite(c('sparcl', 'illuminaHumanv3.db', 'pander', 'ggdendro', 'sp', 'topGO', 'gdata', 'affy', 'vsn', 'limma', 'sva', 'scatterplot3d', 'pushoverr', 'SNPlocs.Hsapiens.dbSNP142.GRCh37', 'MatrixEQTL', 'plsdepot'))"
+RUN Rscript -e "biocLite(c('sparcl', 'illuminaHumanv3.db', 'pander', 'ggdendro', 'sp', 'topGO', 'gdata', 'affy', 'vsn', 'limma', 'sva', 'scatterplot3d', 'pushoverr', 'SNPlocs.Hsapiens.dbSNP142.GRCh37', 'MatrixEQTL', 'plsdepot', 'TxDb.Hsapiens.UCSC.hg19.knownGene'))"
 RUN Rscript -e "devtools::install_github('jimhester/knitrBootstrap', ref='rmarkdown_template')"
 RUN Rscript -e "devtools::install_github('gabraham/plink2R/plink2R')"
 
