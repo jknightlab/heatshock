@@ -12,7 +12,7 @@ RUN easy_install pandocfilters
 RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150727/plink_linux_x86_64.zip && unzip plink_linux_x86_64.zip && cp plink /usr/local/bin/
 
 ## Install multivariate plink
-## RUN cd /tmp && wget -q https://genepi.qimr.edu.au/staff/manuelF/multivariate/plink.multivariate && chmod +x plink.multivariate && cp plink.multivariate /usr/local/bin/
+RUN cd /tmp && wget -q --no-check-certificate https://genepi.qimr.edu.au/staff/manuelF/multivariate/plink.multivariate && chmod +x plink.multivariate && cp plink.multivariate /usr/local/bin/
 
 ## Install additional R packages
 RUN Rscript -e "biocLite(c('sparcl', 'illuminaHumanv3.db', 'pander', 'ggdendro', 'sp', 'topGO', 'gdata', 'affy', 'vsn', 'limma', 'sva', 'scatterplot3d', 'pushoverr', 'SNPlocs.Hsapiens.dbSNP142.GRCh37', 'MatrixEQTL', 'plsdepot', 'TxDb.Hsapiens.UCSC.hg19.knownGene'))"
