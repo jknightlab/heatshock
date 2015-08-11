@@ -57,6 +57,7 @@ library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(plink2R)
 library(MatrixEQTL)
 library(plsdepot)
+library(MultiPhen)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -906,31 +907,18 @@ noSNP <- probePos$NuID[sapply(geneSNPs, function(x) length(x) == 0)]
 snpRange <- unique(unlist(lapply(geneSNPs, function(x) x$snp)))
 ```
 
-```{r writeSNPlist, cache=FALSE}
-writeLines(snpRange, con="tmp/cisRanges")
-```
-
-```{r plinkSubsetSNPs, engine='bash', cache=FALSE}
-plink --bfile tmp/hapmap_yri.smpl_flt2 --out tmp/hapmap_yri.cis --extract tmp/cisRanges --make-bed > log/extract_cis_geno.log
-```
-
-```{r updatePheno, cache=FALSE}
+```{r updatePheno}
 stimComp <- dplyr::filter(plsComp, treatment=="Stim")
 basalComp <- dplyr::filter(plsComp, treatment=="Basal")
-globalPheno <- data.frame(sample=stimComp$sample,
-                          pheno1=sqrt((stimComp$t1 - basalComp$t1)^2 + (stimComp$t2 - basalComp$t2)^2),
-                          pheno2=atan((stimComp$t2 - basalComp$t2)/(stimComp$t1 - basalComp$t1)),
-                          stringsAsFactors = FALSE)
+globalPheno <- data.frame(basal.x=basalComp$t1,
+                          basal.y=basalComp$t1,
+                          distance=sqrt((stimComp$t1 - basalComp$t1)^2 + (stimComp$t2 - basalComp$t2)^2),
+                          direction=atan((stimComp$t2 - basalComp$t2)/(stimComp$t1 - basalComp$t1)))
+rownames(globalPheno) <- stimComp$sample
 
-mvPheno <- geno$fam[,1:2]
-names(mvPheno) <- c("FID", "IID")
-mvPheno <- dplyr::left_join(mvPheno, globalPheno, by=c(IID="sample"))
-write.table(mvPheno, file="tmp/hapmap_yri.cis.phen", row.names=FALSE, col.names=TRUE, 
-            quote=FALSE, sep=" ")
-```
-
-```{r runMVassoc, engine="bash"}
-plink.multivariate --bfile tmp/hapmap_yri.cis --out tmp/hapmap_yri.cis --mult-pheno tmp/hapmap_yri.cis.phen --mqfam --perm --missing-phenotype NA >  log/mult_pheno.log
+rownames(geno$bed) <- str_extract(rownames(geno$bed), "NA[[:digit:]]+$")
+cisGeno <- geno$bed[rownames(globalPheno), snpRange]
+assoc <- mPhen(cisGeno, as.matrix(globalPheno))
 ```
 
 ## Response QTL analysis
