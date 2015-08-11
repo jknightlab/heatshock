@@ -922,7 +922,7 @@ globalPheno <- data.frame(sample=stimComp$sample,
                           pheno2=atan((stimComp$t2 - basalComp$t2)/(stimComp$t1 - basalComp$t1)),
                           stringsAsFactors = FALSE)
 
-mvPheno <- fam[,1:2]
+mvPheno <- geno$fam[,1:2]
 names(mvPheno) <- c("FID", "IID")
 mvPheno <- dplyr::left_join(mvPheno, globalPheno, by=c(IID="sample"))
 write.table(mvPheno, file="tmp/hapmap_yri.cis.phen", row.names=FALSE, col.names=TRUE, 
