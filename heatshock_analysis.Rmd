@@ -906,27 +906,28 @@ noSNP <- probePos$NuID[sapply(geneSNPs, function(x) length(x) == 0)]
 snpRange <- unique(unlist(lapply(geneSNPs, function(x) x$snp)))
 ```
 
-```{r updatePheno, cache=FALSE}
+```{r writeSNPlist, cache=FALSE}
 writeLines(snpRange, con="tmp/cisRanges")
+```
+
+```{r plinkSubsetSNPs, engine='bash', cache=FALSE}
+plink --bfile tmp/hapmap_yri.smpl_flt2 --out tmp/hapmap_yri.cis --extract tmp/cisRanges --recode oxford gen-gz > log/extract_cis_geno.log
+```
+
+```{r updatePheno, cache=FALSE}
 stimComp <- dplyr::filter(plsComp, treatment=="Stim")
 basalComp <- dplyr::filter(plsComp, treatment=="Basal")
 globalPheno <- data.frame(sample=stimComp$sample,
                           distance=sqrt((stimComp$t1 - basalComp$t1)^2 + (stimComp$t2 - basalComp$t2)^2),
                           direction=atan((stimComp$t2 - basalComp$t2)/(stimComp$t1 - basalComp$t1)))
-fam <- as.data.frame(geno$fam[,-ncol(geno$fam)])
-names(fam) <- c("family", "individual", "father", "mother", "sex")
-fam <- dplyr::left_join(fam, globalPheno, by=c(individual="sample"))
-fam$distance[is.na(fam$distance)] <- -9
-fam$direction[is.na(fam$direction)] <- -9
-write.table(fam, file="tmp/hapmap_yri.smpl_flt2.fam", row.names=FALSE, col.names=FALSE, 
+sample <- read.table("tmp/hapmap_yri.sis.sample", header = TRUE)
+sample <- dplyr::select(sample, -phenotype)
+sample <- rbind(c("0", "P", "P"))
+
+sample <- dplyr::left_join(sample, globalPheno, by=c(ID_2="sample"))
+write.table(sample, file="tmp/hapmap_yri.cis.sample", row.names=FALSE, col.names=TRUE, 
             quote=FALSE, sep=" ")
 ```
-
-```{r plinkSubsetSNPs, engine='bash', cache=FALSE}
-plink --bfile tmp/hapmap_yri.smpl_flt2 --out tmp/hapmap_yri.cis --prune --extract tmp/cisRanges --recode oxford gen-gz > log/extract_cis_geno.log
-```
-
-
 
 ## Response QTL analysis
 All probes considered to be differentially expressed following heat shock treatment
