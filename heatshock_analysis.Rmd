@@ -933,7 +933,8 @@ write.table(sample, file="tmp/hapmap_yri.cis.sample", row.names=FALSE, col.names
 ```
 
 ```{r runSNPTEST, engine="bash", cache=FALSE}
-snptest -data tmp/hapmap_yri.cis.gen tmp/yri_hapmap.cis.sample \
+snptest -data tmp/hapmap_yri.cis.gen.gz tmp/yri_hapmap.cis.sample \
+  -o tmp/hapmap_yri.cis
   -bayesian 1 \
   -method expected \
   -mpheno distance direction \
