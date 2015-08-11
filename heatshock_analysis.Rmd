@@ -907,7 +907,7 @@ noSNP <- probePos$NuID[sapply(geneSNPs, function(x) length(x) == 0)]
 snpRange <- unique(unlist(lapply(geneSNPs, function(x) x$snp)))
 ```
 
-```{r updatePheno}
+```{r multiPheno}
 stimComp <- dplyr::filter(plsComp, treatment=="Stim")
 basalComp <- dplyr::filter(plsComp, treatment=="Basal")
 globalPheno <- data.frame(basal.x=basalComp$t1,
@@ -915,10 +915,11 @@ globalPheno <- data.frame(basal.x=basalComp$t1,
                           distance=sqrt((stimComp$t1 - basalComp$t1)^2 + (stimComp$t2 - basalComp$t2)^2),
                           direction=atan((stimComp$t2 - basalComp$t2)/(stimComp$t1 - basalComp$t1)))
 rownames(globalPheno) <- stimComp$sample
+globalPheno <- scale(globalPheno)
 
 rownames(geno$bed) <- str_extract(rownames(geno$bed), "NA[[:digit:]]+$")
 cisGeno <- geno$bed[rownames(globalPheno), snpRange]
-assoc <- mPhen(cisGeno, as.matrix(globalPheno))
+assoc <- mPhen(cisGeno, globalPheno)
 ```
 
 ## Response QTL analysis
