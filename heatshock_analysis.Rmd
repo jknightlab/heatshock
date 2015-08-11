@@ -903,7 +903,7 @@ geneSNPs <- do.call(GRangesList, mapply(
   MoreArgs=list(x=snpPosGR), SIMPLIFY=FALSE))
 names(geneSNPs) <- probePos$NuID
 noSNP <- probePos$NuID[sapply(geneSNPs, function(x) length(x) == 0)]
-snpRange <- unlist(lapply(geneSNPs, function(x) x$snp))
+snpRange <- unique(unlist(lapply(geneSNPs, function(x) x$snp)))
 ```
 
 ```{r updatePheno, cache=FALSE}
