@@ -11,11 +11,8 @@ RUN easy_install pandocfilters
 ## Install plink
 RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150727/plink_linux_x86_64.zip && unzip plink_linux_x86_64.zip && cp plink /usr/local/bin/
 
-## Install GTOOL
-RUN cd /tmp && wget -q http://www.well.ox.ac.uk/~cfreeman/software/gwas/gtool_v0.7.5_x86_64.tgz && tar -xzf gtool_v0.7.5_x86_64.tgz && cp gtool /usr/local/bin
-
-## Install SNPTEST
-RUN cd /tmp && wget -q http://www.well.ox.ac.uk/~gav/resources/snptest_v2.5.2_linux_x86_64_static.tgz && tar -xzf snptest_v2.5.2_linux_x86_64_static.tgz && cp snptest_v2.5.2_linux_x86_64_static/snptest_v2.5.2 /usr/local/bin/snptest
+## Install multivariate plink
+## RUN cd /tmp && wget -q https://genepi.qimr.edu.au/staff/manuelF/multivariate/plink.multivariate && chmod +x plink.multivariate && cp plink.multivariate /usr/local/bin/
 
 ## Install additional R packages
 RUN Rscript -e "biocLite(c('sparcl', 'illuminaHumanv3.db', 'pander', 'ggdendro', 'sp', 'topGO', 'gdata', 'affy', 'vsn', 'limma', 'sva', 'scatterplot3d', 'pushoverr', 'SNPlocs.Hsapiens.dbSNP142.GRCh37', 'MatrixEQTL', 'plsdepot', 'TxDb.Hsapiens.UCSC.hg19.knownGene'))"

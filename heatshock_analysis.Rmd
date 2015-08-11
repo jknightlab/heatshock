@@ -911,37 +911,26 @@ writeLines(snpRange, con="tmp/cisRanges")
 ```
 
 ```{r plinkSubsetSNPs, engine='bash', cache=FALSE}
-plink --bfile tmp/hapmap_yri.smpl_flt2 --out tmp/hapmap_yri.cis --extract tmp/cisRanges --recode oxford gen-gz > log/extract_cis_geno.log
+plink --bfile tmp/hapmap_yri.smpl_flt2 --out tmp/hapmap_yri.cis --extract tmp/cisRanges --make-bed > log/extract_cis_geno.log
 ```
 
 ```{r updatePheno, cache=FALSE}
 stimComp <- dplyr::filter(plsComp, treatment=="Stim")
 basalComp <- dplyr::filter(plsComp, treatment=="Basal")
 globalPheno <- data.frame(sample=stimComp$sample,
-                          distance=sqrt((stimComp$t1 - basalComp$t1)^2 + (stimComp$t2 - basalComp$t2)^2),
-                          direction=atan((stimComp$t2 - basalComp$t2)/(stimComp$t1 - basalComp$t1)),
+                          pheno1=sqrt((stimComp$t1 - basalComp$t1)^2 + (stimComp$t2 - basalComp$t2)^2),
+                          pheno2=atan((stimComp$t2 - basalComp$t2)/(stimComp$t1 - basalComp$t1)),
                           stringsAsFactors = FALSE)
-globalPheno <- rbind(c("0", "P", "P"), globalPheno)
 
-sample <- read.table("tmp/hapmap_yri.cis.sample", header = TRUE)
-sample <- dplyr::select(sample, -phenotype)
-
-sample <- dplyr::left_join(sample, globalPheno, by=c(ID_2="sample"))
-sample$missing <- as.character(sample$missing)
-write.table(sample, file="tmp/hapmap_yri.cis.sample", row.names=FALSE, col.names=TRUE, 
+mvPheno <- fam[,1:2]
+names(mvPheno) <- c("FID", "IID")
+mvPheno <- dplyr::left_join(mvPheno, globalPheno, by=c(IID="sample"))
+write.table(mvPheno, file="tmp/hapmap_yri.cis.phen", row.names=FALSE, col.names=TRUE, 
             quote=FALSE, sep=" ")
 ```
 
-```{r runSNPTEST, engine="bash", cache=FALSE}
-snptest -data tmp/hapmap_yri.cis.gen.gz tmp/yri_hapmap.cis.sample \
-  -o tmp/hapmap_yri.cis
-  -bayesian 1 \
-  -method expected \
-  -mpheno distance direction \
-  -prior_qt_mean_b 0 \
-  -prior_qt_V_b 0.02 \
-  -prior_mqt_c 4 \
-  -prior_mqt_Q 6
+```{r runMVassoc, engine="bash"}
+plink.multivariate --bfile tmp/hapmap_yri.cis --multi-pheno tmp/hapmap_yri.cis.phen --mqfam --missing-phenotype NA
 ```
 
 ## Response QTL analysis
