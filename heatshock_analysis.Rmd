@@ -931,6 +931,17 @@ write.table(sample, file="tmp/hapmap_yri.cis.sample", row.names=FALSE, col.names
             quote=FALSE, sep=" ")
 ```
 
+```{r runSNPTEST, engine="bash", cache=FALSE}
+snptest -data tmp/hapmap_yri.cis.gen tmp/yri_hapmap.cis.sample \
+  -bayesian 1 \
+  -method expected \
+  -mpheno distance direction \
+  -prior_qt_mean_b 0 \
+  -prior_qt_V_b 0.02 \
+  -prior_mqt_c 4 \
+  -prior_mqt_Q 6
+```
+
 ## Response QTL analysis
 All probes considered to be differentially expressed following heat shock treatment
 (FDR < `r fdrCut` and fold change > `r 2^fcCut`) were further investigated for
