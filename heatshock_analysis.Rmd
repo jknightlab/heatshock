@@ -930,7 +930,7 @@ write.table(mvPheno, file="tmp/hapmap_yri.cis.phen", row.names=FALSE, col.names=
 ```
 
 ```{r runMVassoc, engine="bash"}
-plink.multivariate --bfile tmp/hapmap_yri.cis --multi-pheno tmp/hapmap_yri.cis.phen --mqfam --missing-phenotype NA
+plink.multivariate --bfile tmp/hapmap_yri.cis --mult-pheno tmp/hapmap_yri.cis.phen --mqfam --missing-phenotype NA
 ```
 
 ## Response QTL analysis
