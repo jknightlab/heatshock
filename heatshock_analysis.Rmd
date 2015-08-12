@@ -923,6 +923,10 @@ globalPheno <- scale(globalPheno)
 rownames(geno$bed) <- str_extract(rownames(geno$bed), "NA[[:digit:]]+$")
 cisGeno <- geno$bed[rownames(globalPheno), snpRange]
 assoc <- mPhen(cisGeno, globalPheno)
+idx <- order(assoc$Results[, , "JointModel" , 2])
+assoc$Result <- assoc$Results[idx, , ]
+assoc$maf <- assoc$maf[idx]
+assoc$adj.p.val <- p.adjust(assoc[, "JointModel", 2], "BH") 
 ```
 
 ## Response QTL analysis
