@@ -1611,8 +1611,12 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
 
 ## Global heat shock response
 
+Considering the outcome of the partial least squares regression it is aparent that there is
+a considerable change in overall gene expression in response to heat shock. Together the first
+two PLS omponents account for `r sum(plsFit$R2[1:2]*100)`% in the variation observed due to 
+heat shock and provide clear separation of the two treatment groups (`r figRef("treatPLS")`).
 
-```{r treatPLSplot, cache=FALSE, fig.cap=figRef("treatPCA", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock.")}
+```{r treatPLSplot, cache=FALSE, fig.cap=figRef("treatPLS", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock.")}
 treatAvg <- data.frame(do.call(rbind, by(dplyr::select(plsComp, t1, t2), plsComp$treatment, colMeans)))
 treatAvg$treatment <- rownames(treatAvg)
 treatAvg$sample <- "avg"
