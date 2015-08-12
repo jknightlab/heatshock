@@ -204,12 +204,10 @@ plsPlot <- function(plsComp, genotype){
   fig <- fig + geom_line(data=treatAvg, colour="black",  line.width=2,
               arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20))
   if(missing(genotype)){
-    fig <- fig + geom_point(aes(colour=treatment), size=3, alpha=0.4) + 
-      geom_point(aes(colour=treatment), size=3, shape=1)
+    fig <- fig + geom_point(aes(colour=treatment, shape=sex), size=3, alpha=0.6)
     fig <- fig + scale_colour_manual(values=c(Basal="blue", Stim="red"))
   } else {
-    fig <- fig + geom_point(aes_string(colour=genotype), size=3, alpha=0.4) + 
-      geom_point(aes_string(colour=genotype), size=3, shape=1)
+    fig <- fig + geom_point(aes_string(colour=genotype, shape="sex"), size=3, alpha=0.6)
     fig <- fig + scale_colour_manual(values=c("0"="#3E79F7", "1"="#FA2AA4", "2"="#FFB72B"))
   }
   fig <- fig + geom_line(colour="grey", alpha=0.6,
@@ -1683,8 +1681,9 @@ pander(coef)
 genotypes <- data.frame(sample=colnames(geno$bed), stringsAsFactors=FALSE)
 genotypes <- cbind(genotypes, t(geno$bed[dimnames(assoc$Results)[[1]][1:10],]))
 plsComp <- dplyr::left_join(plsComp, genotypes, by="sample")
+plsComp <- cbind(plsComp, sex=factor(globalPheno[plsComp$sample, "sex"]))
 
-plsPlot(plsComp, "rs7784431")
+plsPlot(plsComp, dimnames(assoc$Results)[[1]][1])
 ```
 
 ## Response QTL analysis
