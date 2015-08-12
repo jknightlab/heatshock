@@ -179,35 +179,41 @@ outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID",
 }
 
 plsPlot <- function(plsComp, genotype){
-  treatAvg <- data.frame(do.call(rbind, by(dplyr::select(plsComp, t1, t2), plsComp$treatment, colMeans)))
-  treatAvg$treatment <- rownames(treatAvg)
-  treatAvg$sample <- "avg"
+  treatGrp <- by(dplyr::select(plsComp, t1, t2), 
+                 list(plsComp$treatment, plsComp$sex), colMeans)
+  grps <- do.call(expand.grid, dimnames(treatGrp))
+    grps <- dplyr::filter(grps, !sapply(treatGrp, is.null))
+    names(grps) <- c("treatment", "sex")
+  treatAvg <- cbind(do.call(rbind, treatGrp), grps)
+  treatAvg$sample <- treatAvg$sex
   
   if(!missing(genotype)){
     plsComp[[genotype]] <- as.factor(plsComp[[genotype]])
-    genoAvg <- data.frame(do.call(rbind, by(dplyr::select(plsComp, t1, t2), 
-                                            list(plsComp[[genotype]], plsComp$treatment), colMeans)))
-    genoAvg[[genotype]] <- rep(levels(plsComp[[genotype]]), length(levels(plsComp$treatment)))
-    genoAvg$treatment <- rep(levels(plsComp$treatment), each=length(levels(plsComp[[genotype]])))
-    genoAvg$sample <- "genotype"
+    grpMean <- by(dplyr::select(plsComp, t1, t2), list(plsComp[[genotype]], 
+                                                       plsComp$treatment, plsComp$sex), colMeans)
+    grps <- do.call(expand.grid, dimnames(grpMean))
+    grps <- dplyr::filter(grps, !sapply(grpMean, is.null))
+    names(grps) <- c(genotype, "treatment", "sex")
+    genoAvg <- cbind(do.call(rbind, grpMean), grps) 
+    genoAvg$sample <- paste(genoAvg[[genotype]], genoAvg[["sex"]], sep="_")
   }
   
-  fig <- ggplot(plsComp, aes(x=t1, y=t2, group=sample))
+  fig <- ggplot(plsComp, aes(x=t1, y=t2, group=sample, shape=sex))
   if(missing(genotype)){
     fig <- fig + geom_point(data=treatAvg, aes(colour=treatment), size=5)
   } else {
       fig <- fig + geom_point(data=treatAvg, size=5, colour="black")
-      fig <- fig + geom_point(data=genoAvg, aes_string(colour=genotype, group=genotype), size=5)
-      fig <- fig + geom_line(data=genoAvg, aes_string(colour=genotype, group=genotype),  line.width=2,
+      fig <- fig + geom_point(data=genoAvg, aes_string(colour=genotype), size=5)
+      fig <- fig + geom_line(data=genoAvg, aes_string(colour=genotype),  line.width=2,
               arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20))
   }
   fig <- fig + geom_line(data=treatAvg, colour="black",  line.width=2,
               arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20))
   if(missing(genotype)){
-    fig <- fig + geom_point(aes(colour=treatment, shape=sex), size=3, alpha=0.6)
+    fig <- fig + geom_point(aes(colour=treatment), size=3, alpha=0.6)
     fig <- fig + scale_colour_manual(values=c(Basal="blue", Stim="red"))
   } else {
-    fig <- fig + geom_point(aes_string(colour=genotype, shape="sex"), size=3, alpha=0.6)
+    fig <- fig + geom_point(aes_string(colour=genotype), size=3, alpha=0.6)
     fig <- fig + scale_colour_manual(values=c("0"="#3E79F7", "1"="#FA2AA4", "2"="#FFB72B"))
   }
   fig <- fig + geom_line(colour="grey", alpha=0.6,
@@ -970,7 +976,8 @@ assoc <- mPhen(cisGeno, globalPheno, covariates="sex")
 idx <- order(assoc$Results[1, , "JointModel" , 2])
 assoc$Results <- assoc$Results[,idx, , ]
 assoc$maf <- assoc$maf[idx]
-assoc$adj.p.val <- p.adjust(assoc$Results[, "JointModel", 2], "BH") 
+assoc$adj.p.val <- p.adjust(assoc$Results[, "JointModel", 2], "BH")
+
 ```
 
 ## Response QTL analysis
