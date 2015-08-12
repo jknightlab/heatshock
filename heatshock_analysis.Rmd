@@ -842,8 +842,10 @@ plsComp$treatment <- treat
 To explore to what extend this response is modulated by genetic variation we used
 the length and direction of the response vector, i.e. the vector between the basal
 and stimulated sample for each individual in the space spanned by the first two PLS 
-components, as a (bivariate) phenotype. This was then tested for association with
-genotypes for SNPs close to differentially expressed genes. The GRCh37 coordinates 
+components, together with the location of the basal sample in the same space as a 
+multivariate phenotype. This was then tested for association with
+genotypes for SNPs close to differentially expressed genes using the *MultiPhen* R
+package [@OReilly12]. The GRCh37 coordinates 
 for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142.GRCh37*
 Bioconductor package [@Pages14] and gene coordinates via the 
 *TxDb.Hsapiens.UCSC.hg19.knownGene* package [@Carlson15].
@@ -915,6 +917,7 @@ globalPheno <- data.frame(basal.x=basalComp$t1,
                           distance=sqrt((stimComp$t1 - basalComp$t1)^2 + (stimComp$t2 - basalComp$t2)^2),
                           direction=atan((stimComp$t2 - basalComp$t2)/(stimComp$t1 - basalComp$t1)))
 rownames(globalPheno) <- stimComp$sample
+
 globalPheno <- scale(globalPheno)
 
 rownames(geno$bed) <- str_extract(rownames(geno$bed), "NA[[:digit:]]+$")
