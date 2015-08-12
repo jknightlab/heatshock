@@ -1666,6 +1666,13 @@ heat shock and provide clear separation of the two treatment groups (`r figRef("
 plsPlot(plsComp)
 ```
 
+```{r plsGenoPlot, cache=FALSE, fig.cap=figRef("plsGeno", "Global response to heat shock by genotype.")}
+genotypes <- data.frame(sample=rownames(geno$bed), stringsAsFactors=FALSE)
+genotypes <- cbind(genotypes, geno$bed[, dimnames(assoc$Results)[[1]][1:10]])
+plsComp <- dplyr::left_join(plsComp, genotypes, by="sample")
+
+plsPlot(plsComp, "rs7784431")
+```
 
 ## Response QTL analysis
 
