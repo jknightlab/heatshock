@@ -178,6 +178,48 @@ outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID",
 			theme_bw() + scale_colour_discrete(guide="none")
 }
 
+plsPlot <- function(plsComp, genotype){
+  treatAvg <- data.frame(do.call(rbind, by(dplyr::select(plsComp, t1, t2), plsComp$treatment, colMeans)))
+  treatAvg$treatment <- rownames(treatAvg)
+  treatAvg$sample <- "avg"
+  
+  if(!missing(genotype)){
+    plsComp[[genotype]] <- as.factor(plsComp[[genotype]])
+    genoAvg <- data.frame(do.call(rbind, by(dplyr::select(plsComp, t1, t2), 
+                                            list(plsComp[[genotype]], plsComp$treatment), colMeans)))
+    genoAvg[[genotype]] <- rep(levels(plsComp[[genotype]]), length(levels(plsComp$treatment)))
+    genoAvg$treatment <- rep(levels(plsComp$treatment), each=length(levels(plsComp[[genotype]])))
+    genoAvg$sample <- "genotype"
+  }
+  
+  fig <- ggplot(plsComp, aes(x=t1, y=t2, group=sample))
+  if(missing(genotype)){
+    fig <- fig + geom_point(data=treatAvg, aes(colour=treatment), size=5)
+  } else {
+      fig <- fig + geom_point(data=treatAvg, size=5, colour="black")
+      fig <- fig + geom_point(data=genoAvg, aes_string(colour=genotype, group=genotype), size=5)
+      fig <- fig + geom_line(data=genoAvg, aes_string(colour=genotype, group=genotype),  line.width=2,
+              arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20))
+  }
+  fig <- fig + geom_line(data=treatAvg, colour="black",  line.width=2,
+              arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20))
+  if(missing(genotype)){
+    fig <- fig + geom_point(aes(colour=treatment), size=3, alpha=0.4) + 
+      geom_point(aes(colour=treatment), size=3, shape=1)
+    fig <- fig + scale_colour_manual(values=c(Basal="blue", Stim="red"))
+  } else {
+    fig <- fig + geom_point(aes_string(colour=genotype), size=3, alpha=0.4) + 
+      geom_point(aes_string(colour=genotype), size=3, shape=1)
+    fig <- fig + scale_colour_manual(values=c("0"="#3E79F7", "1"="#FA2AA4", "2"="#FFB72B"))
+  }
+  fig <- fig + geom_line(colour="grey", alpha=0.6,
+                       arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20))
+  
+  fig <- fig + theme_bw() + xlab("Component 1") + ylab("Component 2")
+  fig
+}
+
+
 # Multiple plot function
 #
 # ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
@@ -1621,23 +1663,7 @@ two PLS omponents account for `r sum(plsFit$R2[1:2]*100)`% in the variation obse
 heat shock and provide clear separation of the two treatment groups (`r figRef("treatPLS")`).
 
 ```{r treatPLSplot, cache=FALSE, fig.cap=figRef("treatPLS", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock.")}
-treatAvg <- data.frame(do.call(rbind, by(dplyr::select(plsComp, t1, t2), plsComp$treatment, colMeans)))
-treatAvg$treatment <- rownames(treatAvg)
-treatAvg$sample <- "avg"
-perp <- rev(treatAvg[2,1:2] - treatAvg[1, 1:2]) * c(-1,1)
-slope <- (perp[2]/perp[1])[[1]]
-intersect <- colMeans(treatAvg[ , 1:2])
-intercept <- intersect[2] - slope*intersect[1]
-ggplot(plsComp, aes(x=t1, y=t2, colour=treatment, group=sample)) +
-  geom_abline(slope=slope, intercept=intercept, colour="black", linetype="dashed") + 
-  geom_point(data=treatAvg, size=5) +
-  geom_line(data=treatAvg, colour="black",  line.width=2,
-            arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20)) +
-  geom_line(colour="darkgrey", alpha=0.7,
-            arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20)) + 
-  geom_point(size=3, alpha=0.4) + geom_point(size=3, shape=1) +
-  scale_colour_manual(values=c(Basal="blue", Stim="red")) +
-  theme_bw() + xlab("Component 1") + ylab("Component 2")
+plsPlot(plsComp)
 ```
 
 
