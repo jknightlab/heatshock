@@ -746,7 +746,11 @@ det.data.long <- dat$det
 ```
 
 ```{r exclOutlGeno, cache=FALSE}
-keepSamples <- updateSampleList(sig.data.long$sample, "data/hapmap_YRI_r23a_filtered.fam")
+keepSamples <- updateSampleList(sig.data.long$sample, "tmp/hapmap_yri.smpl_flt2.fam")
+```
+
+```{r plinkExclude, engine="bash", cache=FALSE}
+plink --bfile tmp/hapmap_yri.smpl_flt2 --out tmp/hapmap_yri.smpl_flt3 --keep tmp/sample.lst --make-bed > log/hapmap_yri.smpl_flt3.log
 ```
 
 The remaining samples were normalised separately for each BeadChip and differences 
@@ -806,7 +810,7 @@ close(exprOut)
 ```
 
 ```{r compressData, cache=FALSE, include=FALSE}
-system("tar -czf tmp/yri_geno.tar.gz -C tmp hapmap_yri.smpl_flt2.bed hapmap_yri.smpl_flt2.bim hapmap_yri.smpl_flt2.fam")
+system("tar -czf tmp/yri_geno.tar.gz -C tmp hapmap_yri.smpl_flt3.bed hapmap_yri.smpl_flt3.bim hapmap_yri.smpl_flt3.fam")
 ```
 
 ## Differential expression analysis
@@ -919,7 +923,7 @@ Bioconductor package [@Pages14] and gene coordinates via the
 
 
 ```{r snpPosUpdate}
-geno <- read_plink("tmp/hapmap_yri.smpl_flt2")
+geno <- read_plink("tmp/hapmap_yri.smpl_flt3")
 geno$bim <- dplyr::select(geno$bim, 2, 1, 4)
 names(geno$bim) <- c("snp", "chrom", "pos")
 
