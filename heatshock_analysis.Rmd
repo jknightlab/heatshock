@@ -1142,7 +1142,7 @@ write.table(basalExpr, file="tmp/selected_probes_basal_expr.tab", sep="\t", quot
 ```
 
 ```{r expr_pc}
-nPC_expr <- 3
+nPC_expr <- 1
 pca_stim <- prcomp(t(stimExpr), center=TRUE, scale = TRUE)
 pc_stim <- pca_stim$x
 
@@ -1198,17 +1198,14 @@ meStim <- Matrix_eQTL_main(
     snps = snps,
     gene = phenoStim,
     cvrt = covarStim,
-    output_file_name.cis = "tmp/eQTL_stim_analysis",
-    pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1e-3,
+    output_file_name = "tmp/eQTL_stim_analysis",
+    pvOutputThreshold = 1,
+    pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
-    snpspos = geno$bim,
-    genepos = probePos,
-    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
-    min.pv.by.genesnp = TRUE,
+    min.pv.by.genesnp = FALSE,
     noFDRsaveMemory = FALSE)
 
 meBasal <- Matrix_eQTL_main(
@@ -1216,166 +1213,14 @@ meBasal <- Matrix_eQTL_main(
     gene = phenoBasal,
     cvrt = covarBasal,
     output_file_name.cis = "tmp/eQTL_basal_analysis",
-    pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1e-3,
+    pvOutputThreshold = 1,
+    pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
-    snpspos = geno$bim,
-    genepos = probePos,
-    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
-    min.pv.by.genesnp = TRUE,
+    min.pv.by.genesnp = FALSE,
     noFDRsaveMemory = FALSE)
-```
-
-```{r eGeneSNPs}
-mainSNP_stim <- do.call(rbind, by(meStim$cis$eqtls, meStim$cis$eqtls$gene, 
-                                  function(x) x[order(x$pvalue),][1,,drop=FALSE]))
-mainSNP_stim <- dplyr::arrange(mainSNP_stim, pvalue)
-mainSNP_basal <- do.call(rbind, by(meBasal$cis$eqtls, meBasal$cis$eqtls$gene, 
-                                  function(x) x[order(x$pvalue),][1,,drop=FALSE]))
-mainSNP_basal <- dplyr::arrange(mainSNP_basal, pvalue)
-
-geneP_stim <- meStim$cis$min.pv.gene * sapply(names(meStim$cis$min.pv.gene), 
-                                     function(x) length(geneSNPs[[x]]))
-geneP_stim <- sapply(geneP_stim, min, 1)
-geneP_stim <- p.adjust(geneP_stim, "BH")
-geneP_stim <- data.frame(NuID=names(geneP_stim), Gene.FDR=geneP_stim, stringsAsFactors=FALSE)
-geneP_stim <- dplyr::left_join(geneP_stim, limmaTable, by="NuID")
-geneP_stim <- dplyr::left_join(geneP_stim, mainSNP_stim, by=c(NuID="gene"))
-geneP_stim <- dplyr::filter(geneP_stim, !NuID %in% noSNP)
-geneP_stim <- dplyr::select(geneP_stim, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
-                       pvalue, beta, logFC, adj.P.Val)
-geneP_stim <- dplyr::rename(geneP_stim, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
-                       expression.FDR=adj.P.Val, SNP.beta=beta)
-geneP_stim <- dplyr::arrange(geneP_stim, Gene.FDR, desc(abs(SNP.beta)))
-
-geneP_basal <- meBasal$cis$min.pv.gene * sapply(names(meBasal$cis$min.pv.gene), 
-                                     function(x) length(geneSNPs[[x]]))
-geneP_basal <- sapply(geneP_basal, min, 1)
-geneP_basal <- p.adjust(geneP_basal, "BH")
-geneP_basal <- data.frame(NuID=names(geneP_basal), Gene.FDR=geneP_basal, stringsAsFactors=FALSE)
-geneP_basal <- dplyr::left_join(geneP_basal, limmaTable, by="NuID")
-geneP_basal <- dplyr::left_join(geneP_basal, mainSNP_basal, by=c(NuID="gene"))
-geneP_basal <- dplyr::filter(geneP_basal, !NuID %in% noSNP)
-geneP_basal <- dplyr::select(geneP_basal, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
-                       pvalue, beta, logFC, adj.P.Val)
-geneP_basal <- dplyr::rename(geneP_basal, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
-                       expression.FDR=adj.P.Val, SNP.beta=beta)
-geneP_basal <- dplyr::arrange(geneP_basal, Gene.FDR, desc(abs(SNP.beta)))
-```
-
-```{r prepGeneEqtl, cache=FALSE}
-selGenes_stim <- dplyr::filter(geneP_stim, Gene.FDR < 0.05)
-emptySel <- character()
-for(i in 1:nrow(selGenes_stim)){
-  selSNPs_stim <- geno$bed[geneSNPs[[selGenes_stim$NuID[i]]]$snp, ]
-  if(nrow(selSNPs_stim)){
-    write.table(selSNPs_stim, file=paste0("tmp/genotypes_", selGenes_stim$Symbol[i],"_stim.tab"), 
-                quote=FALSE, sep="\t")
-    write.table(stimExpr[selGenes_stim$NuID[i], , drop=FALSE], 
-                file=paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"), sep="\t", quote=FALSE)
-  } else {
-    emptySel <- c(emptySel, selGenes_stim$NuID[i])
-  }
-}
-selGenes_stim <- dplyr::filter(selGenes_stim, !NuID %in% emptySel)
-
-selGenes_basal <- dplyr::filter(geneP_basal, Gene.FDR < 0.05)
-emptySel <- character()
-for(i in 1:nrow(selGenes_basal)){
-  selSNPs_basal <- geno$bed[geneSNPs[[selGenes_basal$NuID[i]]]$snp, ]
-  if(nrow(selSNPs_basal)){
-    write.table(selSNPs_basal, file=paste0("tmp/genotypes_", selGenes_basal$Symbol[i],"_basal.tab"), 
-                quote=FALSE, sep="\t")
-    write.table(basalExpr[selGenes_basal$NuID[i], , drop=FALSE], 
-                file=paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"), sep="\t", quote=FALSE)
-  } else {
-    emptySel <- c(emptySel, selGenes_basal$NuID[i])
-  }
-}
-selGenes_basal <- dplyr::filter(selGenes_basal, !NuID %in% emptySel)
-```
-
-```{r runGeneEqtl, cache=FALSE, results="hide"}
-meGene_stim <- vector(mode="list", nrow(selGenes_stim))
-names(meGene_stim) <- selGenes_stim$NuID
-for(i in 1:nrow(selGenes_stim)){
-  snpsSub <- SlicedData$new();
-  snpsSub$fileDelimiter <- "\t"
-  snpsSub$fileOmitCharacters <- "NA"
-  snpsSub$fileSkipRows <- 1
-  snpsSub$fileSkipColumns <- 1
-  snpsSub$fileSliceSize <- 2000
-  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes_stim$Symbol[i],"_stim.tab"))
-  
-  pheno <- SlicedData$new();
-  pheno$fileDelimiter <- "\t"
-  pheno$fileOmitCharacters <- "NA"
-  pheno$fileSkipRows <- 1
-  pheno$fileSkipColumns <- 1
-  pheno$fileSliceSize <- 2000
-  pheno$LoadFile(paste0("tmp/", selGenes_stim$Symbol[i], "_stim.tab"))
-  
-  meGene_stim[[selGenes_stim$NuID[i]]] <- Matrix_eQTL_main(
-    snps = snpsSub,
-    gene = pheno,
-    cvrt = covarStim,
-    output_file_name.cis = paste0("tmp/eQTL_", selGenes_stim$Symbol[i],"_stim_analysis"),
-    pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1,
-    useModel = modelLINEAR, 
-    errorCovariance = numeric(),
-    snpspos = geno$bim,
-    genepos = probePos,
-    cisDist = cisWindow,
-    verbose = FALSE,
-    pvalue.hist = FALSE,
-    min.pv.by.genesnp = TRUE,
-    noFDRsaveMemory = FALSE)
-}
-
-geneSNPcount_stim <- sapply(meGene_stim, function(x) sum(x$cis$eqtls$FDR < 0.01))
-
-meGene_basal <- vector(mode="list", nrow(selGenes_basal))
-names(meGene_basal) <- selGenes_basal$NuID
-for(i in 1:nrow(selGenes_basal)){
-  snpsSub <- SlicedData$new();
-  snpsSub$fileDelimiter <- "\t"
-  snpsSub$fileOmitCharacters <- "NA"
-  snpsSub$fileSkipRows <- 1
-  snpsSub$fileSkipColumns <- 1
-  snpsSub$fileSliceSize <- 2000
-  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes_basal$Symbol[i],"_basal.tab"))
-  
-  pheno <- SlicedData$new();
-  pheno$fileDelimiter <- "\t"
-  pheno$fileOmitCharacters <- "NA"
-  pheno$fileSkipRows <- 1
-  pheno$fileSkipColumns <- 1
-  pheno$fileSliceSize <- 2000
-  pheno$LoadFile(paste0("tmp/", selGenes_basal$Symbol[i], "_basal.tab"))
-  
-  meGene_basal[[selGenes_basal$NuID[i]]] <- Matrix_eQTL_main(
-    snps = snpsSub,
-    gene = pheno,
-    cvrt = covarBasal,
-    output_file_name.cis = paste0("tmp/eQTL_", selGenes_basal$Symbol[i],"_basal_analysis"),
-    pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1,
-    useModel = modelLINEAR, 
-    errorCovariance = numeric(),
-    snpspos = geno$bim,
-    genepos = probePos,
-    cisDist = cisWindow,
-    verbose = FALSE,
-    pvalue.hist = FALSE,
-    min.pv.by.genesnp = TRUE,
-    noFDRsaveMemory = FALSE)
-}
-
-geneSNPcount_basal <- sapply(meGene_basal, function(x) sum(x$cis$eqtls$FDR < 0.01))
 ```
 
 The genes with significant associations (FDR < 0.05) in either condition are considered
@@ -1383,11 +1228,11 @@ for significance in the other condition. Any gene with a significant association
 one condition and FDR > 0.5 in the other is considered to be specific to that condition.
 
 ```{r compareGenes}
-basal_extended <- dplyr::filter(geneP_basal, Gene.FDR < 0.5)$Symbol
-stim_extended <- dplyr::filter(geneP_stim, Gene.FDR < 0.5)$Symbol
+basal_extended <- dplyr::filter(meBasal, FDR < 0.5)$gene
+stim_extended <- dplyr::filter(meStim, FDR < 0.5)$gene
 
-stimGenes <- dplyr::filter(geneP_stim, Gene.FDR < 0.05 & !Symbol %in% basal_extended)
-basalGenes <- dplyr::filter(geneP_basal, Gene.FDR < 0.05 & !Symbol %in% stim_extended)
+stimGenes <- dplyr::filter(meStim, FDR < 0.05 & !gene %in% basal_extended)
+basalGenes <- dplyr::filter(meBasal, FDR < 0.05 & !gene %in% stim_extended)
 ```
 
 ```{r bundleEQTLinput, cache=FALSE, include=FALSE}
