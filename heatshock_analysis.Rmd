@@ -129,6 +129,25 @@ adjustLabel <- function(x, y, centre){
 	just
 }
 
+countBlocks <- function(geno, pval, pcut=0.05, rcut=0.8){
+  count <- 0
+  selected <- which(pval < pcut)
+  if(length(selected)){
+    if(length(selected) == 1){
+      count <- 1
+    } else{
+      r2 <-cor(geno[, names(pval)[selected]], use="pairwise", method="spearman")^2
+      remain <- 1:ncol(r2)
+      while(length(remain)){
+        i <- remain[1]
+        count <- count + 1
+        remain <- intersect(which(r2[i, ] < rcut), remain)
+      }
+    }
+  }
+  count
+}
+
 ## Create a scatter plot with one panel per group (by default BeadChip)
 ## Data points (by default samples in PC space) are assumed to be from a 
 ## bivariate t distribution. Confidence ellipses are drawn based on this
@@ -1676,9 +1695,15 @@ plsComp <- cbind(plsComp, sex=factor(globalPheno[plsComp$sample, "sex"]))
 plsPlot(plsComp)
 ```
 
+Of the `r length(assoc$adj.p.val)` SNPs tested for association with the global response phenotype
+`r sum(assoc$adj.p.val < 0.05)` are considered significant (FDR < 0.05) (`r tabRef("treatPLS")`). 
+These SNPs form `r countBlocks(geno$bed, assoc$adj.p.val)` group of highly correlated genotypes,
+likely due to local LD structure.
+
 ```{r treatPLStable, cache=FALSE}
-coef <- assoc$Results[1:4, , 1]
-coef[, "JointModel"] <- assoc$adj.p.val[1:4]
+sel <- which(assoc$adj.p.val < 0.05)
+coef <- assoc$Results[sel, , 1]
+coef[, "JointModel"] <- assoc$adj.p.val[sel]
 colnames(coef)[ncol(coef)] <- "Joint model FDR"
 set.caption(tabRef("treatPLS", "Standardised coefficients and adjusted p-values for the top SNPs."))
 pander(coef)
