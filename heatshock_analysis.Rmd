@@ -958,12 +958,8 @@ snpRange <- unique(unlist(lapply(geneSNPs, function(x) x$snp)))
 ```{r multiPheno}
 stimComp <- dplyr::filter(plsComp, treatment=="Stim")
 basalComp <- dplyr::filter(plsComp, treatment=="Basal")
-<<<<<<< HEAD
-globalPheno <- data.frame(basal.x=basalComp$t1,
-=======
 globalPheno <- data.frame(sample=stimComp$sample,
                           basal.x=basalComp$t1,
->>>>>>> branch 'pls' of git@github.com:jknightlab/heatshock.git
                           basal.y=basalComp$t2,
                           distance=sqrt((stimComp$t1 - basalComp$t1)^2 + (stimComp$t2 - basalComp$t2)^2),
                           direction=atan((stimComp$t2 - basalComp$t2)/(stimComp$t1 - basalComp$t1)))
@@ -1676,6 +1672,7 @@ in the variation observed due to
 heat shock and provide clear separation of the two treatment groups (`r figRef("treatPLS")`).
 
 ```{r treatPLSplot, cache=FALSE, fig.cap=figRef("treatPLS", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock.")}
+plsComp <- cbind(plsComp, sex=factor(globalPheno[plsComp$sample, "sex"]))
 plsPlot(plsComp)
 ```
 
@@ -1691,7 +1688,6 @@ pander(coef)
 genotypes <- data.frame(sample=colnames(geno$bed), stringsAsFactors=FALSE)
 genotypes <- cbind(genotypes, t(geno$bed[dimnames(assoc$Results)[[1]][1:10],]))
 plsComp <- dplyr::left_join(plsComp, genotypes, by="sample")
-plsComp <- cbind(plsComp, sex=factor(globalPheno[plsComp$sample, "sex"]))
 
 plsPlot(plsComp, dimnames(assoc$Results)[[1]][1])
 ```
