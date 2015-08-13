@@ -53,9 +53,11 @@ library(reshape2)
 library(ggdendro)
 library(topGO)
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(plink2R)
 library(MatrixEQTL)
 library(plsdepot)
+library(MultiPhen)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -127,6 +129,25 @@ adjustLabel <- function(x, y, centre){
 	just
 }
 
+countBlocks <- function(geno, pval, pcut=0.05, rcut=0.8){
+  count <- 0
+  selected <- which(pval < pcut)
+  if(length(selected)){
+    if(length(selected) == 1){
+      count <- 1
+    } else{
+      r2 <-cor(geno[, names(pval)[selected]], use="pairwise", method="spearman")^2
+      remain <- 1:ncol(r2)
+      while(length(remain)){
+        i <- remain[1]
+        count <- count + 1
+        remain <- intersect(which(r2[i, ] < rcut), remain)
+      }
+    }
+  }
+  count
+}
+
 ## Create a scatter plot with one panel per group (by default BeadChip)
 ## Data points (by default samples in PC space) are assumed to be from a 
 ## bivariate t distribution. Confidence ellipses are drawn based on this
@@ -175,6 +196,52 @@ outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID",
 					aes_string(label=id, hjust="h", vjust="v"), size=4) +
 			theme_bw() + scale_colour_discrete(guide="none")
 }
+
+plsPlot <- function(plsComp, genotype){
+  treatGrp <- by(dplyr::select(plsComp, t1, t2), 
+                 list(plsComp$treatment, plsComp$sex), colMeans)
+  grps <- do.call(expand.grid, dimnames(treatGrp))
+    grps <- dplyr::filter(grps, !sapply(treatGrp, is.null))
+    names(grps) <- c("treatment", "sex")
+  treatAvg <- cbind(do.call(rbind, treatGrp), grps)
+  treatAvg$sample <- treatAvg$sex
+  
+  if(!missing(genotype)){
+    plsComp[[genotype]] <- as.factor(plsComp[[genotype]])
+    grpMean <- by(dplyr::select(plsComp, t1, t2), list(plsComp[[genotype]], 
+                                                       plsComp$treatment, plsComp$sex), colMeans)
+    grps <- do.call(expand.grid, dimnames(grpMean))
+    grps <- dplyr::filter(grps, !sapply(grpMean, is.null))
+    names(grps) <- c(genotype, "treatment", "sex")
+    genoAvg <- cbind(do.call(rbind, grpMean), grps) 
+    genoAvg$sample <- paste(genoAvg[[genotype]], genoAvg[["sex"]], sep="_")
+  }
+  
+  fig <- ggplot(plsComp, aes(x=t1, y=t2, group=sample, shape=sex))
+  if(missing(genotype)){
+    fig <- fig + geom_point(data=treatAvg, aes(colour=treatment), size=5)
+  } else {
+      fig <- fig + geom_point(data=treatAvg, size=5, colour="black")
+      fig <- fig + geom_point(data=genoAvg, aes_string(colour=genotype), size=5)
+      fig <- fig + geom_line(data=genoAvg, aes_string(colour=genotype),  line.width=2,
+              arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20))
+  }
+  fig <- fig + geom_line(data=treatAvg, colour="black",  line.width=2,
+              arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20))
+  if(missing(genotype)){
+    fig <- fig + geom_point(aes(colour=treatment), size=3, alpha=0.6)
+    fig <- fig + scale_colour_manual(values=c(Basal="blue", Stim="red"))
+  } else {
+    fig <- fig + geom_point(aes_string(colour=genotype), size=3, alpha=0.6)
+    fig <- fig + scale_colour_manual(values=c("0"="#3E79F7", "1"="#FA2AA4", "2"="#FFB72B"))
+  }
+  fig <- fig + geom_line(colour="grey", alpha=0.6,
+                       arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20))
+  
+  fig <- fig + theme_bw() + xlab("Component 1") + ylab("Component 2")
+  fig
+}
+
 
 # Multiple plot function
 #
@@ -503,12 +570,12 @@ a clustering of samples from two RNA amplification batches in October 2009
 (`r figRef("pcaPlot")`). This batch effect is noted for later correction during the analysis.
 
 Further analysis of the gene expression response to heat shock revealed that four of the samples
-(NA18502, NA18508, NA18522 and NA18853) exhibit patterns of expression inconsistent with those observed
+(NA18502, NA18508, NA18522, NA18853, NA18504) exhibit patterns of expression inconsistent with those observed
 in other samples, including reversal of fold change for strongly differentially expressed
 genes. This suggests a potential mislabeling of these samples, which were consequently excluded.
 
 ```{r extraExclusions}
-exclude$sample <- union(exclude$sample, c("NA18502", "NA18508", "NA18522", "NA18853"))
+exclude$sample <- union(exclude$sample, c("NA18502", "NA18508", "NA18522", "NA18853", "NA18504"))
 dat <- filterSample(sig.data.long, sig.data.raw.long, det.data.long, exclude$sample)
 sig.data.long <- dat$sig
 sig.data.raw.long <- dat$sig.raw
@@ -823,18 +890,113 @@ system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulat
 
 ## Global heat shock response
 
-To assess the magnitude of the global difference in gene expression induced by heat shock
-we initially consider the principle components of the gene expression data. We reasoned that
-a substantial, global change in gene expression is likely to be well represented by the first
-few principle components. To determine which of these best capture the change we carried out
-a logistic regression with the treatment state (basal or stimulated) as response that included
-the first four principle components as predictors.
+To assess the global difference in gene expression induced by heat shock
+we carried out partial least squares regression (PLS), using the treatment state
+(basal or stimulated) as a binary response variable and all gene expression
+probes that passed QC as explanatory variables.
 
-```{r pcaFit}
-pcaFit <- glm(factor(Treatment) ~ PC1 + PC2 + PC3 + PC4, data=sig.pc, family = binomial())
-selPC <- names(sort(coef(pcaFit)[-1], decreasing=TRUE))[1:2]
+```{r pls}
+names <- strsplit(colnames(sig.data.norm), "_")
+treat <- factor(sapply(names, "[[", 2), levels=c("Basal", "Stim"))
+plsFit <- plsreg1(t(sig.data.norm), data.frame(treatment=as.integer(treat)-1))
+plsComp <- as.data.frame(plsFit$x.scores)
+plsComp$sample <- sapply(names, "[[", 1)
+plsComp$treatment <- treat
 ```
 
+To explore to what extend this response is modulated by genetic variation we used
+the length and direction of the response vector, i.e. the vector between the basal
+and stimulated sample for each individual in the space spanned by the first two PLS 
+components, together with the location of the basal sample in the same space as a 
+multivariate phenotype. This was then tested for association with
+genotypes for SNPs close to differentially expressed genes using the *MultiPhen* R
+package [@OReilly12]. The GRCh37 coordinates 
+for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142.GRCh37*
+Bioconductor package [@Pages14] and gene coordinates via the 
+*TxDb.Hsapiens.UCSC.hg19.knownGene* package [@Carlson15].
+
+
+```{r snpPosUpdate}
+geno <- read_plink("tmp/hapmap_yri.smpl_flt2")
+geno$bim <- dplyr::select(geno$bim, 2, 1, 4)
+names(geno$bim) <- c("snp", "chrom", "pos")
+
+geno$bim <- by(geno$bim, geno$bim$chrom, function(x){
+  locs <- getSNPlocs(paste0("ch", x$chrom[1]), caching=FALSE)
+  locs$RefSNP_id <- paste0("rs", locs$RefSNP_id)
+  snps <- inner_join(x, locs, by=c(snp="RefSNP_id"))
+  if(nrow(snps) < nrow(x)) warning("Dropped ", nrow(x) - nrow(snps), " SNP(s) from chromosome ", x$chrom[1])
+  dplyr::select(snps, snp, chrom, loc)
+})
+
+geno$bim <- do.call(rbind, geno$bim)
+geno$bim$chrom <- paste0("chr", geno$bim$chrom)
+geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
+```
+
+```{r cisSNPs}
+cisWindow <- 1e4
+
+exclChrom <- c("chrX", "chrY", "chrM")
+selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
+                                 !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
+selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation, EntrezReannotated)
+
+selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation, 
+                                             "chr[[:digit:]]{1,2}:[[:digit:]]+:[[:digit:]]+")
+selectedGenes <- dplyr::filter(selectedGenes, !is.na(GenomicLocation) & !is.na(EntrezReannotated))
+
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+txTable <- select(txdb, keys=selectedGenes$EntrezReannotated, 
+                  columns=c("TXID", "TXCHROM", "TXSTART", "TXEND"),
+                  keytype="GENEID")
+txTable <- dplyr::filter(txTable, !is.na(TXCHROM) & !str_detect(TXCHROM, "_"))
+txTable <- by(txTable, txTable$GENEID, function(x) data.frame(entrez=x[["GENEID"]][1], 
+                                                              chrom=x[["TXCHROM"]][1], 
+                                                              start=min(x[["TXSTART"]]),
+                                                              end=max(x[["TXEND"]])))
+txTable <- do.call(rbind, txTable)
+selectedGenes <- dplyr::right_join(selectedGenes, txTable, by=c(EntrezReannotated="entrez"))
+
+probePos <- dplyr::select(selectedGenes, NuID, chrom, start, end)
+probePos <- dplyr::arrange(probePos, chrom, start)
+
+probePosGR <- makeGRangesFromDataFrame(probePos, ignore.strand = TRUE, keep.extra.columns = TRUE)
+snpPosGR <- makeGRangesFromDataFrame(geno$bim, ignore.strand = TRUE, keep.extra.columns = TRUE, 
+                                   start.field = "loc", end.field = "loc")
+geneSNPs <- do.call(GRangesList, mapply(
+  function(x, chr, s, e) 
+    subset(x, seqnames == chr & start >= s - cisWindow & end <= e + cisWindow), 
+  as.character(seqnames(probePosGR)), start(probePosGR), end(probePosGR), 
+  MoreArgs=list(x=snpPosGR), SIMPLIFY=FALSE))
+names(geneSNPs) <- probePos$NuID
+noSNP <- probePos$NuID[sapply(geneSNPs, function(x) length(x) == 0)]
+snpRange <- unique(unlist(lapply(geneSNPs, function(x) x$snp)))
+```
+
+```{r multiPheno}
+stimComp <- dplyr::filter(plsComp, treatment=="Stim")
+basalComp <- dplyr::filter(plsComp, treatment=="Basal")
+globalPheno <- data.frame(sample=stimComp$sample,
+                          basal.x=basalComp$t1,
+                          basal.y=basalComp$t2,
+                          distance=sqrt((stimComp$t1 - basalComp$t1)^2 + (stimComp$t2 - basalComp$t2)^2),
+                          direction=atan((stimComp$t2 - basalComp$t2)/(stimComp$t1 - basalComp$t1)))
+globalPheno <- dplyr::left_join(globalPheno, dplyr::select(geno$fam, V2, V5), by=c(sample="V2"))
+globalPheno <- dplyr::rename(globalPheno, sex=V5)
+
+globalPheno <- cbind(scale(dplyr::select(globalPheno, -sex, -sample)), sex=globalPheno$sex-1)
+rownames(globalPheno) <- stimComp$sample
+
+rownames(geno$bed) <- str_extract(rownames(geno$bed), "NA[[:digit:]]+$")
+cisGeno <- geno$bed[rownames(globalPheno), snpRange]
+assoc <- mPhen(cisGeno, globalPheno, covariates="sex")
+idx <- order(assoc$Results[1, , "JointModel" , 2])
+assoc$Results <- assoc$Results[,idx, , ]
+assoc$maf <- assoc$maf[idx]
+assoc$adj.p.val <- p.adjust(assoc$Results[, "JointModel", 2], "BH")
+
+```
 
 ## Response QTL analysis
 All probes considered to be differentially expressed following heat shock treatment
@@ -842,21 +1004,10 @@ All probes considered to be differentially expressed following heat shock treatm
 the presence of genetic variation that modulates their response to the stimulus.
 
 For each probe the observed response to the stimulus (as measured by the log~2~ 
-fold change) is tested for association with the genotypes within a 1 Mb window
+fold change) is tested for association with the genotypes within a `r cisWindow`bp window
 either side of the probe location. For this purpose only typed SNPs that passed
 QC were considered. Only genes and SNPs on autosomes were included in the 
 analysis.
-
-```{r selectGenes}
-exclChrom <- c("chrX", "chrY", "chrM")
-selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
-                                 !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
-selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation)
-
-selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation, 
-                                             "chr[[:digit:]]{1,2}:[[:digit:]]+:[[:digit:]]+")
-selectedGenes <- dplyr::filter(selectedGenes, !is.na(GenomicLocation))
-```
 
 ```{r probeFC}
 selectedExpr <- sig.data.norm[selectedGenes$ArrayAddress,]
@@ -871,41 +1022,8 @@ rownames(selectedFC) <- selectedGenes$NuID
 write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE)
 ```
 
-```{r probeLoc}
-probePos <- as.data.frame(str_split_fixed(selectedGenes$GenomicLocation, ":", 3), stringsAsFactors=FALSE)
-names(probePos) <- c("chrom", "start", "end")
-probePos <- cbind(id=selectedGenes$NuID, probePos, stringsAsFactors=FALSE)
-probePos$start <- as.integer(probePos$start)
-probePos$end <- as.integer(probePos$end)
-```
-
 ```{r writeProbePos, cache=FALSE}
 write.table(probePos, file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, row.names=FALSE)
-```
-
-The GRCh37 coordinates for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142.GRCh37*
-Bioconductor package [@Pages14].
-
-```{r snpPos}
-geno <- read_plink("tmp/hapmap_yri.smpl_flt2")
-geno$bim <- dplyr::select(geno$bim, 2, 1, 4)
-names(geno$bim) <- c("snp", "chrom", "pos")
-```
-
-```{r snpPosUpdate}
-geno$bim <- by(geno$bim, geno$bim$chrom, function(x){
-  locs <- getSNPlocs(paste0("ch", x$chrom[1]), caching=FALSE)
-  locs$RefSNP_id <- paste0("rs", locs$RefSNP_id)
-  snps <- inner_join(x, locs, by=c(snp="RefSNP_id"))
-  if(nrow(snps) < nrow(x)) warning("Dropped ", nrow(x) - nrow(snps), " SNP(s) from chromosome ", x$chrom[1])
-  dplyr::select(snps, snp, chrom, loc)
-})
-```
-
-```{r snpPosComb}
-geno$bim <- do.call(rbind, geno$bim)
-geno$bim$chrom <- paste0("chr", geno$bim$chrom)
-geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
 ```
 
 ```{r writeSNPpos, cache=FALSE, results="hide"}
@@ -958,8 +1076,6 @@ write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, 
 ```
 
 ```{r prepQTL, results="hide", cache=FALSE}
-cisWindow <- 1e4
-
 snps <- SlicedData$new();
 snps$fileDelimiter <- "\t"
 snps$fileOmitCharacters <- "NA"
@@ -1005,17 +1121,6 @@ me <- Matrix_eQTL_main(
 ```
 
 ```{r geneSNPs}
-probePos <- makeGRangesFromDataFrame(probePos, ignore.strand = TRUE, keep.extra.columns = TRUE)
-snpPos <- makeGRangesFromDataFrame(geno$bim, ignore.strand = TRUE, keep.extra.columns = TRUE, 
-                                   start.field = "loc", end.field = "loc")
-geneSNPs <- do.call(GRangesList, mapply(
-  function(x, chr, s, e) 
-    subset(x, seqnames == chr & start >= s - cisWindow & end <= e + cisWindow), 
-  as.character(seqnames(probePos)), start(probePos), end(probePos), 
-  MoreArgs=list(x=snpPos), SIMPLIFY=FALSE))
-names(geneSNPs) <- probePos$id
-noSNP <- probePos$id[sapply(geneSNPs, function(x) length(x) == 0)]
-
 mainSNP <- dplyr::filter(me$cis$eqtls, !duplicated(gene))
 
 geneP <- me$cis$min.pv.gene * sapply(names(me$cis$min.pv.gene), 
@@ -1080,7 +1185,7 @@ for(i in 1:nrow(selGenes)){
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    genepos = probePos,
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1177,7 +1282,7 @@ meStim <- Matrix_eQTL_main(
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    genepos = probePos,
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1194,7 +1299,7 @@ meBasal <- Matrix_eQTL_main(
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    genepos = probePos,
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1301,7 +1406,7 @@ for(i in 1:nrow(selGenes_stim)){
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    genepos = probePos,
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1340,7 +1445,7 @@ for(i in 1:nrow(selGenes_basal)){
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
-    genepos = dplyr::select(as.data.frame(probePos), id, seqnames, start, end),
+    genepos = probePos,
     cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
@@ -1477,7 +1582,7 @@ meHSFbasal <- Matrix_eQTL_main(
     gene = phenoBasal,
     cvrt = covarHSFbasal,
     output_file_name = "tmp/eQTL_hsf_basal_analysis",
-    pvOutputThreshold = 1e-5,
+    pvOutputThreshold = 1e-3,
     pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
@@ -1579,34 +1684,45 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
 
 ## Global heat shock response
 
-```{r pcaModelTable, cache=FALSE}
-set.caption(tabRef("pcaFit", "Logistic regression fit"))
-pander(pcaFit)
+Considering the outcome of the partial least squares regression it is aparent that there is
+a considerable change in overall gene expression in response to heat shock. Together the first
+two PLS components account for `r format(sum(plsFit$R2[1:2]*100), nsmall=1, digits=2)`% 
+in the variation observed due to 
+heat shock and provide clear separation of the two treatment groups (`r figRef("treatPLS")`).
+
+```{r treatPLSplot, cache=FALSE, fig.cap=figRef("treatPLS", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock.")}
+plsComp <- cbind(plsComp, sex=factor(globalPheno[plsComp$sample, "sex"]))
+plsPlot(plsComp)
 ```
 
-Based on the logistic regression fit (`r tabRef("pcaFit")`) `r paste(selPC, collapse=" and ")` 
-were selected as subspace in which to visualise the data (`r figRef("treatPCA")`). While this
-shows an overall consitent change in gene expression across samples it also highlights
-variability beween individuals.
+Of the `r length(assoc$adj.p.val)` SNPs tested for association with the global response phenotype
+`r sum(assoc$adj.p.val < 0.05)` are considered significant (FDR < 0.05) (`r tabRef("treatPLS")`). 
+These SNPs form `r countBlocks(geno$bed, assoc$adj.p.val)` group of highly correlated genotypes,
+likely due to local LD structure.
 
-```{r treatPCAplot, cache=FALSE, fig.cap=figRef("treatPCA", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock.")}
-treatAvg <- data.frame(do.call(rbind, by(dplyr::select(sig.pc, PC2, PC4), sig.pc$Treat, colMeans)))
-treatAvg$Treatment <- rownames(treatAvg)
-treatAvg[["Cell Line"]] <- "avg"
-perp <- rev(treatAvg[2,1:2] - treatAvg[1, 1:2]) * c(-1,1)
-slope <- (perp[2]/perp[1])[[1]]
-ggplot(sig.pc, aes(x=PC2, y=PC4, colour=Treatment, group=`Cell Line`)) + 
-  geom_point(data=treatAvg, size=5) +
-  geom_line(data=treatAvg, colour="black",  line.width=2,
-            arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20)) +
-  geom_line(colour="darkgrey", alpha=0.7,
-            arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20)) + 
-  geom_point(size=2.5, alpha=0.5) +  
-  geom_abline(slope=slope, intercept=0, colour="black", linetype="dashed") + 
-  scale_colour_manual(values=c(Basal="blue", Stim="red")) +
-  theme_bw()
+```{r treatPLStable, cache=FALSE}
+sel <- which(assoc$adj.p.val < 0.05)
+coef <- assoc$Results[sel, , 1]
+coef[, "JointModel"] <- assoc$adj.p.val[sel]
+colnames(coef)[ncol(coef)] <- "Joint model FDR"
+set.caption(tabRef("treatPLS", "Standardised coefficients and adjusted p-values for the top SNPs."))
+pander(coef)
 ```
 
+The SNP rs7789228 is located in an intron of RSBN1L and is annotated as falling within an
+enhancer by Ensembl's regulatory build (Ensembl release 81). Although none of the cell lines
+studied here are included in the regulatory build genome segmentation data are available for
+GM12878, a HapMap cell line of caucasian ancestry, providing a useful reference for the
+samples in this study. In GM12878 the enhancer element is annotated as being active with
+evidence of CTCF and RAD21 binding.
+
+```{r plsGenoPlot, cache=FALSE, fig.cap=figRef("plsGeno", "Global response to heat shock by genotype.")}
+genotypes <- data.frame(sample=colnames(geno$bed), stringsAsFactors=FALSE)
+genotypes <- cbind(genotypes, t(geno$bed[dimnames(assoc$Results)[[1]][sel],]))
+plsComp <- dplyr::left_join(plsComp, genotypes, by="sample")
+
+plsPlot(plsComp, "rs7789228")
+```
 
 ## Response QTL analysis
 
