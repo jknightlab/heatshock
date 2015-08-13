@@ -942,7 +942,7 @@ cisWindow <- 1e4
 exclChrom <- c("chrX", "chrY", "chrM")
 selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
                                  !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
-selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation, EntrezReannotated)
+selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation, EntrezReannotated, SymbolReannotated)
 
 selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation, 
                                              "chr[[:digit:]]{1,2}:[[:digit:]]+:[[:digit:]]+")
@@ -1001,15 +1001,20 @@ assoc$adj.p.val <- p.adjust(assoc$Results[, "JointModel", 2], "BH")
 ```
 
 ## Response QTL analysis
-All probes considered to be differentially expressed following heat shock treatment
-(FDR < `r fdrCut` and fold change > `r 2^fcCut`) were further investigated for
-the presence of genetic variation that modulates their response to the stimulus.
+Having established the association between rs7789228 and the global response to 
+heat shock we sought to further investigate the influence of this SNP on the
+expression of individual genes. To this end we considered all differentially 
+expressed genes (FDR < `r fdrCut` and fold change > `r 2^fcCut`) on chromosome 7.
+
+```{r candGenes}
+selectedGenes <- dplyr::filter(selectedGenes, chrom == "chr7") 
+```
+
+This results in a list of `r nrow(selectedGenes)` probes (targeting 
+`r length(unique(selectedGenes$SymbolReannotated))` different genes).
 
 For each probe the observed response to the stimulus (as measured by the log~2~ 
-fold change) is tested for association with the genotypes within a `r cisWindow`bp window
-either side of the probe location. For this purpose only typed SNPs that passed
-QC were considered. Only genes and SNPs on autosomes were included in the 
-analysis.
+fold change) is tested for association with the genotype of rs7789228.
 
 ```{r probeFC}
 selectedExpr <- sig.data.norm[selectedGenes$ArrayAddress,]
@@ -1025,11 +1030,12 @@ write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE
 ```
 
 ```{r writeProbePos, cache=FALSE}
-write.table(probePos, file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(dplyr::filter(probePos, NuID %in% selectedGenes$NuID), 
+            file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, row.names=FALSE)
 ```
 
 ```{r writeSNPpos, cache=FALSE, results="hide"}
-write.table(geno$bim, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
+write.table(dplyr::filter(geno$bim, snp=="rs7789228"), file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
 ```
 
 ```{r prepGeno}
@@ -1043,34 +1049,27 @@ if(any(flip)){
 ```
 
 ```{r writeGeno, cache=FALSE, results="hide"}
-write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
+write.table(geno$bed["rs7789228",,drop=FALSE], file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
 ```
 
 ```{r fc_pc}
-nPC <- 3
-pca <- prcomp(t(selectedFC), center=TRUE, scale = TRUE)
-pc <- pca$x
+nPC <- 0
+if(nPC > 0){
+  pca <- prcomp(t(selectedFC), center=TRUE, scale = TRUE)
+  pc <- pca$x
+}
 ```
 
 We tested for associations between genotype and heat shock response using
 a linear model as implemented in Matrix-eQTL [@Shabalin12], correcting for
 sex as well as the first `r nPC` principle components of the treatment response. 
-The analysis was carried out in two stages. The first stage served to identify genes that show 
-evidence of being modulated in their response to heat shock by local genetic 
-variation. To this end determine the the minimum p-value for each gene, adjusted 
-for the number of SNPs tested for association
-with this gene using a Bonferroni correction. The resulting p-values are
-then corrected for the number of genes tested by computing the corresponding
-false discovery rate. The second stage served to examine the identified
-genes more closely by identifying individual SNPs that are associated
-with the change in expression observed for the gene in response to the stimulus.
 
 ```{r covariates}
 geno$fam <- dplyr::filter(dplyr::select(geno$fam, 2, 5), V2 %in% colnames(geno$bed))
 geno$fam <- t(geno$fam)
 colnames(geno$fam) <- geno$fam[1,]
 geno$fam <- geno$fam[, colnames(selectedFC)]
-geno$fam <- rbind(geno$fam, t(pc[, 1:nPC]))
+if(nPC > 0) geno$fam <- rbind(geno$fam, t(pc[, 1:nPC]))
 ```
 
 ```{r writeCovar, cache=FALSE, echo=FALSE}
@@ -1108,94 +1107,15 @@ me <- Matrix_eQTL_main(
     snps = snps,
     gene = pheno,
     cvrt = covar,
-    output_file_name.cis = "tmp/reQTL_analysis",
-    pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1e-3,
+    output_file_name = "tmp/reQTL_analysis",
+    pvOutputThreshold = 1,
+    pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
-    snpspos = geno$bim,
-    genepos = probePos,
-    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
-    min.pv.by.genesnp = TRUE,
+    min.pv.by.genesnp = FALSE,
     noFDRsaveMemory = FALSE)
-```
-
-```{r geneSNPs}
-mainSNP <- dplyr::filter(me$cis$eqtls, !duplicated(gene))
-
-geneP <- me$cis$min.pv.gene * sapply(names(me$cis$min.pv.gene), 
-                                     function(x) length(geneSNPs[[x]]))
-geneP <- sapply(geneP, min, 1)
-geneP <- p.adjust(geneP, "BH")
-geneP <- data.frame(NuID=names(geneP), Gene.FDR=geneP, stringsAsFactors=FALSE)
-geneP <- dplyr::left_join(geneP, limmaTable, by="NuID")
-geneP <- dplyr::left_join(geneP, mainSNP, by=c(NuID="gene"))
-geneP <- dplyr::filter(geneP, !NuID %in% noSNP)
-geneP <- dplyr::select(geneP, SymbolReannotated, snps, NuID, ArrayAddress, Gene.FDR, 
-                       pvalue, beta, logFC, adj.P.Val)
-geneP <- dplyr::rename(geneP, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
-                       expression.FDR=adj.P.Val, SNP.beta=beta)
-geneP <- dplyr::arrange(geneP, Gene.FDR, desc(abs(SNP.beta)))
-```
-
-```{r prepGeneMatrixEqtl, cache=FALSE}
-selGenes <- dplyr::filter(geneP, Gene.FDR < 1)
-emptySel <- character()
-for(i in 1:nrow(selGenes)){
-  selSNPs <- geno$bed[geneSNPs[[selGenes$NuID[i]]]$snp, ]
-  if(nrow(selSNPs)){
-    write.table(selSNPs, file=paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"), 
-                quote=FALSE, sep="\t")
-    write.table(selectedFC[selGenes$NuID[i], , drop=FALSE], 
-                file=paste0("tmp/", selGenes$Symbol[i], "_fc.tab"), sep="\t", quote=FALSE)
-    } else {
-      emptySel <- c(emptySel, selGenes$NuID[i])
-    }
-}
-selGenes <- dplyr::filter(selGenes, !NuID %in% emptySel)
-```
-
-```{r runGeneMatrixEqtl, cache=FALSE, results="hide"}
-meGene <- vector(mode="list", nrow(selGenes))
-names(meGene) <- selGenes$NuID
-for(i in 1:nrow(selGenes)){
-  snpsSub <- SlicedData$new();
-  snpsSub$fileDelimiter <- "\t"
-  snpsSub$fileOmitCharacters <- "NA"
-  snpsSub$fileSkipRows <- 1
-  snpsSub$fileSkipColumns <- 1
-  snpsSub$fileSliceSize <- 2000
-  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"))
-  
-  pheno <- SlicedData$new();
-  pheno$fileDelimiter <- "\t"
-  pheno$fileOmitCharacters <- "NA"
-  pheno$fileSkipRows <- 1
-  pheno$fileSkipColumns <- 1
-  pheno$fileSliceSize <- 2000
-  pheno$LoadFile(paste0("tmp/", selGenes$Symbol[i], "_fc.tab"))
-  
-  meGene[[selGenes$NuID[i]]] <- Matrix_eQTL_main(
-    snps = snpsSub,
-    gene = pheno,
-    cvrt = covar,
-    output_file_name.cis = paste0("tmp/reQTL_", selGenes$Symbol[i],"analysis"),
-    pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1,
-    useModel = modelLINEAR, 
-    errorCovariance = numeric(),
-    snpspos = geno$bim,
-    genepos = probePos,
-    cisDist = cisWindow,
-    verbose = FALSE,
-    pvalue.hist = FALSE,
-    min.pv.by.genesnp = TRUE,
-    noFDRsaveMemory = FALSE)
-}
-
-geneSNPcount <- sapply(meGene, function(x) sum(x$cis$eqtls$FDR < 0.01))
 ```
 
 ```{r bundleReQTLinput, cache=FALSE, include=FALSE}
