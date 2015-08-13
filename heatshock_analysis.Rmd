@@ -1011,8 +1011,8 @@ nPerm <- 200
 pPerm <- numeric(nPerm)
 snpPerm <- character(nPerm)
 for(i in 1:nPerm){
-  permPheno <- dplyr::sample_n(globalPheno, nrow(globalPheno), replace=FALSE)
-  assocPerm <- mPhen(cisGeno, permPheno, covariates="sex")
+  permPheno <- dplyr::sample_n(as.data.frame(globalPheno), nrow(globalPheno), replace=FALSE)
+  assocPerm <- mPhen(cisGeno, as.matrix(permPheno), covariates="sex")
   idx <- which.min(assocPerm$Results[1, ,"JointModel", 2])
   pPerm[i] <- assocPerm$Results[1, idx,"JointModel", 2]
   snpPerm[i] <- dimnames(assocPerm$Results)[[2]][idx]
