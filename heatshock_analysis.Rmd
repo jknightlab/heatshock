@@ -1709,12 +1709,19 @@ set.caption(tabRef("treatPLS", "Standardised coefficients and adjusted p-values 
 pander(coef)
 ```
 
+The SNP rs7789228 is located in an intron of RSBN1L and is annotated as falling within an
+enhancer by Ensembl's regulatory build (Ensembl release 81). Although none of the cell lines
+studied here are included in the regulatory build genome segmentation data are available for
+GM12878, a HapMap cell line of caucasian ancestry, providing a useful reference for the
+samples in this study. In GM12878 the enhancer element is annotated as being active with
+evidence of CTCF and RAD21 binding.
+
 ```{r plsGenoPlot, cache=FALSE, fig.cap=figRef("plsGeno", "Global response to heat shock by genotype.")}
 genotypes <- data.frame(sample=colnames(geno$bed), stringsAsFactors=FALSE)
-genotypes <- cbind(genotypes, t(geno$bed[dimnames(assoc$Results)[[1]][1:10],]))
+genotypes <- cbind(genotypes, t(geno$bed[dimnames(assoc$Results)[[1]][sel],]))
 plsComp <- dplyr::left_join(plsComp, genotypes, by="sample")
 
-plsPlot(plsComp, dimnames(assoc$Results)[[1]][1])
+plsPlot(plsComp, "rs7789228")
 ```
 
 ## Response QTL analysis
