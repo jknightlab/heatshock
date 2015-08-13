@@ -1004,11 +1004,7 @@ assoc$adj.p.val <- p.adjust(assoc$Results[, "JointModel", 2], "BH")
 Having established the association between rs7789228 and the global response to 
 heat shock we sought to further investigate the influence of this SNP on the
 expression of individual genes. To this end we considered all differentially 
-expressed genes (FDR < `r fdrCut` and fold change > `r 2^fcCut`) on chromosome 7.
-
-```{r candGenes}
-selectedGenes <- dplyr::filter(selectedGenes, chrom == "chr7") 
-```
+expressed genes (FDR < `r fdrCut` and fold change > `r 2^fcCut`).
 
 This results in a list of `r nrow(selectedGenes)` probes (targeting 
 `r length(unique(selectedGenes$SymbolReannotated))` different genes).
