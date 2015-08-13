@@ -1667,7 +1667,7 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
 
 Considering the outcome of the partial least squares regression it is aparent that there is
 a considerable change in overall gene expression in response to heat shock. Together the first
-two PLS omponents account for `r format(sum(plsFit$R2[1:2]*100), nsmall=1, digits=2)`% 
+two PLS components account for `r format(sum(plsFit$R2[1:2]*100), nsmall=1, digits=2)`% 
 in the variation observed due to 
 heat shock and provide clear separation of the two treatment groups (`r figRef("treatPLS")`).
 
