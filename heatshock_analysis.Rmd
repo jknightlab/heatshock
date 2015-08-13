@@ -136,7 +136,9 @@ countBlocks <- function(geno, pval, pcut=0.05, rcut=0.8){
     if(length(selected) == 1){
       count <- 1
     } else{
-      r2 <-cor(geno[, names(pval)[selected]], use="pairwise", method="spearman")^2
+      if(names(pval)[1] %in% colnames(geno)) geno <- geno[, names(pval)[selected]]
+      else geno <- t(geno[names(pval)[selected], ])
+      r2 <-cor(geno, use="pairwise", method="spearman")^2
       remain <- 1:ncol(r2)
       while(length(remain)){
         i <- remain[1]
