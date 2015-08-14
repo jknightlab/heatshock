@@ -1007,11 +1007,12 @@ Significance of the observed associations was assessed through a permutation tes
 
 ```{r multiPhenoPerm}
 set.seed(54864548L)
-nPerm <- 200
+nPerm <- 100
 pPerm <- numeric(nPerm)
 snpPerm <- character(nPerm)
 for(i in 1:nPerm){
   permPheno <- dplyr::sample_n(as.data.frame(globalPheno), nrow(globalPheno), replace=FALSE)
+  rownames(permPheno) <- rownames(globalPheno)
   assocPerm <- mPhen(cisGeno, as.matrix(permPheno), covariates="sex")
   idx <- which.min(assocPerm$Results[1, ,"JointModel", 2])
   pPerm[i] <- assocPerm$Results[1, idx,"JointModel", 2]
