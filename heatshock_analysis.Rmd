@@ -1747,7 +1747,7 @@ pander(coef)
 ```
 
 
-```{r treatPLSpval, cache=FALSE, fig.cap=figRef("permPval", past0("P-values observed after permutation of global response phenotype for SNP ", dimnames(assoc$Result)[[1]][1], ".")}
+```{r treatPLSpval, cache=FALSE, fig.cap=figRef("permPval", paste0("P-values observed after permutation of global response phenotype for SNP ", dimnames(assoc$Result)[[1]][1], "."))}
 ggplot(pPerm[,bins[dimnames(assoc$Result)[[1]][1]]], aes(x=-log10(p.value))) + 
   geom_histogram(fill="lightgrey", binwidth=0.1) +
   geom_vline(xintercept=-log10(assoc$Results[1, "JointModel",2]), colour="red") + 
