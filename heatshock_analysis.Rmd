@@ -1005,7 +1005,7 @@ assoc$maf <- assoc$maf[idx]
 Significance of the observed associations was assessed through a permutation test to account for the
 structure inherent to the data.
 
-```{r multiPhenoPerm}
+```{r multiPhenoPerm, results='hide'}
 set.seed(54864548L)
 nPerm <- 1000
 bins <- sapply(apply(cisGeno, 2, table), paste, collapse="_")
