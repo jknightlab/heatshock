@@ -1007,25 +1007,32 @@ structure inherent to the data.
 
 ```{r multiPhenoPerm}
 set.seed(54864548L)
-nPerm <- 100
-pPerm <- numeric(nPerm)
-snpPerm <- character(nPerm)
+nPerm <- 200
+bins <- sapply(apply(cisGeno, 2, table), paste, collapse="_")
+names(bins) <- colnames(cisGeno)
+pPerm <- matrix(NA, nrow=nPerm, ncol=length(unique(bins)))
+colnames(pPerm) <- unique(bins)
+binSNPs <- tapply(colnames(cisGeno), bins, function(x) x)
+permGeno <- cisGeno[, sapply(binSNPs, "[", 1)]
+
 for(i in 1:nPerm){
   permPheno <- dplyr::sample_n(as.data.frame(globalPheno), nrow(globalPheno), replace=FALSE)
   rownames(permPheno) <- rownames(globalPheno)
-  assocPerm <- mPhen(cisGeno, as.matrix(permPheno), covariates="sex")
-  idx <- which.min(assocPerm$Results[1, ,"JointModel", 2])
-  pPerm[i] <- assocPerm$Results[1, idx,"JointModel", 2]
-  snpPerm[i] <- dimnames(assocPerm$Results)[[2]][idx]
+  assocPerm <- mPhen(permGeno, as.matrix(permPheno), covariates="sex")
+  pPerm[i, ] <- assocPerm$Results[1, ,"JointModel", 2]
 }
-permResult <- data.frame(p.value=pPerm, snp=snpPerm)
 ```
 
 To this end the observed global response phenotype for each individual and covariates used in the model
 were randomly assigned to one of the observed set of genotypes.
 
 ```{r permFDR}
-assoc$adj.p.val <- sapply(assoc$Results[, "JointModel", 2], function(x, p) sum(p < x)/length(p), pPerm)
+assoc$adj.p.val <- numeric(length(assoc$maf))
+names(assoc$adj.p.val) <- dimnames(assoc$Results)[[1]]
+for(i in 1:ncol(pPerm)){
+  assoc$adj.p.val[binSNPs[[i]]] <- sapply(assoc$Results[binSNPs[[i]], "JointModel", 2],
+                                          function(x, p) sum(p < x)/length(p), pPerm[, i])
+}
 ```
 
 ## Response QTL analysis
@@ -1740,10 +1747,10 @@ pander(coef)
 ```
 
 
-```{r treatPLSpval, cache=FALSE, fig.cap=figRef("permPval", "Most extreme p-values observed after permutations.")}
-ggplot(permResult, aes(x=-log10(p.value))) + 
+```{r treatPLSpval, cache=FALSE, fig.cap=figRef("permPval", past0("P-values observed after permutation of global response phenotype for SNP ", dimnames(assoc$Result)[[1]][1], ".")}
+ggplot(pPerm[,bins[dimnames(assoc$Result)[[1]][1]]], aes(x=-log10(p.value))) + 
   geom_histogram(fill="lightgrey", binwidth=0.1) +
-  geom_vline(xintercept=-log10(assoc$Results[1,5,2]), colour="red") + 
+  geom_vline(xintercept=-log10(assoc$Results[1, "JointModel",2]), colour="red") + 
   theme_bw() + xlab(expression(-log[10]("p-value")))
 ```
 
