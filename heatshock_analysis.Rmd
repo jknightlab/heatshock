@@ -1007,7 +1007,7 @@ structure inherent to the data.
 
 ```{r multiPhenoPerm}
 set.seed(54864548L)
-nPerm <- 200
+nPerm <- 1000
 bins <- sapply(apply(cisGeno, 2, table), paste, collapse="_")
 names(bins) <- colnames(cisGeno)
 pPerm <- matrix(NA, nrow=nPerm, ncol=length(unique(bins)))
