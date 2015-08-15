@@ -1000,10 +1000,10 @@ assoc <- mPhen(cisGeno, globalPheno, covariates="sex")
 idx <- order(assoc$Results[1, , "JointModel" , 2])
 assoc$Results <- assoc$Results[,idx, , ]
 assoc$maf <- assoc$maf[idx]
-assoc$adj.p.val <- p.adjust(assoc$Results[, "JointModel", 2], "BH")
 ```
 
-Significance of the observed associations was assessed through a permutation test.
+Significance of the observed associations was assessed through a permutation test to account for the
+structure inherent to the data.
 
 ```{r multiPhenoPerm}
 set.seed(54864548L)
@@ -1019,6 +1019,13 @@ for(i in 1:nPerm){
   snpPerm[i] <- dimnames(assocPerm$Results)[[2]][idx]
 }
 permResult <- data.frame(p.value=pPerm, snp=snpPerm)
+```
+
+To this end the observed global response phenotype for each individual and covariates used in the model
+were randomly assigned to one of the observed set of genotypes.
+
+```{r permFDR}
+assoc$adj.p.val <- sapply(assoc$Results[, "JointModel", 2], function(x, p) sum(p < x)/length(p), pPerm)
 ```
 
 ## Response QTL analysis
@@ -1730,6 +1737,14 @@ coef[, "JointModel"] <- assoc$adj.p.val[sel]
 colnames(coef)[ncol(coef)] <- "Joint model FDR"
 set.caption(tabRef("treatPLS", "Standardised coefficients and adjusted p-values for the top SNPs."))
 pander(coef)
+```
+
+
+```{r treatPLSpval, cache=FALSE, fig.cap=figRef("permPval", "Most extreme p-values observed after permutations.")}
+ggplot(permResult, aes(x=-log10(p.value))) + 
+  geom_histogram(fill="lightgrey", binwidth=0.1) +
+  geom_vline(xintercept=-log10(assoc$Results[1,5,2]), colour="red") + 
+  theme_bw() + xlab(expression(-log[10]("p-value")))
 ```
 
 The SNP rs7789228 is located in an intron of RSBN1L and is annotated as falling within an
