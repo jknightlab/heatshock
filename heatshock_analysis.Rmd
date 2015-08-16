@@ -919,9 +919,9 @@ gene.data <- getBM(
 gene.data <- dplyr::filter(gene.data, namespace_1003=="biological_process")
 termFilter <- c("heat", "stress", "folding", "folded", 
                 "death", "apoptosis", "apoptotic", 
-                "cell cycle", "mitosis", "mitotic", 
+                "cell cycle", "mitosis", "mitotic", "proliferation", 
                 "virus", "viral", "immune",
-                "transcription", "translation")
+                "transcription", "translation", "gene expression")
 knownGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, collapse="|")))
 selGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut & 
                             !SymbolReannotated %in% knownGenes$hgnc_symbol)
