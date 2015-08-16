@@ -882,14 +882,16 @@ tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, nodeSize=10,
 ```{r testTopGO}
 resultUp <- runTest(tgUp, algorithm="classic", statistic="fisher")
 resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
+goTabUp <- GenTable(tgUp, up = resultUp, down = resultDown, 
+                     topNodes = length(score(resultUp)), orderBy = "up")
+goTabDown <- GenTable(tgDown, up = resultUp, down = resultDown, 
+                     topNodes = length(score(resultDown)), orderBy = "down")
 ```
 
 ```{r writeTopGO, include=FALSE, cache=FALSE}
-write.table(GenTable(tgUp, up = resultUp, down = resultDown, 
-                     topNodes = length(score(resultUp)), orderBy = "up"),
+write.table(goTabUp,
             file="tmp/topGO_upregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
-write.table(GenTable(tgDown, up = resultUp, down = resultDown, 
-                     topNodes = length(score(resultDown)), orderBy = "down"),
+write.table(goTabDown,
             file="tmp/topGO_downregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
 system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulated.tab")
 ```
