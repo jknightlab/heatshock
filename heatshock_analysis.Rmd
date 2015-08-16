@@ -1756,11 +1756,19 @@ pander(coef)
 ```
 
 
-```{r treatPLSpval, cache=FALSE, fig.cap=figRef("permPval", paste0("P-values observed after permutation of global response phenotype for SNP ", dimnames(assoc$Result)[[1]][1], "."))}
-ggplot(data.frame(p.value=pPerm[,bins[dimnames(assoc$Result)[[1]][1]]]), aes(x=-log10(p.value))) + 
+```{r treatPLSpval, cache=FALSE, fig.cap=figRef("permPval", paste0("P-values observed after permutation of global response phenotype for SNP ", dimnames(assoc$Result)[[1]][1], " (left) and the minimum p-value observed in each iteration across all SNPs (right)."))}
+
+fig1 <- ggplot(data.frame(p.value=pPerm[,bins[dimnames(assoc$Result)[[1]][1]]]), aes(x=-log10(p.value))) + 
   geom_histogram(fill="lightgrey", binwidth=0.1) +
   geom_vline(xintercept=-log10(assoc$Results[1, "JointModel",2]), colour="red") + 
   theme_bw() + xlab(expression(-log[10]("p-value")))
+
+fig2 <- ggplot(data.frame(p.value=apply(pPerm,1, min)), aes(x=-log10(p.value))) + 
+  geom_histogram(fill="lightgrey", binwidth=0.1) +
+  geom_vline(xintercept=-log10(assoc$Results[1, "JointModel",2]), colour="red") + 
+  theme_bw() + xlab(expression(-log[10]("p-value")))
+
+multiplot(fig1, fig2, cols=2)
 ```
 
 The SNP rs7789228 is located in an intron of RSBN1L and is annotated as falling within an
