@@ -58,6 +58,7 @@ library(plink2R)
 library(MatrixEQTL)
 library(plsdepot)
 library(MultiPhen)
+library(RISmed)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -882,17 +883,77 @@ tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, nodeSize=10,
 ```{r testTopGO}
 resultUp <- runTest(tgUp, algorithm="classic", statistic="fisher")
 resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
+goTabUp <- GenTable(tgUp, up = resultUp, down = resultDown, 
+                     topNodes = length(score(resultUp)), orderBy = "up")
+goTabDown <- GenTable(tgDown, up = resultUp, down = resultDown, 
+                     topNodes = length(score(resultDown)), orderBy = "down")
 ```
 
 ```{r writeTopGO, include=FALSE, cache=FALSE}
-write.table(GenTable(tgUp, up = resultUp, down = resultDown, 
-                     topNodes = length(score(resultUp)), orderBy = "up"),
+write.table(goTabUp,
             file="tmp/topGO_upregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
-write.table(GenTable(tgDown, up = resultUp, down = resultDown, 
-                     topNodes = length(score(resultDown)), orderBy = "down"),
+write.table(goTabDown,
             file="tmp/topGO_downregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
 system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulated.tab")
 ```
+
+## Gene annotions
+In addition to identifying common themes amongst differentially expressed genes the question
+arises to what extend these genes have been previously associated with the heat
+shock or, more generally, stress response. As a first step in highlighting genes 
+not previously known to play a role in this contxt we identify all significantly
+up regulated genes that lack GO annotations of obvious relevance to heat shock response.
+In addition to terms related to stress response and protein folding we also include
+terms related to cell death and proliferation. To account for the presence of EBV in 
+these cells we ignore all genes annotated with terms related to viral infections.
+Finally, any remaining genes related to regulation of gene expression are considered
+to be explained by the large scale changes in gene expression that are taking place
+in response to heat shock.
+
+```{r goTerms}
+sig.entrez <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$EntrezReannotated
+mart <- useMart("ensembl",dataset="hsapiens_gene_ensembl")
+gene.data <- getBM(
+  attributes=c('hgnc_symbol', 'entrezgene', 'go_id', 'name_1006', 'namespace_1003'), 
+  filters = 'entrezgene', values = sig.entrez, mart = mart)
+gene.data <- dplyr::filter(gene.data, namespace_1003=="biological_process")
+termFilter <- c("heat", "stress", "folding", "folded", 
+                "death", "apoptosis", "apoptotic", 
+                "cell cycle", "mitosis", "mitotic", "proliferation", 
+                "virus", "viral", "immune",
+                "transcription", "translation", "gene expression")
+knownGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, collapse="|")))
+selGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut & 
+                            !SymbolReannotated %in% knownGenes$hgnc_symbol)
+```
+
+A PubMed search for articles mentioning the remaining genes in the context
+of heat shock response was carried out.
+
+```{r pubmed}
+selGenes <- dplyr::filter(selGenes, SymbolReannotated != "")
+queryString <- paste(unique(selGenes$SymbolReannotated), "AND (heat shock OR stress)")
+
+query <- lapply(queryString, EUtilsSummary)
+names(query) <- unique(selGenes$SymbolReannotated)
+queryEmpty <- query[sapply(query, QueryCount) == 0]
+queryFound <- query[sapply(query, QueryCount) != 0]
+
+pmids <- lapply(queryFound, function(x) PMID(EUtilsGet(x)))
+putativeGenes <- dplyr::filter(selGenes, SymbolReannotated %in% names(queryEmpty))
+putativeGenes <- dplyr::left_join(putativeGenes, dplyr::select(gene.data, 
+                                                               hgnc_symbol, go_id, name_1006), 
+                                  by=c(SymbolReannotated="hgnc_symbol"))
+```
+
+```{r geneRecords, cache=FALSE}
+write.table(data.frame(gene=names(queryFound), pmid=sapply(pmids, paste, collapse=",")),
+            file="tmp/heatshock_pmid.txt", row.names=FALSE, quote=FALSE, sep="\t")
+write.table(putativeGenes, file="tmp/heatshock_novel.tab", sep="\t", 
+            quote=FALSE, row.names=FALSE)
+system("tar -czf tmp/gene_annotation.tar.gz tmp/heatshock_pmid.txt tmp/heatshock_novel.tab")
+```
+
 
 ## Global heat shock response
 
@@ -1727,6 +1788,14 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
     scale_shape_manual(values=c(up=24, down=25)) +
     theme_bw()
 ```
+
+## Gene annotations
+
+Of the `r length(unique(sig.entrez))` significantly up regulated genes `r length(unique(knownGenes$entrezgene))`
+are associated with GO terms that clearly relate to heat shock response or other relevant processes
+and a further `r length(pmids)` genes with at least one reference to heat shock or stress response.
+This leaves `r length(queryEmpty)` genes with no obvious association to heat shock. Of these 
+`r sum(is.na(putativeGenes$go_id))` don't have any GO annotations.
 
 ## Global heat shock response
 
