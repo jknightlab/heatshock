@@ -926,6 +926,31 @@ knownGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, c
 selGenes <- dplyr::filter(gene.data, !hgnc_symbol %in% knownGenes$hgnc_symbol)
 ```
 
+A PubMed search for articles mentioning the remaining genes in the context
+of heat shock response was carried out.
+
+```{r pubmed}
+selGenes <- dplyr::filter(selGenes, hgnc_symbol != "")
+queryString <- paste(unique(selGenes$hgnc_symbol), "AND (heat shock OR stress)")
+
+query <- lapply(queryString, EUtilsSummary)
+names(query) <- unique(selGenes$hgnc_symbol)
+queryEmpty <- query[sapply(query, QueryCount) == 0]
+queryFound <- query[sapply(query, QueryCount) != 0]
+
+pmids <- lapply(queryFound, function(x) PMID(EUtilsGet(x)))
+putativeGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% names(queryEmpty))
+putativeGenes <- dplyr::left_join(putativeGenes, selGenes, by=c(SymbolReannotated="hgnc_symbol"))
+```
+
+```{r geneRecords, cache=FALSE}
+write.table(data.frame(gene=names(queryFound), pmid=sapply(queryFound, paste, collapse=",")),
+            file="tmp/heatshock_pmid.txt", row.names=FALSE, quote=FALSE, sep="\t")
+write.table(putativeGenes, file="tmp/heatshock_novel.tab", sep="\t", 
+            quote=FALSE, row.names=FALSE)
+```
+
+
 ## Global heat shock response
 
 To assess the global difference in gene expression induced by heat shock
