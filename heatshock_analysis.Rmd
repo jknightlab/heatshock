@@ -896,6 +896,35 @@ write.table(goTabDown,
 system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulated.tab")
 ```
 
+## Gene annotions
+In addition to identifying common themes amongst differentially expressed genes the question
+arises to what extend these genes have been previously associated with the heat
+shock or, more generally, stress response. As a first step in highlighting genes 
+not previously known to play a role in this contxt we identify all significantly
+up regulated genes that lack GO annotations of obvious relevance to heat shock response.
+In addition to terms related to stress response and protein folding we also include
+terms related to cell death and proliferation. To account for the presence of EBV in 
+these cells we ignore all genes annotated with terms related to viral infections.
+Finally, any remaining genes related to regulation of gene expression are considered
+to be explained by the large scale changes in gene expression that are taking place
+in response to heat shock.
+
+```{r goTerms}
+sig.entrez <- limmaTable$EntrezReannotated[groupUp == 1]
+mart <- useMart("ensembl",dataset="hsapiens_gene_ensembl")
+gene.data <- getBM(
+  attributes=c('hgnc_symbol', 'entrezgene', 'go_id', 'name_1006', 'namespace_1003'), 
+  filters = 'entrezgene', values = sig.entrez, mart = mart)
+gene.data <- dplyr::filter(gene.data, namespace_1003=="biological_process")
+termFilter <- c("heat", "stress", "folding", "folded", 
+                "death", "apoptosis", "apoptotic", 
+                "cell cycle", "mitosis", "mitotic", 
+                "virus", "viral", "immune",
+                "transcription", "translation")
+knownGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, collapse="|")))
+selGenes <- dplyr::filter(gene.data, !hgnc_symbol %in% knownGenes$hgnc_symbol)
+```
+
 ## Global heat shock response
 
 To assess the global difference in gene expression induced by heat shock
