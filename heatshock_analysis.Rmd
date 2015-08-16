@@ -59,6 +59,7 @@ library(MatrixEQTL)
 library(plsdepot)
 library(MultiPhen)
 library(RISmed)
+library(biomaRt)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
