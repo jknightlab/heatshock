@@ -1018,10 +1018,10 @@ permGeno <- cisGeno[, sapply(binSNPs, "[", 1)]
 for(i in 1:nPerm){
   permPheno <- dplyr::sample_n(as.data.frame(globalPheno), nrow(globalPheno), replace=FALSE)
   rownames(permPheno) <- rownames(globalPheno)
-  tryCatch( assocPerm <- mPhen(permGeno, as.matrix(permPheno), covariates="sex"),
-            error={
+  assocPerm <- tryCatch( mPhen(permGeno, as.matrix(permPheno), covariates="sex"),
+            error= function(e){
               permPheno <- dplyr::sample_n(as.data.frame(globalPheno), nrow(globalPheno), replace=FALSE)
-              assocPerm <- mPhen(permGeno, as.matrix(permPheno), covariates="sex")
+              mPhen(permGeno, as.matrix(permPheno), covariates="sex")
             })
   pPerm[i, ] <- assocPerm$Results[1, ,"JointModel", 2]
 }
