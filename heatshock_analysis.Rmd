@@ -58,6 +58,7 @@ library(plink2R)
 library(MatrixEQTL)
 library(plsdepot)
 library(MultiPhen)
+library(RISmed)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
