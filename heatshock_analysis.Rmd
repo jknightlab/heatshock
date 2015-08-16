@@ -1028,13 +1028,18 @@ for(i in 1:nPerm){
 ```
 
 To this end the observed global response phenotype for each individual and covariates used in the model
-were randomly assigned to one of the observed set of genotypes.
+were randomly assigned to one of the observed set of genotypes `r nPerm` times and p-values for 
+the joint model were computed for each permutation. From these we computed fase discovery rates
+by comparing observed p-values to the empirical distribution of minimum p-values from each permutation.
 
 ```{r permFDR}
-assoc$adj.p.val <- numeric(length(assoc$maf))
+minp <- apply(pPerm, 1, min)
+assoc$adj.p.val <- sapply(assoc$Results[, "JointModel", 2], function(x) sum(minp < x)/length(minp))
 names(assoc$adj.p.val) <- dimnames(assoc$Results)[[1]]
+assoc$perm.p.val <- numeric(length(assoc$maf))
+names(assoc$perm.p.val) <- dimnames(assoc$Results)[[1]]
 for(i in 1:ncol(pPerm)){
-  assoc$adj.p.val[binSNPs[[i]]] <- sapply(assoc$Results[binSNPs[[i]], "JointModel", 2],
+  assoc$perm.p.val[binSNPs[[i]]] <- sapply(assoc$Results[binSNPs[[i]], "JointModel", 2],
                                           function(x, p) sum(p < x)/length(p), pPerm[, i])
 }
 ```
