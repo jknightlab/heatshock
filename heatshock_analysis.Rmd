@@ -950,6 +950,7 @@ write.table(data.frame(gene=names(queryFound), pmid=sapply(pmids, paste, collaps
             file="tmp/heatshock_pmid.txt", row.names=FALSE, quote=FALSE, sep="\t")
 write.table(putativeGenes, file="tmp/heatshock_novel.tab", sep="\t", 
             quote=FALSE, row.names=FALSE)
+system("tar -czf tmp/gene_annotation.tar.gz tmp/heatshock_pmid.txt tmp/heatshock_novel.tab")
 ```
 
 
