@@ -923,24 +923,25 @@ termFilter <- c("heat", "stress", "folding", "folded",
                 "virus", "viral", "immune",
                 "transcription", "translation")
 knownGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, collapse="|")))
-selGenes <- dplyr::filter(gene.data, !hgnc_symbol %in% knownGenes$hgnc_symbol)
+selGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut & 
+                            !SymbolReannotated %in% knownGenes$hgnc_symbol)
 ```
 
 A PubMed search for articles mentioning the remaining genes in the context
 of heat shock response was carried out.
 
 ```{r pubmed}
-selGenes <- dplyr::filter(selGenes, hgnc_symbol != "")
-queryString <- paste(unique(selGenes$hgnc_symbol), "AND (heat shock OR stress)")
+selGenes <- dplyr::filter(selGenes, SymbolReannotated != "")
+queryString <- paste(unique(selGenes$SymbolReannotated), "AND (heat shock OR stress)")
 
 query <- lapply(queryString, EUtilsSummary)
-names(query) <- unique(selGenes$hgnc_symbol)
+names(query) <- unique(selGenes$SymbolReannotated)
 queryEmpty <- query[sapply(query, QueryCount) == 0]
 queryFound <- query[sapply(query, QueryCount) != 0]
 
 pmids <- lapply(queryFound, function(x) PMID(EUtilsGet(x)))
-putativeGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% names(queryEmpty))
-putativeGenes <- dplyr::left_join(putativeGenes, dplyr::select(selGenes, 
+putativeGenes <- dplyr::filter(selGenes, SymbolReannotated %in% names(queryEmpty))
+putativeGenes <- dplyr::left_join(putativeGenes, dplyr::select(gene.data, 
                                                                hgnc_symbol, go_id, name_1006), 
                                   by=c(SymbolReannotated="hgnc_symbol"))
 ```
