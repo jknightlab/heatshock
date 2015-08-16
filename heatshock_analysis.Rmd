@@ -946,7 +946,7 @@ putativeGenes <- dplyr::left_join(putativeGenes, dplyr::select(selGenes,
 ```
 
 ```{r geneRecords, cache=FALSE}
-write.table(data.frame(gene=names(queryFound), pmid=sapply(queryFound, paste, collapse=",")),
+write.table(data.frame(gene=names(queryFound), pmid=sapply(pmids, paste, collapse=",")),
             file="tmp/heatshock_pmid.txt", row.names=FALSE, quote=FALSE, sep="\t")
 write.table(putativeGenes, file="tmp/heatshock_novel.tab", sep="\t", 
             quote=FALSE, row.names=FALSE)
