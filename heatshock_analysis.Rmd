@@ -940,7 +940,9 @@ queryFound <- query[sapply(query, QueryCount) != 0]
 
 pmids <- lapply(queryFound, function(x) PMID(EUtilsGet(x)))
 putativeGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% names(queryEmpty))
-putativeGenes <- dplyr::left_join(putativeGenes, selGenes, by=c(SymbolReannotated="hgnc_symbol"))
+putativeGenes <- dplyr::left_join(putativeGenes, dplyr::select(selGenes, 
+                                                               hgnc_symbol, go_id, name_1006), 
+                                  by=c(SymbolReannotated="hgnc_symbol"))
 ```
 
 ```{r geneRecords, cache=FALSE}
