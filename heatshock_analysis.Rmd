@@ -1112,7 +1112,7 @@ All probes considered to be differentially expressed following heat shock treatm
 the presence of genetic variation that modulates their response to the stimulus.
 
 For each probe the observed response to the stimulus (as measured by the log~2~ 
-fold change) is tested for association with the genotypes within a `r cisWindow`bp window
+fold change) is tested for association with the genotypes within a $`r cisWindow`$bp window
 either side of the probe location. For this purpose only typed SNPs that passed
 QC were considered. Only genes and SNPs on autosomes were included in the 
 analysis.
