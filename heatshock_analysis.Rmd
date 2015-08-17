@@ -1314,7 +1314,7 @@ meBasal <- Matrix_eQTL_main(
     snps = snps,
     gene = phenoBasal,
     cvrt = covarBasal,
-    output_file_name.cis = "tmp/eQTL_basal_analysis",
+    output_file_name = "tmp/eQTL_basal_analysis",
     pvOutputThreshold = 1,
     pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
