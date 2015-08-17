@@ -1703,6 +1703,12 @@ meHSFbasal <- Matrix_eQTL_main(
 
 ```
 
+## Associations with copy number variations
+
+```{r loadCNV}
+cnv <- read_tsv("data/yri_cnv.tab")
+cnv <- dplyr::select(cnv, one_of(c("Gene", colnames(selectedFC))))
+```
 
 
 # Results
