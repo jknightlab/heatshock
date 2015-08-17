@@ -1330,11 +1330,11 @@ for significance in the other condition. Any gene with a significant association
 one condition and FDR > 0.5 in the other is considered to be specific to that condition.
 
 ```{r compareGenes}
-basal_extended <- dplyr::filter(meBasal, FDR < 0.5)$gene
-stim_extended <- dplyr::filter(meStim, FDR < 0.5)$gene
+basal_extended <- dplyr::filter(meBasal$all$eqtls, FDR < 0.5)$gene
+stim_extended <- dplyr::filter(meStim$all$eqtls, FDR < 0.5)$gene
 
-stimGenes <- dplyr::filter(meStim, FDR < 0.05 & !gene %in% basal_extended)
-basalGenes <- dplyr::filter(meBasal, FDR < 0.05 & !gene %in% stim_extended)
+stimGenes <- dplyr::filter(meStim$all$eqtls, FDR < 0.05 & !gene %in% basal_extended)
+basalGenes <- dplyr::filter(meBasal$all$eqtls, FDR < 0.05 & !gene %in% stim_extended)
 ```
 
 ```{r bundleEQTLinput, cache=FALSE, include=FALSE}
