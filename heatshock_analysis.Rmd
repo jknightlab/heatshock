@@ -1754,7 +1754,7 @@ ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) +
             y=max(-log10(limmaTable$adj.P.Val))+2)
 ```
 
-```{r heatmap, cahe=FALSE, fig.cap=figRef("exprHeat", "Heatmap comparing gene expression for differentially expressed genes between basal and stimulated samples. Samples were clustered by gene  with stimulated (orange) and basal (purple) samples forming two distinct groups. Expression estimates for each gene were scaled and centred across samples. Blue cells correspond to lower and red cells to higher than average expression.")}
+```{r heatmap, cache=FALSE, fig.cap=figRef("exprHeat", "Heatmap comparing gene expression for differentially expressed genes between basal and stimulated samples. Samples were clustered by gene  with stimulated (orange) and basal (purple) samples forming two distinct groups. Expression estimates for each gene were scaled and centred across samples. Blue cells correspond to lower and red cells to higher than average expression.")}
 idx <- dplyr::arrange(dplyr::filter(limmaTable, ArrayAddress %in% rownames(selectedExpr)), logFC)$ArrayAddress
 sideCols <- c(Basal="purple", Stim="orange")
 treat <- str_extract(colnames(selectedExpr), "(Basal|Stim)$")
