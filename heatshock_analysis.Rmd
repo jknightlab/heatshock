@@ -41,6 +41,8 @@ library(vsn)
 library(limma)
 library(scatterplot3d)
 library(sva)
+library(gplots)
+library(RColorBrewer)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
@@ -1515,6 +1517,13 @@ ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) +
         theme_bw() + xlab("log2(fold change)") + ylab("-log10(FDR)") + 
         expand_limits(x=c(min(limmaTable$logFC)-0.25, max(limmaTable$logFC)+0.25), 
             y=max(-log10(limmaTable$adj.P.Val))+2)
+```
+
+```{r heatmap, cache=FALSE, fig.cap=figRef("exprHeat", "Heatmap comparing gene expression for differentially expressed genes between basal and stimulated samples. Samples were clustered by gene  with stimulated (orange) and basal (purple) samples forming two distinct groups. Expression estimates for each gene were scaled and centred across samples. Blue cells correspond to lower and red cells to higher than average expression.")}
+idx <- dplyr::arrange(dplyr::filter(limmaTable, ArrayAddress %in% rownames(selectedExpr)), logFC)$ArrayAddress
+sideCols <- c(Basal="purple", Stim="orange")
+treat <- str_extract(colnames(selectedExpr), "(Basal|Stim)$")
+heatmap.2(selectedExpr[rev(idx),],trace = "none", Rowv=FALSE, Colv=TRUE, scale="row", dendrogram="column", col=rev(brewer.pal(11, "RdBu")), ColSideColors=sideCols[treat], key=FALSE, labRow="", labCol="", xlab="Samples", ylab="Genes")
 ```
 
 ## GO enrichment analysis
