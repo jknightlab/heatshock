@@ -978,14 +978,30 @@ peaks2genes <- data.frame()
 for(i in peaks){
         nm <- gsub("/analysis/data/(.*).txt", "\\1", i)
         f <- read.table(i, sep="\t", header=T)
-        genes <-  paste(f[,11], collapse=", ")
-        genes <- unique(strsplit(genes, ", ")[[1]])
+        genes <-  paste(f[,11], collapse=",")
+        genes <- unique(strsplit(genes, ",|-")[[1]])
         genes[genes==""] <- NA
 
         genes <- genes[!is.na(genes)]
         peaks2genes <- rbind(peaks2genes, data.frame(cond=nm, genes=genes) )
 }
 peaks2genes$cond2 <- gsub("^M|^U", "comb", peaks2genes$cond)
+peaks2genes$treatment <- str_extract(peaks2genes$cond2, "C|HS")
+peaks2genes$tf <- str_extract(peaks2genes$cond2, "HSF.")
+
+peakSplit <- by(peaks2genes, list(peaks2genes$treatment, peaks2genes$tf), function(x) x)
+peakSplit[[1]] <- subset(peakSplit[[1]], genes %in% peakSplit[[3]]$genes)
+if(nrow(peakSplit[[1]])) {
+  peakSplit[[1]]$tf <- "HSF1+HSF2"
+  peakSplit[[1]]$cond2 <- paste0(peakSplit[[1]]$cond2, "+HSF2")
+}
+peakSplit[[2]] <- subset(peakSplit[[2]], genes %in% peakSplit[[4]]$genes)
+if(nrow(peakSplit[[2]])){
+  peakSplit[[2]]$tf <- "HSF1+HSF2"
+  peakSplit[[2]]$cond2 <- paste0(peakSplit[[2]]$cond2, "+HSF2")
+} 
+
+peaks2genes <- rbind(peaks2genes, peakSplit[[1]], peakSplit[[2]])
 ```
 
 ```{r peakGroups}
