@@ -4,7 +4,7 @@ author:
   - name: Peter Humburg
     affiliation: Wellcome Trust Centre for Human Genetics, University of Oxford, Roosevelt Dr., Oxford, OX3 7BN, UK
     email: peter.humburg@well.ox.ac.uk
-  - name Wanseon Lee
+  - name: Wanseon Lee
     affiliation: Wellcome Trust Centre for Human Genetics, University of Oxford, Roosevelt Dr., Oxford, OX3 7BN, UK
     email: wanseon.lee@well.ox.ac.uk
 date: "`r format(Sys.time(), '%a %d %b %Y')`"
