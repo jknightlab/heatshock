@@ -1905,6 +1905,30 @@ and a further `r length(pmids)` genes with at least one reference to heat shock 
 in the literature. This leaves `r length(queryEmpty)` genes with no obvious association to heat shock. Of these 
 `r sum(is.na(putativeGenes$go_id))` don't have any GO annotations. 
 
+```{r peakEnrichTab, cache=FALSE}
+condition <- str_replace(hsfPval$cond, "comb-C_", "basal ")
+condition <- str_replace(condition, "comb-HS_", "heat shock ")
+tab <- data.frame(Condition=condition, 
+                  up=paste0(hsfPval$sigGenes_up, " (", format(hsfPval$up, digits=2),")"),
+                  down=paste0(hsfPval$sigGenes_down, " (", format(hsfPval$down, digits=2),")"))
+tab$up <- str_replace(tab$up, "e+00", "") 
+tab$down <- str_replace(tab$down, "e+00", "")
+tab$up <- str_replace(tab$up, "([[:digits:]].[[:digits:]])e-([[:digits:]]+)", "\\$$1 \\\\times 10^{$2}\\$")
+
+set.caption(tabRef("peakEnrich", "Number (and corresponding p-values) of ChIP-seq peaks for HSF1 and HSF2 associated with significantly up and down regulated genes."))
+highlightStrong <- NULL
+if(any(hsfPval$up < 0.001)) highlightStrong <- cbind(which(hsfPval$up < 0.001), 2)
+if(any(hsfPval$down < 0.001)) highlightStrong <- rbind(highlightStrong, cbind(which(hsfPval$down < 0.001), 3))
+
+highlight <- NULL
+if(any(hsfPval$up < 0.01 & hsfPval$up > 0.001)) 
+  highlight <- cbind(which(hsfPval$up < 0.01 & hsfPval$up > 0.001), 2)
+if(any(hsfPval$down < 0.01 & hsfPval$down > 0.001)) 
+  highlight <- rbind(highlight, cbind(which(hsfPval$down < 0.01 & hsfPval$down > 0.001), 3))
+
+pander(tab, emphasize.cells=highlight, emphasize.strong.cells=highlightStrong)
+```
+
 ## Global heat shock response
 
 Considering the outcome of the partial least squares regression it is aparent that there is
