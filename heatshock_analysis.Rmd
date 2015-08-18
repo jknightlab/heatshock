@@ -997,7 +997,7 @@ NofgroupUp <- length(groupUp)
 NofgroupDown <- length(groupDown)
 
 genes_in_both <- data.frame()
-r <- data.frame()
+hsfPval <- data.frame()
 for(g in unique(peaks2genes$cond2) ){
         anno_genes <- unique( subset(peaks2genes, cond2==g)$genes )
         groupUp_in_anno_genes <- length( anno_genes[anno_genes %in% groupUp] )
@@ -1026,7 +1026,7 @@ for(g in unique(peaks2genes$cond2) ){
         rst_down <- fisher.test(dat_down, alternative="less")
 
 
-        r <- rbind(r, data.frame(cond=g, up=rst_up$p.value, down=rst_down$p.value, 
+        hsfPval <- rbind(hsfPval, data.frame(cond=g, up=rst_up$p.value, down=rst_down$p.value, 
                                  sigGenes_up=groupUp_in_anno_genes, sigGenes_down=groupDown_in_anno_genes) )
 }
 
@@ -1035,7 +1035,7 @@ genes_in_both$heatshock_novel_genes <- ifelse( genes_in_both$genes %in% heatshoc
 ```
 
 ```{r peakOutput, cache=FALSE}
-write.table(r, "tmp/hsf_genes_pvalue.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(hsfPval, "tmp/hsf_genes_pvalue.txt", sep="\t", quote=FALSE, row.names=FALSE)
 write.table(genes_in_both, "tmp/hsf_genes.txt" , sep="\t", quote=FALSE, row.names=FALSE)
 system("tar -czf tmp/gene_annotation.tar.gz -C tmp heatshock_pmid.txt heatshock_novel.tab hsf_genes.txt hsf_genes_pvalue.txt")
 ```
