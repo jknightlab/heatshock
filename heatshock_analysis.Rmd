@@ -311,6 +311,14 @@ updateSampleList <- function(samples, sampleFile){
   invisible(keepSamples)
 }
 
+formatQTL <- function (me, limmaTable) {
+  eQTL <- me$all$eqtls
+  eQTL <- dplyr::left_join(eQTL, dplyr::select(limmaTable, NuID, SymbolReannotated, logFC), by=c(gene="NuID"))
+  eQTL <- dplyr::select(eQTL, SNP, SymbolReannotated, NuID, beta:FDR, AveExpr, logFC)
+  eQTL <- dplyr::rename(eQTL, Gene="SymbolReannotated")
+  eQTL
+}
+
 figRef <- local({
     tag <- numeric()
     created <- logical()
@@ -1218,6 +1226,8 @@ me <- Matrix_eQTL_main(
     pvalue.hist = FALSE,
     min.pv.by.genesnp = FALSE,
     noFDRsaveMemory = FALSE)
+
+reQTL <- formatQTL(me, limmaTable)
 ```
 
 ```{r bundleReQTLinput, cache=FALSE, include=FALSE}
@@ -1323,6 +1333,9 @@ meBasal <- Matrix_eQTL_main(
     pvalue.hist = FALSE,
     min.pv.by.genesnp = FALSE,
     noFDRsaveMemory = FALSE)
+
+stimEQTL <- formatEQTL(meStim, limmaTable)
+basalEQTL <- formatEQTL(meBasal, limmaTable)
 ```
 
 The genes with significant associations (FDR < 0.05) in either condition are considered
@@ -1330,11 +1343,11 @@ for significance in the other condition. Any gene with a significant association
 one condition and FDR > 0.5 in the other is considered to be specific to that condition.
 
 ```{r compareGenes}
-basal_extended <- dplyr::filter(meBasal$all$eqtls, FDR < 0.5)$gene
-stim_extended <- dplyr::filter(meStim$all$eqtls, FDR < 0.5)$gene
+basal_extended <- dplyr::filter(basalEQTL, FDR < 0.5)$Gene
+stim_extended <- dplyr::filter(stimEQTL, FDR < 0.5)$Gene
 
-stimGenes <- dplyr::filter(meStim$all$eqtls, FDR < 0.05 & !gene %in% basal_extended)
-basalGenes <- dplyr::filter(meBasal$all$eqtls, FDR < 0.05 & !gene %in% stim_extended)
+stimGenes <- dplyr::filter(stimEQTL, FDR < 0.05 & !Gene %in% basal_extended)
+basalGenes <- dplyr::filter(basalEQTL, FDR < 0.05 & !Gene %in% stim_extended)
 ```
 
 ```{r bundleEQTLinput, cache=FALSE, include=FALSE}
@@ -1396,6 +1409,8 @@ meHSF <- Matrix_eQTL_main(
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
     noFDRsaveMemory = FALSE)
+
+hsfQTL <- formatQTL(meHSF, limmaTable)
 ```
 
 ```{r runHSFtransExpr, cache=FALSE, results="hide"}
@@ -1447,6 +1462,8 @@ meHSFbasal <- Matrix_eQTL_main(
     min.pv.by.genesnp = TRUE,
     noFDRsaveMemory = FALSE)
 
+hsfBasalQTL <- formatQTL(meHSFbasal, limmaTable)
+hsfStimQTL <- formatQTL(meHSFstim, limmaTable)
 ```
 
 
@@ -1608,26 +1625,17 @@ plsPlot(plsComp, "rs7789228")
 
 ```{r reQTLGeneTable, cache=FALSE}
 set.caption(tabRef("reQTLgenes", "List of genes with strongest evidence for response QTL."))
-pander(head(dplyr::select(geneP, -ArrayAddress, -NuID)))
+reQTLSigif <- dplyr::filter(reQTL, FDR < 0.05)
+pander(dplyr::select(reQTLSigif, -NuID))
 ```
 
-The association test designed to identify genetic modulators of gene expression response to 
-heat shock only uncovered very limited evidence for the presence of such effects
-(`r tabRef("reQTLgenes")`). A closer inspection of the potential cis associations for
-the highest ranked gene (`r geneP$Symbol[1]`) suggests `r geneSNPcount[1]`
-SNP`r if(geneSNPcount[1] > 1) "s" else ""` that may be of interest (`r tabRef("topGeneSNPs")`).
+The association test designed to identify genes modulated by rs7789228 detected
+significant associations to `r length(unique(reQTLSigif))` genes (`r tabRef("reQTLgenes")`).
 
-```{r topGeneSNPs, cache=FALSE}
-set.caption(tabRef("topGeneSNPs", paste("Possible Response QTL for", geneP$Symbol[1])))
-tab <- head(meGene[[1]]$cis$eqtls, geneSNPcount[1])
-tab$gene <- geneP$Symbol[1]
-pander(tab)
-```
-
-```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype. Fold changes were corrected for the effect of covariates."))}
-snp <- as.character(meGene[[1]]$cis$eqtls$snps[1])
-gene <- geneP$Symbol[1]
-probe <- geneP$NuID[1]
+```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", reQTL$Gene[1], "by genotype. Fold changes were corrected for the effect of covariates."))}
+snp <- as.character(reQTL$SNP[1])
+gene <- reQTL$Gene[1]
+probe <- reQTL$NuID[1]
 
 fit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covar[[1]]))
 offset <- colSums(fit$coefficients[-(1:2)]*covar[[1]])
@@ -1644,40 +1652,23 @@ ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
 
 ```{r eQTLStimGeneTable, cache=FALSE}
 set.caption(tabRef("eQTLstimGenes", "List of genes with strongest evidence for genetic modulation of gene expression after heat shock treatment. Significant associations only observed after heat shock treatment are highlight."))
-highlight <- which(head(geneP_stim)$Symbol %in% stimGenes$Symbol)
-pander(dplyr::select(head(geneP_stim), -ArrayAddress, -NuID), 
+stimEQTLsignif <- dplyr::filter(stimEQTL, FDR < 0.05)
+highlight <- which(stimEQTLsignif$Gene %in% stimGenes$Gene)
+pander(dplyr::select(stimEQTLsignif, -NuID), 
        emphasize.strong.rows=if(length(highlight)) highlight else NULL)
 ```
 
 ```{r eQTLBasalGeneTable, cache=FALSE}
 set.caption(tabRef("eQTLbasalGenes", "List of genes with strongest evidence for genetic modulation of gene expression in basal state. Significant associations specific to the basal state are highlighted."))
-highlight <- which(head(geneP_basal)$Symbol %in% basalGenes$Symbol)
-pander(dplyr::select(head(geneP_basal), -ArrayAddress, -NuID),
+basalEQTLsignif <- dplyr::filter(basalEQTL, FDR < 0.05)
+highlight <- which(basalEQTLsignif$Gene %in% basalGenes$Gene)
+pander(dplyr::select(basalEQTLsignif, -NuID),
        emphasize.strong.rows=if(length(highlight)) highlight else NULL)
 ```
 
 Condition specific associations were identified for `r nrow(stimGenes)` 
 gene`r if(nrow(stimGenes) != 1) "s" else ""` in the stimulated and for `r nrow(basalGenes)`
-in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`). See 
-`r if(geneSNPcount_stim[1] > 0) tabRef("topGeneSNPs_stim") else ""` 
-`r if(geneSNPcount_stim[1] > 0 && geneSNPcount_basal[1] > 0) "and" else ""`
-`r if(geneSNPcount_basal[1] > 0) tabRef("topGeneSNPs_basal") else ""` 
-for a list of SNPs of interest for these genes.
-
-```{r topGeneSNPs_stim, cache=FALSE, include=geneSNPcount_stim[1] > 0, eval=geneSNPcount_stim[1] > 0}
-set.caption(tabRef("topGeneSNPs_stim", paste("Top eSNPs for", stimGenes$Symbol[1], "following heat shock.")))
-tab <- head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_stim[1], 20))
-tab$gene <- stimGenes$Symbol[1]
-pander(tab)
-```
-
-```{r topGeneSNPs_basal, cache=FALSE, include=geneSNPcount_basal[1] > 0, eval=geneSNPcount_basal[1] > 0}
-set.caption(tabRef("topGeneSNPs_basal", paste("Top eSNPs for", basalGenes$Symbol[1], "in basal state.")))
-tab <- head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_basal[1], 20))
-tab$gene <- basalGenes$Symbol[1]
-pander(tab)
-```
-
+in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`).
 
 ```{r topEgeneSNPplot, cache=FALSE, fig.cap=figRef("topEgeneSNP", paste("Gene expression by genotype for genes showing evidence of condition specific eQTL. Gene expression estimates were corrected for the effect of covariates.")), include=nrow(basalGenes) + nrow(stimGenes) > 0, eval=nrow(basalGenes) + nrow(stimGenes) > 0}
 
@@ -1730,37 +1721,20 @@ multiplot(plotlist=plots)
 ```
 ## Trans associations for SNPs upstream of HSF1 and HSF2
 
-```{r prepTransTable}
-tab <- dplyr::left_join(meHSF$all$eqtls, limmaTable, by=c(gene="NuID"))
-tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
-tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
-```
-
 ```{r transGeneTable, cache=FALSE}
 set.caption(tabRef("transGenes", "List of genes with strongest evidence for trans associations between heat shock response and SNPs upstream of HSF1 and HSF2."))
-if(nrow(tab)) pander(head(tab, 10))
-```
-
-```{r prepTransStimTable}
-tab <- dplyr::left_join(meHSFstim$all$eqtls, limmaTable, by=c(gene="NuID"))
-tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
-tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
+if(nrow(hsfQTL)) pander(head(hsfQTL, 10))
 ```
 
 ```{r transStimGeneTable, cache=FALSE}
 set.caption(tabRef("transStimGenes", "List of genes with strongest evidence for trans associations between gene expression following heat shock and SNPs upstream of HSF1 and HSF2."))
-if(nrow(tab)) pander(head(tab, 10))
+if(nrow(hsfStimQTL)) pander(head(hsfStimQTL, 10))
 ```
 
-```{r prepTransBasalTable}
-tab <- dplyr::left_join(meHSFbasal$all$eqtls, limmaTable, by=c(gene="NuID"))
-tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
-tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
-```
 
 ```{r transBasalGeneTable, cache=FALSE}
 set.caption(tabRef("transBasalGenes", "List of genes with strongest evidence for trans associations between gene expression in the basal state and SNPs upstream of HSF1 and HSF2."))
-if(nrow(tab)) pander(head(tab, 10))
+if(nrow(hsfBasalQTL)) pander(head(hsfBasalQTL, 10))
 ```
 
 
