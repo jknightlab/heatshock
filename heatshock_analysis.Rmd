@@ -972,11 +972,11 @@ and those without were tested for enrichment of HSF binding genes using Fisher's
 exact test.
 
 ```{r loadPeaks}
-peaks <- list.files(path="/analysis/data/", pattern="HSF.*\\.txt", full.name=TRUE)
+peaks <- list.files(path="/analysis/data", pattern="HSF.*\\.txt", full.name=TRUE)
 
 peaks2genes <- data.frame()
 for(i in peaks){
-        nm <- gsub(".*HSFs/(.*).txt", "\\1", i)
+        nm <- gsub("/analysis/data/(.*).txt", "\\1", i)
         f <- read.table(i, sep="\t", header=T)
         genes <-  paste(f[,11], collapse=", ")
         genes <- unique(strsplit(genes, ", ")[[1]])
