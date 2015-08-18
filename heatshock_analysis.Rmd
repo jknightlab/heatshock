@@ -904,6 +904,7 @@ system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulat
 ```
 
 ## Gene annotions
+### Gene Ontology terms
 In addition to identifying common themes amongst differentially expressed genes the question
 arises to what extend these genes have been previously associated with the heat
 shock or, more generally, stress response. As a first step in highlighting genes 
@@ -933,8 +934,9 @@ selGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut &
                             !SymbolReannotated %in% knownGenes$hgnc_symbol)
 ```
 
-A PubMed search for articles mentioning the remaining genes in the context
-of heat shock response was carried out.
+### PubMed
+All genes not annotated with obvious GO terms were subjected to a PubMed search
+to find publications that link the gene to heat shock or stress response.
 
 ```{r pubmed}
 selGenes <- dplyr::filter(selGenes, SymbolReannotated != "")
@@ -957,9 +959,86 @@ write.table(data.frame(gene=names(queryFound), pmid=sapply(pmids, paste, collaps
             file="tmp/heatshock_pmid.txt", row.names=FALSE, quote=FALSE, sep="\t")
 write.table(putativeGenes, file="tmp/heatshock_novel.tab", sep="\t", 
             quote=FALSE, row.names=FALSE)
-system("tar -czf tmp/gene_annotation.tar.gz tmp/heatshock_pmid.txt tmp/heatshock_novel.tab")
 ```
 
+### Heat shock factor binding
+To further establish links between differntially expressed genes and heat shock response
+we consider the evidence for binding of HSF1 and HSF2 in the promoter regions of these genes.
+Using binding sites derived fro ChIP-seq data obtained from the K562 cell line
+[@Vihervaara13] we annotated our list of differentially expressed genes by
+cross-referencing it with the list HSF binding genes. Groups of genes corresponding
+to up or down regulated genes as well as those with existing heat shock related annotations
+and those without were tested for enrichment of HSF binding genes using Fisher's
+exact test.
+
+```{r loadPeaks}
+peaks <- list.files(path="/analysis/data/", pattern="HSF.*\\.txt", full.name=TRUE)
+
+peaks2genes <- data.frame()
+for(i in peaks){
+        nm <- gsub(".*HSFs/(.*).txt", "\\1", i)
+        f <- read.table(i, sep="\t", header=T)
+        genes <-  paste(f[,11], collapse=", ")
+        genes <- unique(strsplit(genes, ", ")[[1]])
+        genes[genes==""] <- NA
+
+        genes <- genes[!is.na(genes)]
+        peaks2genes <- rbind(peaks2genes, data.frame(cond=nm, genes=genes) )
+}
+peaks2genes$cond2 <- gsub("^M|^U", "comb", peaks2genes$cond)
+```
+
+```{r peakGroups}
+groupUp <- unique(subset(limmaTable, limmaTable$adj.P.Val < fdrCut & limmaTable$logFC > fcCut)$SymbolReannotated)
+groupDown <- unique(subset(limmaTable, limmaTable$adj.P.Val < fdrCut & limmaTable$logFC < -fcCut)$SymbolReannotated)
+
+totalNumberOfGenes <- length(unique(limmaTable$SymbolReannotated))
+NofgroupUp <- length(groupUp)
+NofgroupDown <- length(groupDown)
+
+genes_in_both <- data.frame()
+r <- data.frame()
+for(g in unique(peaks2genes$cond2) ){
+        anno_genes <- unique( subset(peaks2genes, cond2==g)$genes )
+        groupUp_in_anno_genes <- length( anno_genes[anno_genes %in% groupUp] )
+        groupUp_not_in_anno_genes <- length( anno_genes[!(anno_genes %in% groupUp)] )
+
+        groupDown_in_anno_genes <- length( anno_genes[anno_genes %in% groupDown] )
+        groupDown_not_in_anno_genes <- length( anno_genes[!(anno_genes %in% groupDown)] )
+
+        if ( length(anno_genes[anno_genes %in% groupUp] ) > 0) {
+                genes_in_both <- rbind(genes_in_both, 
+                                       data.frame(cond=g, exp="up", 
+                                                  genes=anno_genes[anno_genes %in% groupUp] ) )
+        }
+
+        if ( length(anno_genes[anno_genes %in% groupDown] ) > 0) {
+                genes_in_both <- rbind(genes_in_both, 
+                                       data.frame(cond=g, exp="down", 
+                                                  genes=anno_genes[anno_genes %in% groupDown] ) )
+        }
+        dat_up <- matrix(c(NofgroupUp, (totalNumberOfGenes - NofgroupUp), 
+                           groupUp_in_anno_genes, groupUp_not_in_anno_genes), ncol=2 )
+        rst_up <- fisher.test(dat_up, alternative="less")
+
+        dat_down <- matrix(c(NofgroupDown, (totalNumberOfGenes - NofgroupDown), 
+                             groupDown_in_anno_genes, groupDown_not_in_anno_genes), ncol=2 )
+        rst_down <- fisher.test(dat_down, alternative="less")
+
+
+        r <- rbind(r, data.frame(cond=g, up=rst_up$p.value, down=rst_down$p.value, 
+                                 sigGenes_up=groupUp_in_anno_genes, sigGenes_down=groupDown_in_anno_genes) )
+}
+
+heatshock_novel_genes <- unique(putativeGenes$SymbolReannotated)
+genes_in_both$heatshock_novel_genes <- ifelse( genes_in_both$genes %in% heatshock_novel_genes, 1, 0)
+```
+
+```{r peakOutput, cache=FALSE}
+write.table(r, "tmp/hsf_genes_pvalue.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(genes_in_both, "tmp/hsf_genes.txt" , sep="\t", quote=FALSE, row.names=FALSE)
+system("tar -czf tmp/gene_annotation.tar.gz -C tmp heatshock_pmid.txt heatshock_novel.tab hsf_genes.txt hsf_genes_pvalue.txt")
+```
 
 ## Global heat shock response
 
