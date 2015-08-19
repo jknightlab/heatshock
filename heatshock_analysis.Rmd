@@ -318,7 +318,7 @@ formatQTL <- function (me, limmaTable) {
   eQTL <- dplyr::left_join(eQTL, dplyr::select(limmaTable, NuID, SymbolReannotated, AveExpr, logFC), 
                            by=c(gene="NuID"))
   eQTL <- dplyr::select(eQTL, snps, SymbolReannotated, gene, beta:FDR, AveExpr, logFC)
-  eQTL <- dplyr::rename(eQTL, Gene="SymbolReannotated", NuID="gene")
+  eQTL <- dplyr::rename(eQTL, Gene=SymbolReannotated, NuID=gene)
   eQTL
 }
 
