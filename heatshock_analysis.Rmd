@@ -1913,7 +1913,7 @@ tab <- data.frame(Condition=condition,
                   down=paste0(hsfPval$sigGenes_down, " (", format(hsfPval$down, digits=2),")"))
 tab$up <- str_replace(tab$up, fixed("e+00"), "") 
 tab$down <- str_replace(tab$down, fixed("e+00"), "")
-tab$up <- sub("([[:digit:]]\\.[[:digit:]])e(-[[:digit:]]+)", "\\$\\1 \\times 10^{\\2}\\$", tab$up)
+tab$up <- sub("\\(([[:digit:]]\\.[[:digit:]])e(-[[:digit:]]+)\\)", "\\$(\\1 \\\\times 10^{\\2})\\$", tab$up)
 
 set.caption(tabRef("peakEnrich", "Number (and corresponding p-values) of ChIP-seq peaks for HSF1 and HSF2 associated with significantly up and down regulated genes."))
 highlightStrong <- NULL
