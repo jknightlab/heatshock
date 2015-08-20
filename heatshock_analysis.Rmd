@@ -58,6 +58,7 @@ library(reshape2)
 library(ggdendro)
 library(topGO)
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+library(BSgenome.Hsapiens.UCSC.hg19)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(plink2R)
 library(MatrixEQTL)
@@ -65,6 +66,8 @@ library(plsdepot)
 library(MultiPhen)
 library(RISmed)
 library(biomaRt)
+library(PWMEnrich)
+library(PWMEnrich.Hsapiens.background)
 
 opts_chunk$set(autodep=TRUE)
 opts_chunk$set(tidy=TRUE)
@@ -314,6 +317,13 @@ updateSampleList <- function(samples, sampleFile){
   keepSamples <- dplyr::filter(dplyr::select(sampleInfo, Family, Individual), Individual %in% samples)
   write.table(keepSamples, file="tmp/sample.lst", quote=FALSE, col.names=FALSE, row.names=FALSE)
   invisible(keepSamples)
+}
+
+promoterScan <- function(seqs, pwms, group){
+  res <- motifEnrichment(seqs, pwms)
+  report <- lapply(1:length(seqs), function(x, i) sequenceReport(x, i@d), x=res)
+  report <- do.call(rbind, report)
+  cbind(report,  EntrezReannotated=names(seqs), expr=group)
 }
 
 figRef <- local({
@@ -1049,6 +1059,50 @@ for(g in unique(peaks2genes$cond2) ){
 heatshock_novel_genes <- unique(putativeGenes$SymbolReannotated)
 genes_in_both$heatshock_novel_genes <- ifelse( genes_in_both$genes %in% heatshock_novel_genes, 1, 0)
 ```
+
+In addition to the direct evidence from the ChIP-seq data we carried out a
+scan for the presence of HSF binding motifs in the promoter region 
+(1200bp upstream - 300bp downstream of the TSS) of differentially expressed genes.
+The scan was based on the PWM defined by SwissRegulon [@Pachkov07] and carried 
+out with the Bioconductor package PWMEnrich [@PWMEnrich].
+
+```{r prepPWMEnrich}
+txdb <- transcripts(TxDb.Hsapiens.UCSC.hg19.knownGene, columns=c("gene_id", "tx_id", "tx_name"))
+promoter.seqs <- getPromoterSeq(txdb, Hsapiens, upstream=1200, downstream=300)
+names(promoter.seqs) <-  as.character(txdb$gene_id)
+promoter.seqs <- unique(promoter.seqs)
+promoter.seqs_noNA <- promoter.seqs[!is.na(names(promoter.seqs) )]
+
+group_up <- subset(limmaTable, limmaTable$adj.P.Val < fdrCut & limmaTable$logFC > fcCut)
+group_dn <- subset(limmaTable, limmaTable$adj.P.Val < fdrCut & limmaTable$logFC < -fcCut)
+group_others <- subset(limmaTable, limmaTable$adj.P.Val >= fdrCut | (limmaTable$logFC < fcCut & limmaTable$logFC > -fcCut) )
+
+group_up_noNa <- subset(group_up, !is.na(EntrezReannotated))
+group_dn_noNa <- subset(group_dn, !is.na(EntrezReannotated))
+group_others_noNa <- subset(group_others, !is.na(EntrezReannotated))
+
+
+promoter.seqs.group_up <- unique(promoter.seqs_noNA[names(promoter.seqs_noNA) %in% group_up_noNa$EntrezReannotated])
+promoter.seqs.group_dn <- unique(promoter.seqs_noNA[names(promoter.seqs_noNA) %in% group_dn_noNa$EntrezReannotated])
+promoter.seqs.group_others <- unique(promoter.seqs_noNA[names(promoter.seqs_noNA) %in% group_others_noNa$EntrezReannotated])
+```
+
+```{r pwmEnrich}
+registerCoresPWMEnrich(4)
+motif.HSF1 <- readMotifs("data/HSF1_pwm.jaspar")
+genomic.acgt = getBackgroundFrequencies("hg19")
+pwms.denovo = toPWM(motif.HSF1, prior=genomic.acgt)
+bg.denovo = makeBackground(pwms.denovo, organism="hg19", type="logn", quick=TRUE)
+
+r_promoter.seqs.group_up <- promoterScan(promoter.seqs.group_up, bg.denovo, "up")
+r_promoter.seqs.group_dn <- promoterScan(promoter.seqs.group_dn, bg.denovo, "down")
+r_promoter.seqs.group_others <- promoterScan(promoter.seqs.group_others, bg.denovo, "others")
+
+r_promoter <- rbind(r_promoter.seqs.group_up, r_promoter.seqs.group_dn, r_promoter.seqs.group_others)
+r_promoter <- dplyr::left_join(r_promoter, limmaTable, by="EntrezReannotated")
+
+```
+
 
 ```{r peakOutput, cache=FALSE}
 write.table(hsfPval, "tmp/hsf_genes_pvalue.txt", sep="\t", quote=FALSE, row.names=FALSE)
