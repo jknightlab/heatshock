@@ -1684,7 +1684,7 @@ in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`
 
 stimPlot <- NULL
 if(nrow(stimGenes)){
-  snp <- as.character(meStim[[stimGenes$NuID[1]]]$cis$eqtls$snps[1])
+  snp <- stimGenes$SNP[1]
   gene <- stimGenes$Symbol[1]
   probe <- stimGenes$NuID[1]
   
@@ -1706,7 +1706,7 @@ if(nrow(stimGenes)){
 
 basalPlot <- NULL
 if(nrow(basalGenes)){
-  snp <- as.character(meBasal[[basalGenes$NuID[1]]]$cis$eqtls$snps[1])
+  snp <- basalGenes$SNP[1]
   gene <- basalGenes$Symbol[1]
   probe <- basalGenes$NuID[1]
   
