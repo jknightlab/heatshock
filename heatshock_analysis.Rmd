@@ -321,7 +321,7 @@ updateSampleList <- function(samples, sampleFile){
 
 promoterScan <- function(seqs, pwms, group){
   res <- motifEnrichment(seqs, pwms)
-  report <- lapply(1:length(seqs), function(x, i) sequenceReport(x, i@d), x=res)
+  report <- lapply(1:length(seqs), function(x, i) sequenceReport(x, i)@d, x=res)
   report <- do.call(rbind, report)
   cbind(report,  EntrezReannotated=names(seqs), expr=group)
 }
