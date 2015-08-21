@@ -497,9 +497,31 @@ one genomic location or to a location that contains a known SNP were excluded.
 
 ```{r probeQual}
 annot <- illuminaHumanv3fullReannotation() 
-exclude$probe <- union(exclude$probe, subset(annot, 
+exclude$probe <- union(exclude$probe, dplyr::filter(annot, 
 		!grepl("Good|Perfect", ProbeQuality) | !is.na(OverlappingSNP) | 
 		!is.na(RepeatMask))$ArrayAddress)
+annot <- dplyr::filter(annot, !ArrayAddress %in% exclude$probe)
+
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+probePos <- strsplit(dplyr::filter(annot, !is.na(GenomicLocation))$GenomicLocation, "[:, ]")
+probePos <- data.frame(ArrayAddress=dplyr::filter(annot, !is.na(GenomicLocation))$ArrayAddress,
+                       chrom=sapply(probePos, "[[", 1), 
+                       start=as.numeric(sapply(probePos, "[[", 2)),
+                       end=as.numeric(sapply(probePos, "[[", 3)), 
+                       strand=sapply(probePos, "[[", 4))
+probePos <- makeGRangesFromDataFrame(probePos, keep.extra.columns=TRUE)
+tx <- transcriptsByOverlaps(txdb, probePos)
+hits <- findOverlaps(probePos, tx)
+probeTx <- data.frame(ArrayAddress=probePos$ArrayAddress[queryHits(hits)], tx_id=tx$tx_id[subjectHits(hits)] )
+tx2gene <- transcripts(txdb, vals=list(tx_id=unique(probeTx$tx_id)), columns=c("tx_id", "gene_id"))
+tx2gene <- dplyr::select(as.data.frame(tx2gene), tx_id, gene_id)
+probeGene <- dplyr::left_join(probeTx, tx2gene, by="tx_id")
+probeGene <- unique(dplyr::select(probeGene, ArrayAddress, gene_id))
+probeGene$gene_id <- as.character(probeGene$gene_id)
+
+excl <- table(probeGene$ArrayAddress)
+exclude$probe <- union(exclude$probe, names(excl)[excl > 1])
+annot <- dplyr::filter(annot, !ArrayAddress %in% exclude$probe)
 ```
 
 ```{r thresholds}
