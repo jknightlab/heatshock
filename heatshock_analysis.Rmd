@@ -1435,10 +1435,10 @@ if(nrow(selGenes)){
                   file=paste0("tmp/", selGenes$Symbol[i], "_fc.tab"), sep="\t", quote=FALSE)
       } else {
         emptySel <- c(emptySel, selGenes$NuID[i])
-        }
-    }
-  selGenes <- dplyr::filter(selGenes, !NuID %in% emptySel)
+      }
   }
+  selGenes <- dplyr::filter(selGenes, !NuID %in% emptySel)
+}
 ```
 
 ```{r runGeneMatrixEqtl, cache=FALSE, results="hide"}
