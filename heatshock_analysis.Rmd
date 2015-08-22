@@ -531,7 +531,7 @@ annot <- dplyr::select(annot, -gene_id)
 eg <- mappedkeys(org.Hs.egSYMBOL)
 symbols <- as.list(org.Hs.egSYMBOL[eg])
 symbols <- data.frame(entrez=names(symbols), symbol=unlist(symbols))
-annot <- dplyr::left_join(annot, symbols, by=c(EntrezReannotated=entrez))
+annot <- dplyr::left_join(annot, symbols, by=c(EntrezReannotated="entrez"))
 annot$SymbolReannotated <- ifelse(is.na(annot$symbol), annot$SymbolReannotated, annot$symbol)
 annot <- dplyr::select(annot, -symbol)
 ```
