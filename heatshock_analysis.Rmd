@@ -1444,42 +1444,44 @@ if(nrow(selGenes)){
 ```{r runGeneMatrixEqtl, cache=FALSE, results="hide"}
 meGene <- vector(mode="list", nrow(selGenes))
 names(meGene) <- selGenes$NuID
-for(i in 1:nrow(selGenes)){
-  snpsSub <- SlicedData$new();
-  snpsSub$fileDelimiter <- "\t"
-  snpsSub$fileOmitCharacters <- "NA"
-  snpsSub$fileSkipRows <- 1
-  snpsSub$fileSkipColumns <- 1
-  snpsSub$fileSliceSize <- 2000
-  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"))
-  
-  pheno <- SlicedData$new();
-  pheno$fileDelimiter <- "\t"
-  pheno$fileOmitCharacters <- "NA"
-  pheno$fileSkipRows <- 1
-  pheno$fileSkipColumns <- 1
-  pheno$fileSliceSize <- 2000
-  pheno$LoadFile(paste0("tmp/", selGenes$Symbol[i], "_fc.tab"))
-  
-  meGene[[selGenes$NuID[i]]] <- Matrix_eQTL_main(
-    snps = snpsSub,
-    gene = pheno,
-    cvrt = covar,
-    output_file_name.cis = paste0("tmp/reQTL_", selGenes$Symbol[i],"analysis"),
-    pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1,
-    useModel = modelLINEAR, 
-    errorCovariance = numeric(),
-    snpspos = geno$bim,
-    genepos = probePos,
-    cisDist = cisWindow,
-    verbose = FALSE,
-    pvalue.hist = FALSE,
-    min.pv.by.genesnp = TRUE,
-    noFDRsaveMemory = FALSE)
+if(nrow(selGenes) > 0){
+  for(i in 1:nrow(selGenes)){
+    snpsSub <- SlicedData$new();
+    snpsSub$fileDelimiter <- "\t"
+    snpsSub$fileOmitCharacters <- "NA"
+    snpsSub$fileSkipRows <- 1
+    snpsSub$fileSkipColumns <- 1
+    snpsSub$fileSliceSize <- 2000
+    snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"))
+    
+    pheno <- SlicedData$new();
+    pheno$fileDelimiter <- "\t"
+    pheno$fileOmitCharacters <- "NA"
+    pheno$fileSkipRows <- 1
+    pheno$fileSkipColumns <- 1
+    pheno$fileSliceSize <- 2000
+    pheno$LoadFile(paste0("tmp/", selGenes$Symbol[i], "_fc.tab"))
+    
+    meGene[[selGenes$NuID[i]]] <- Matrix_eQTL_main(
+      snps = snpsSub,
+      gene = pheno,
+      cvrt = covar,
+      output_file_name.cis = paste0("tmp/reQTL_", selGenes$Symbol[i],"analysis"),
+      pvOutputThreshold = 0,
+      pvOutputThreshold.cis = 1,
+      useModel = modelLINEAR, 
+      errorCovariance = numeric(),
+      snpspos = geno$bim,
+      genepos = probePos,
+      cisDist = cisWindow,
+      verbose = FALSE,
+      pvalue.hist = FALSE,
+      min.pv.by.genesnp = TRUE,
+      noFDRsaveMemory = FALSE)
+  }
 }
-
 geneSNPcount <- sapply(meGene, function(x) sum(x$cis$eqtls$FDR < 0.01))
+
 ```
 
 ```{r bundleReQTLinput, cache=FALSE, include=FALSE}
