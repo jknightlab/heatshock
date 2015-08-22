@@ -60,6 +60,7 @@ library(topGO)
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 library(BSgenome.Hsapiens.UCSC.hg19)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(org.Hs.eg.db)
 library(plink2R)
 library(MatrixEQTL)
 library(plsdepot)
@@ -522,6 +523,17 @@ probeGene$gene_id <- as.character(probeGene$gene_id)
 excl <- table(probeGene$ArrayAddress)
 exclude$probe <- union(exclude$probe, names(excl)[excl > 1])
 annot <- dplyr::filter(annot, !ArrayAddress %in% exclude$probe)
+
+annot <- dplyr::left_join(annot, probeGene, by="ArrayAddress")
+annot$EntrezReannoated <- ifelse(is.na(annot$gene_id), annot$EntrezReannotated, annot$gene_id)
+annot <- dplyr::select(annot, -gene_id)
+
+eg <- mappedkeys(org.Hs.egSYMBOL)
+symbols <- as.list(org.Hs.egSYMBOL[eg])
+symbols <- data.frame(entrez=names(symbols), symbol=unlist(symbols))
+annot <- dplyr::left_join(annot, symbols, by=c(EntrezReannotated=entrez))
+annot$SymbolReannotated <- ifelse(is.na(annot$symbol), annot$SymbolReannotated, annot$symbol)
+annot <- dplyr::select(annot, -symbol)
 ```
 
 ```{r thresholds}
