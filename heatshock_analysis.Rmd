@@ -1425,18 +1425,20 @@ geneP <- dplyr::arrange(geneP, Gene.FDR, desc(abs(SNP.beta)))
 ```{r prepGeneMatrixEqtl, cache=FALSE}
 selGenes <- dplyr::filter(geneP, Gene.FDR < 1)
 emptySel <- character()
-for(i in 1:nrow(selGenes)){
-  selSNPs <- geno$bed[geneSNPs[[selGenes$NuID[i]]]$snp, ]
-  if(nrow(selSNPs)){
-    write.table(selSNPs, file=paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"), 
-                quote=FALSE, sep="\t")
-    write.table(selectedFC[selGenes$NuID[i], , drop=FALSE], 
-                file=paste0("tmp/", selGenes$Symbol[i], "_fc.tab"), sep="\t", quote=FALSE)
-    } else {
-      emptySel <- c(emptySel, selGenes$NuID[i])
+if(nrow(selGenes)){
+  for(i in 1:nrow(selGenes)){
+    selSNPs <- geno$bed[geneSNPs[[selGenes$NuID[i]]]$snp, ]
+    if(nrow(selSNPs)){
+      write.table(selSNPs, file=paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"), 
+                  quote=FALSE, sep="\t")
+      write.table(selectedFC[selGenes$NuID[i], , drop=FALSE], 
+                  file=paste0("tmp/", selGenes$Symbol[i], "_fc.tab"), sep="\t", quote=FALSE)
+      } else {
+        emptySel <- c(emptySel, selGenes$NuID[i])
+        }
     }
-}
-selGenes <- dplyr::filter(selGenes, !NuID %in% emptySel)
+  selGenes <- dplyr::filter(selGenes, !NuID %in% emptySel)
+  }
 ```
 
 ```{r runGeneMatrixEqtl, cache=FALSE, results="hide"}
