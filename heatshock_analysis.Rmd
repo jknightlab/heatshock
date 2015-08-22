@@ -1664,6 +1664,11 @@ ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
 set.caption(tabRef("eQTLstimGenes", "List of genes with strongest evidence for genetic modulation of gene expression after heat shock treatment. Significant associations only observed after heat shock treatment are highlight."))
 stimEQTLsignif <- dplyr::filter(stimEQTL, FDR < 0.05)
 highlight <- which(stimEQTLsignif$Gene %in% stimGenes$Gene)
+
+if(nrow(stimEQTLsignif) == 0){
+  stimEQTLsignif <- head(stimEQTL, 5)
+}
+
 pander(dplyr::select(stimEQTLsignif, -NuID), 
        emphasize.strong.rows=if(length(highlight)) highlight else NULL)
 ```
@@ -1672,6 +1677,11 @@ pander(dplyr::select(stimEQTLsignif, -NuID),
 set.caption(tabRef("eQTLbasalGenes", "List of genes with strongest evidence for genetic modulation of gene expression in basal state. Significant associations specific to the basal state are highlighted."))
 basalEQTLsignif <- dplyr::filter(basalEQTL, FDR < 0.05)
 highlight <- which(basalEQTLsignif$Gene %in% basalGenes$Gene)
+
+if(nrow(basalQTLsignif) == 0){
+  basalEQTLsignif <- head(basalEQTL, 5)
+}
+
 pander(dplyr::select(basalEQTLsignif, -NuID),
        emphasize.strong.rows=if(length(highlight)) highlight else NULL)
 ```
