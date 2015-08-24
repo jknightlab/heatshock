@@ -2093,14 +2093,14 @@ the highest ranked gene (`r geneP$Symbol[1]`) suggests `r if(length(geneSNPcount
 SNP`r if(!length(geneSNPcount) || geneSNPcount[1] != 1) "s" else ""` 
 that may be of interest (`r tabRef("topGeneSNPs")`).
 
-```{r topGeneSNPs, cache=FALSE}
+```{r topGeneSNPs, cache=FALSE, eval=nrow(selGenes) > 0, include=nrow(selGenes) > 0}
 set.caption(tabRef("topGeneSNPs", paste("Possible Response QTL for", geneP$Symbol[1])))
 tab <- head(meGene[[1]]$cis$eqtls, geneSNPcount[1])
 tab$gene <- geneP$Symbol[1]
 pander(tab)
 ```
 
-```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype. Fold changes were corrected for the effect of covariates."))}
+```{r topGeneSNPplot, cache=FALSE, eval=nrow(selGenes) > 0, include=nrow(selGenes) > 0, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype. Fold changes were corrected for the effect of covariates."))}
 snp <- as.character(meGene[[1]]$cis$eqtls$snps[1])
 gene <- geneP$Symbol[1]
 probe <- geneP$NuID[1]
