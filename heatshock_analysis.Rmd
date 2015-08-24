@@ -2076,7 +2076,7 @@ genotypes <- data.frame(sample=colnames(geno$bed), stringsAsFactors=FALSE)
 genotypes <- cbind(genotypes, t(geno$bed[dimnames(assoc$Results)[[1]][sel],]))
 plsComp <- dplyr::left_join(plsComp, genotypes, by="sample")
 
-plsPlot(plsComp, "rs7789228")
+plsPlot(plsComp, dimnames(assoc$Results)[[1]][1])
 ```
 
 ## Response QTL analysis
