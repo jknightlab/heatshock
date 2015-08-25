@@ -1107,9 +1107,10 @@ names(promoter.seqs) <-  as.character(txdb$gene_id)
 promoter.seqs <- unique(promoter.seqs)
 promoter.seqs_noNA <- promoter.seqs[!is.na(names(promoter.seqs) )]
 
-group_up <- subset(limmaTable, limmaTable$adj.P.Val < fdrCut & limmaTable$logFC > fcCut)
-group_dn <- subset(limmaTable, limmaTable$adj.P.Val < fdrCut & limmaTable$logFC < -fcCut)
-group_others <- subset(limmaTable, limmaTable$adj.P.Val >= fdrCut | (limmaTable$logFC < fcCut & limmaTable$logFC > -fcCut) )
+group_up <- dplyr::filter(limmaTable, adj.P.Val < fdrCut, logFC > fcCut)
+group_dn <- dplyr::filter(limmaTable, adj.P.Val < fdrCut, logFC < -fcCut)
+group_others <- dplyr::filter(limmaTable, !SymbolReannotated %in% group_up$SymbolReannotated,
+                              !SymbolReannotated %in% group_dn$SymbolReannotated)
 
 group_up_noNa <- subset(group_up, !is.na(EntrezReannotated))
 group_dn_noNa <- subset(group_dn, !is.na(EntrezReannotated))
