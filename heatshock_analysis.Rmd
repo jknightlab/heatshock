@@ -1141,13 +1141,28 @@ r_promoter <- dplyr::left_join(r_promoter, limmaTable, by="EntrezReannotated")
 ```{r pwmAnnotate}
 r_promoter$HSFpeak <- ifelse( r_promoter$SymbolReannotated %in% peaks2genes$genes, 1, 0)
 r_promoter$novel <- ifelse(r_promoter$SymbolReannotated %in% putativeGenes$SymbolReannotated, 1,0)
+
+trx_numbers <- data.frame(table(r_promoter$SymbolReannotated))
+colnames(trx_numbers) <- c("SymbolReannotated", "trx_numbers")
+totalGeneNumber <- nrow(trx_numbers)
+
+genePval <- do.call(rbind, by(r_promoter, r_promoter$SymbolReannotated, function(x){
+  x[which.min(x$p.value),,drop=FALSE]
+}))
+genePval$pwm.FDR <- p.adjust(genePval$p.value, "BH")
+r_promoter <- dplyr::left_join(r_promoter, dplyr::select(genePval, EntrezReannotated, pwm.FDR), by="EntrezReannotated")
+r_promoter <- dplyr::select(r_promoter, -rank, -target, -id)
+r_promoter <- dplyr::select(r_promoter, ArrayAddress, NuID, 
+                            EntrezReannotated, SymbolReannotated, GenomicLocation:B,
+                            expr, novel, HSFpeak, raw.score, pwm.p.value=p.value, pwm.FDR)
 ```
 
 
 ```{r peakOutput, cache=FALSE}
 write.table(hsfPval, "tmp/hsf_genes_pvalue.txt", sep="\t", quote=FALSE, row.names=FALSE)
 write.table(genes_in_both, "tmp/hsf_genes.txt" , sep="\t", quote=FALSE, row.names=FALSE)
-system("tar -czf tmp/gene_annotation.tar.gz -C tmp heatshock_pmid.txt heatshock_novel.tab hsf_genes.txt hsf_genes_pvalue.txt")
+write.table(r_promoter, "tmp/hsf_motif_genes.txt", sep="\t", quote=FALSE, row.names=FALSE)
+system("tar -czf tmp/gene_annotation.tar.gz -C tmp heatshock_pmid.txt heatshock_novel.tab hsf_genes.txt hsf_genes_pvalue.txt hsf_motif_genes.txt")
 ```
 
 ## Global heat shock response
