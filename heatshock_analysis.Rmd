@@ -60,6 +60,7 @@ library(topGO)
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 library(BSgenome.Hsapiens.UCSC.hg19)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(org.Hs.eg.db)
 library(plink2R)
 library(MatrixEQTL)
 library(plsdepot)
@@ -497,9 +498,42 @@ one genomic location or to a location that contains a known SNP were excluded.
 
 ```{r probeQual}
 annot <- illuminaHumanv3fullReannotation() 
-exclude$probe <- union(exclude$probe, subset(annot, 
+exclude$probe <- union(exclude$probe, dplyr::filter(annot, 
 		!grepl("Good|Perfect", ProbeQuality) | !is.na(OverlappingSNP) | 
 		!is.na(RepeatMask))$ArrayAddress)
+annot <- dplyr::filter(annot, !ArrayAddress %in% exclude$probe)
+
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+probePos <- strsplit(dplyr::filter(annot, !is.na(GenomicLocation))$GenomicLocation, "[:, ]")
+probePos <- data.frame(ArrayAddress=dplyr::filter(annot, !is.na(GenomicLocation))$ArrayAddress,
+                       chrom=sapply(probePos, "[[", 1), 
+                       start=as.numeric(sapply(probePos, "[[", 2)),
+                       end=as.numeric(sapply(probePos, "[[", 3)), 
+                       strand=sapply(probePos, "[[", 4))
+probePos <- makeGRangesFromDataFrame(probePos, keep.extra.columns=TRUE)
+tx <- transcriptsByOverlaps(txdb, probePos)
+hits <- findOverlaps(probePos, tx)
+probeTx <- data.frame(ArrayAddress=probePos$ArrayAddress[queryHits(hits)], tx_id=tx$tx_id[subjectHits(hits)] )
+tx2gene <- transcripts(txdb, vals=list(tx_id=unique(probeTx$tx_id)), columns=c("tx_id", "gene_id"))
+tx2gene <- dplyr::select(as.data.frame(tx2gene), tx_id, gene_id)
+probeGene <- dplyr::left_join(probeTx, tx2gene, by="tx_id")
+probeGene <- unique(dplyr::select(probeGene, ArrayAddress, gene_id))
+probeGene$gene_id <- as.character(probeGene$gene_id)
+
+excl <- table(probeGene$ArrayAddress)
+exclude$probe <- union(exclude$probe, names(excl)[excl > 1])
+annot <- dplyr::filter(annot, !ArrayAddress %in% exclude$probe)
+
+annot <- dplyr::left_join(annot, probeGene, by="ArrayAddress")
+annot$EntrezReannoated <- ifelse(is.na(annot$gene_id), annot$EntrezReannotated, annot$gene_id)
+annot <- dplyr::select(annot, -gene_id)
+
+eg <- mappedkeys(org.Hs.egSYMBOL)
+symbols <- as.list(org.Hs.egSYMBOL[eg])
+symbols <- data.frame(entrez=names(symbols), symbol=unlist(symbols), stringsAsFactors=FALSE)
+annot <- dplyr::left_join(annot, symbols, by=c(EntrezReannotated="entrez"))
+annot$SymbolReannotated <- ifelse(is.na(annot$symbol), annot$SymbolReannotated, annot$symbol)
+annot <- dplyr::select(annot, -symbol)
 ```
 
 ```{r thresholds}
@@ -1403,59 +1437,63 @@ geneP <- dplyr::arrange(geneP, Gene.FDR, desc(abs(SNP.beta)))
 ```{r prepGeneMatrixEqtl, cache=FALSE}
 selGenes <- dplyr::filter(geneP, Gene.FDR < 1)
 emptySel <- character()
-for(i in 1:nrow(selGenes)){
-  selSNPs <- geno$bed[geneSNPs[[selGenes$NuID[i]]]$snp, ]
-  if(nrow(selSNPs)){
-    write.table(selSNPs, file=paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"), 
-                quote=FALSE, sep="\t")
-    write.table(selectedFC[selGenes$NuID[i], , drop=FALSE], 
-                file=paste0("tmp/", selGenes$Symbol[i], "_fc.tab"), sep="\t", quote=FALSE)
-    } else {
-      emptySel <- c(emptySel, selGenes$NuID[i])
-    }
+if(nrow(selGenes)){
+  for(i in 1:nrow(selGenes)){
+    selSNPs <- geno$bed[geneSNPs[[selGenes$NuID[i]]]$snp, ]
+    if(nrow(selSNPs)){
+      write.table(selSNPs, file=paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"), 
+                  quote=FALSE, sep="\t")
+      write.table(selectedFC[selGenes$NuID[i], , drop=FALSE], 
+                  file=paste0("tmp/", selGenes$Symbol[i], "_fc.tab"), sep="\t", quote=FALSE)
+      } else {
+        emptySel <- c(emptySel, selGenes$NuID[i])
+      }
+  }
+  selGenes <- dplyr::filter(selGenes, !NuID %in% emptySel)
 }
-selGenes <- dplyr::filter(selGenes, !NuID %in% emptySel)
 ```
 
 ```{r runGeneMatrixEqtl, cache=FALSE, results="hide"}
 meGene <- vector(mode="list", nrow(selGenes))
 names(meGene) <- selGenes$NuID
-for(i in 1:nrow(selGenes)){
-  snpsSub <- SlicedData$new();
-  snpsSub$fileDelimiter <- "\t"
-  snpsSub$fileOmitCharacters <- "NA"
-  snpsSub$fileSkipRows <- 1
-  snpsSub$fileSkipColumns <- 1
-  snpsSub$fileSliceSize <- 2000
-  snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"))
-  
-  pheno <- SlicedData$new();
-  pheno$fileDelimiter <- "\t"
-  pheno$fileOmitCharacters <- "NA"
-  pheno$fileSkipRows <- 1
-  pheno$fileSkipColumns <- 1
-  pheno$fileSliceSize <- 2000
-  pheno$LoadFile(paste0("tmp/", selGenes$Symbol[i], "_fc.tab"))
-  
-  meGene[[selGenes$NuID[i]]] <- Matrix_eQTL_main(
-    snps = snpsSub,
-    gene = pheno,
-    cvrt = covar,
-    output_file_name.cis = paste0("tmp/reQTL_", selGenes$Symbol[i],"analysis"),
-    pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1,
-    useModel = modelLINEAR, 
-    errorCovariance = numeric(),
-    snpspos = geno$bim,
-    genepos = probePos,
-    cisDist = cisWindow,
-    verbose = FALSE,
-    pvalue.hist = FALSE,
-    min.pv.by.genesnp = TRUE,
-    noFDRsaveMemory = FALSE)
+if(nrow(selGenes) > 0){
+  for(i in 1:nrow(selGenes)){
+    snpsSub <- SlicedData$new();
+    snpsSub$fileDelimiter <- "\t"
+    snpsSub$fileOmitCharacters <- "NA"
+    snpsSub$fileSkipRows <- 1
+    snpsSub$fileSkipColumns <- 1
+    snpsSub$fileSliceSize <- 2000
+    snpsSub$LoadFile(paste0("tmp/genotypes_", selGenes$Symbol[i],".tab"))
+    
+    pheno <- SlicedData$new();
+    pheno$fileDelimiter <- "\t"
+    pheno$fileOmitCharacters <- "NA"
+    pheno$fileSkipRows <- 1
+    pheno$fileSkipColumns <- 1
+    pheno$fileSliceSize <- 2000
+    pheno$LoadFile(paste0("tmp/", selGenes$Symbol[i], "_fc.tab"))
+    
+    meGene[[selGenes$NuID[i]]] <- Matrix_eQTL_main(
+      snps = snpsSub,
+      gene = pheno,
+      cvrt = covar,
+      output_file_name.cis = paste0("tmp/reQTL_", selGenes$Symbol[i],"analysis"),
+      pvOutputThreshold = 0,
+      pvOutputThreshold.cis = 1,
+      useModel = modelLINEAR, 
+      errorCovariance = numeric(),
+      snpspos = geno$bim,
+      genepos = probePos,
+      cisDist = cisWindow,
+      verbose = FALSE,
+      pvalue.hist = FALSE,
+      min.pv.by.genesnp = TRUE,
+      noFDRsaveMemory = FALSE)
+  }
 }
-
 geneSNPcount <- sapply(meGene, function(x) sum(x$cis$eqtls$FDR < 0.01))
+
 ```
 
 ```{r bundleReQTLinput, cache=FALSE, include=FALSE}
@@ -2038,7 +2076,7 @@ genotypes <- data.frame(sample=colnames(geno$bed), stringsAsFactors=FALSE)
 genotypes <- cbind(genotypes, t(geno$bed[dimnames(assoc$Results)[[1]][sel],]))
 plsComp <- dplyr::left_join(plsComp, genotypes, by="sample")
 
-plsPlot(plsComp, "rs7789228")
+plsPlot(plsComp, dimnames(assoc$Results)[[1]][1])
 ```
 
 ## Response QTL analysis
@@ -2051,17 +2089,18 @@ pander(head(dplyr::select(geneP, -ArrayAddress, -NuID)))
 The association test designed to identify genetic modulators of gene expression response to 
 heat shock only uncovered very limited evidence for the presence of such effects
 (`r tabRef("reQTLgenes")`). A closer inspection of the potential cis associations for
-the highest ranked gene (`r geneP$Symbol[1]`) suggests `r geneSNPcount[1]`
-SNP`r if(geneSNPcount[1] > 1) "s" else ""` that may be of interest (`r tabRef("topGeneSNPs")`).
+the highest ranked gene (`r geneP$Symbol[1]`) suggests `r if(length(geneSNPcount)) geneSNPcount[1] else "no"`
+SNP`r if(!length(geneSNPcount) || geneSNPcount[1] != 1) "s" else ""` 
+that may be of interest (`r tabRef("topGeneSNPs")`).
 
-```{r topGeneSNPs, cache=FALSE}
+```{r topGeneSNPs, cache=FALSE, eval=nrow(selGenes) > 0, include=nrow(selGenes) > 0}
 set.caption(tabRef("topGeneSNPs", paste("Possible Response QTL for", geneP$Symbol[1])))
 tab <- head(meGene[[1]]$cis$eqtls, geneSNPcount[1])
 tab$gene <- geneP$Symbol[1]
 pander(tab)
 ```
 
-```{r topGeneSNPplot, cache=FALSE, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype. Fold changes were corrected for the effect of covariates."))}
+```{r topGeneSNPplot, cache=FALSE, eval=nrow(selGenes) > 0, include=nrow(selGenes) > 0, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype. Fold changes were corrected for the effect of covariates."))}
 snp <- as.character(meGene[[1]]$cis$eqtls$snps[1])
 gene <- geneP$Symbol[1]
 probe <- geneP$NuID[1]
