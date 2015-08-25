@@ -423,7 +423,7 @@ and drug response [@Martin04]. Despite its obvious significance many details of 
 heat shock response still remain uncertain.
 
 Here we study the genome-wide changes to gene expression induced by heat shock in
-60 HapMap cell lines from Yoruban individuals [@Gibbs10] to identify genes and pathways
+60 HapMap cell lines from Yoruba individuals [@Gibbs10] to identify genes and pathways
 involved in the human heat shock response. To further elucidate underlying mechanisms
 genetic variants modulating gene expression are mapped across all relevant genes.
 
@@ -625,7 +625,7 @@ a clustering of samples from two RNA amplification batches in October 2009
 Further analysis of the gene expression response to heat shock revealed that four of the samples
 (NA18502, NA18508, NA18522, NA18853, NA18504) exhibit patterns of expression inconsistent with those observed
 in other samples, including reversal of fold change for strongly differentially expressed
-genes. This suggests a potential mislabeling of these samples, which were consequently excluded.
+genes. This suggests a potential mislabelling of these samples, which were consequently excluded.
 
 ```{r extraExclusions}
 exclude$sample <- union(exclude$sample, c("NA18502", "NA18508", "NA18522", "NA18853", "NA18504"))
@@ -952,7 +952,7 @@ system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulat
 In addition to identifying common themes amongst differentially expressed genes the question
 arises to what extend these genes have been previously associated with the heat
 shock or, more generally, stress response. As a first step in highlighting genes 
-not previously known to play a role in this contxt we identify all significantly
+not previously known to play a role in this context we identify all significantly
 up regulated genes that lack GO annotations of obvious relevance to heat shock response.
 In addition to terms related to stress response and protein folding we also include
 terms related to cell death and proliferation. To account for the presence of EBV in 
@@ -1006,7 +1006,7 @@ write.table(putativeGenes, file="tmp/heatshock_novel.tab", sep="\t",
 ```
 
 ### Heat shock factor binding
-To further establish links between differntially expressed genes and heat shock response
+To further establish links between differentially expressed genes and heat shock response
 we consider the evidence for binding of HSF1 and HSF2 in the promoter regions of these genes.
 Using binding sites derived fro ChIP-seq data obtained from the K562 cell line
 [@Vihervaara13] we annotated our list of differentially expressed genes by
@@ -1300,7 +1300,7 @@ for(i in 1:nPerm){
 
 To this end the observed global response phenotype for each individual and covariates used in the model
 were randomly assigned to one of the observed set of genotypes `r nPerm` times and p-values for 
-the joint model were computed for each permutation. From these we computed fase discovery rates
+the joint model were computed for each permutation. From these we computed false discovery rates
 by comparing observed p-values to the empirical distribution of minimum p-values from each permutation.
 
 ```{r permFDR}
@@ -1525,7 +1525,7 @@ system("tar -czf tmp/reQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_G
 
 To further investigate potential genetic modulators of gene expression for genes that
 play a role in heat shock response we carried out a cis eQTL analysis for all genes identified
-as differntially expressed in response to heat shock.
+as differentially expressed in response to heat shock.
 
 ```{r selectedExpr}
 stimExpr <- selectedExpr[, stimIdx]
@@ -1795,9 +1795,9 @@ system("tar -czf tmp/eQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GR
 
 ## Trans associations for SNPs upstream of HSF1 and HSF2
 
-Strong associations between SNPs in the promoter region of a HSF1 homolog and the
+Strong associations between SNPs in the promoter region of a HSF1 homologue and the
 expression of heat shock proteins are known to exist in rats [@Dumas00]. We therefore
-thought to investigate wether similar effects can be observed for the differentially
+thought to investigate whether similar effects can be observed for the differentially
 expressed genes we identified. To this end we tested all genotyped SNPs that passed QC
 within a window including the gene body and 1MB upstream of the transcription start site
 of HSF1 and HSF2 for associations with the heat shock response (log fold change) as well
@@ -2044,7 +2044,7 @@ pander(tab, emphasize.cells=highlight, emphasize.strong.cells=highlightStrong)
 
 ## Global heat shock response
 
-Considering the outcome of the partial least squares regression it is aparent that there is
+Considering the outcome of the partial least squares regression it is apparent that there is
 a considerable change in overall gene expression in response to heat shock. Together the first
 two PLS components account for `r format(sum(plsFit$R2[1:2]*100), nsmall=1, digits=2)`% 
 in the variation observed due to 
@@ -2088,7 +2088,7 @@ multiplot(fig1, fig2, cols=2)
 The SNP rs7789228 is located in an intron of RSBN1L and is annotated as falling within an
 enhancer by Ensembl's regulatory build (Ensembl release 81). Although none of the cell lines
 studied here are included in the regulatory build genome segmentation data are available for
-GM12878, a HapMap cell line of caucasian ancestry, providing a useful reference for the
+GM12878, a HapMap cell line of Caucasian ancestry, providing a useful reference for the
 samples in this study. In GM12878 the enhancer element is annotated as being active with
 evidence of CTCF and RAD21 binding.
 
