@@ -1140,7 +1140,7 @@ r_promoter <- dplyr::left_join(r_promoter, limmaTable, by="EntrezReannotated")
 
 ```{r pwmAnnotate}
 r_promoter$HSFpeak <- ifelse( r_promoter$SymbolReannotated %in% peaks2genes$genes, 1, 0)
-r_promoter$novel <- ifelse(r_promoter$SymbolReannotated %in% putativeGenes, 1,0)
+r_promoter$novel <- ifelse(r_promoter$SymbolReannotated %in% putativeGenes$SymbolReannotated, 1,0)
 ```
 
 
