@@ -2042,6 +2042,28 @@ if(any(hsfPval$down < 0.01 & hsfPval$down > 0.001))
 pander(tab, emphasize.cells=highlight, emphasize.strong.cells=highlightStrong)
 ```
 
+There are `r nrow(dplyr::filter(r_promoter, HSFpeak == 1, novel == 1))` up-regulated
+genes without an established role in the heat shock response that show evidence of 
+heat shock factor binding in their promoter region. Further evidence for the
+binding of HSF1 and HSF2 in these regions is provided by scanning for the presence
+of the HSF1 binding motif. While this provides less direct evidence than the presence
+of a ChIP-seq peak and even a good match for the motif is no guarantee for the 
+presence of an active binding site, it enables the detection of potential binding sites that may be
+inactive in the cell type or state studied through ChIP-seq experiments. Although
+overall the evidence for the presence of the HSF1 motif is relatively weak, there
+is a clear increase in the average score for genes that show evidence of HSF binding
+compared to those that don't (`r figRef("pwmPlot")`). Also note that
+there is no obvious difference in scores for novel and established heat shock response genes.
+
+```{r pwmPlot, cache=FALSE, fig.cap=figRef("pwmPlot", "Distribution of p-values for HSF1 motif score.")}
+ggplot(dplyr::filter(r_promoter, expr=="up"), 
+       aes(x=factor(HSFpeak, levels=c("0", "1"), labels=c("absent", "present")), 
+           y=-log10(pwm.p.value), 
+           fill=factor(novel, levels=c("0", "1"), labels=c("established", "novel")))) +
+  geom_boxplot() + theme_bw() + xlab("HSF peak") + ylab(expression(-log[10]("p-value"))) +
+  scale_fill_discrete(name="heat shock association")
+```
+
 ## Global heat shock response
 
 Considering the outcome of the partial least squares regression it is apparent that there is
