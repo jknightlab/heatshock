@@ -1137,6 +1137,11 @@ r_promoter <- dplyr::left_join(r_promoter, limmaTable, by="EntrezReannotated")
 
 ```
 
+```{r pwmAnnotate}
+r_promoter$HSFpeak <- ifelse( r_promoter$SymbolReannotated %in% peaks2genes$genes, 1, 0)
+r_promoter$novel <- ifelse(r_promoter$SymbolReannotated %in% putativeGenes, 1,0)
+```
+
 
 ```{r peakOutput, cache=FALSE}
 write.table(hsfPval, "tmp/hsf_genes_pvalue.txt", sep="\t", quote=FALSE, row.names=FALSE)
