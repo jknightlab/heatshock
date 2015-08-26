@@ -2065,17 +2065,66 @@ presence of an active binding site, it enables the detection of potential bindin
 inactive in the cell type or state studied through ChIP-seq experiments. Although
 overall the evidence for the presence of the HSF1 motif is relatively weak, there
 is a clear increase in the average score for genes that show evidence of HSF binding
-compared to those that don't (`r figRef("pwmPlot")`). Also note that
-there is no obvious difference in scores for novel and established heat shock response genes.
+compared to those that don't (`r figRef("pwmPlot")`). 
 
 ```{r pwmPlot, cache=FALSE, fig.cap=figRef("pwmPlot", "Distribution of p-values for HSF1 motif score.")}
-ggplot(dplyr::filter(r_promoter, expr=="up"), 
+ggplot(dplyr::filter(r_gene, expr=="up"), 
        aes(x=factor(HSFpeak, levels=c("0", "1"), labels=c("absent", "present")), 
            y=-log10(pwm.p.value), 
            fill=factor(novel, levels=c("0", "1"), labels=c("established", "novel")))) +
   geom_boxplot() + theme_bw() + xlab("HSF peak") + ylab(expression(-log[10]("p-value"))) +
   scale_fill_discrete(name="heat shock association")
 ```
+
+```{r HSFtable, cache=FALSE}
+hsfTab <- data.frame(expression=r_gene$expr, ChIPseq=ifelse(r_gene$HSFpeak==1, "yes", "no"),
+                     motif=ifelse(r_gene$pwm.p.value < 0.05, "present", "absent"))
+tab <- tidyr::spread(as.data.frame(table(hsfTab)), motif, Freq)
+tab[["frequency"]] <- paste0(sprintf("%0.2f",tab$present/(tab$present + tab$absent)*100),"%")
+
+upTest <- fisher.test(tab[tab$expression=="up", c("absent", "present")], alternative="greater")
+downTest <- fisher.test(tab[tab$expression=="down", c("absent", "present")], alternative="greater")
+
+set.caption(tabRef("HSFtable", "Summary of HSF1 motif occurance in promoters of differentially expressed genes. with and without HSF ChIP-seq peaks."))
+pander(tab)
+```
+
+Considering the frequency with
+wich HSF1 motifs occur (using a p-value threshold of 0.05) in the promoter regions 
+of genes with and without ChIP-seq binding evidence (`r tabRef("HSFtable")`) it is apparent that the motif
+is enriched amongst up-regulated genes with corresponding protein binding evidence
+(Fisher's exact test p-value: `r format(upTest$p.value, digits=2)`). This enrichment
+is less pronounced for down regulated genes  (`r format(downTest$p.value, digits=2)`).
+
+Further examining up-regulated genes for evidence of HSF binding reveals that
+`r nrow(dplyr::filter(r_gene, novel==1, HSFpeak==15))`
+genes not previously characterised as heat shock response genes have ChIP-seq peaks
+and of these
+`r nrow(dplyr::filter(r_gene, novel==1, HSFpeak==1, pwm.p.value < 0.05))` also
+carry the HSF1 binding motif in their promoter (`r tabRef("HSFnovel")` and 
+`r tabRef("novelTable")`).
+
+```{r HSFnovel, cache=FALSE}
+hsfTab$type <- ifelse(r_gene$novel==1, "novel", "established")
+hsfTab <- dplyr::filter(hsfTab, expression=="up") %>% dplyr::select(-expression)
+tab <- tidyr::spread(as.data.frame(table(hsfTab)), type, Freq)
+
+set.caption(tabRef("HSFnovel", "Summary of HSF binding evidence for the promoters of novel and established heat shock response genes."))
+pander(tab, emphasize.strong.cells=matrix(c(3,4,4,4), ncol=2))
+```
+
+```{r novelTable, cache=FALSE}
+set.caption(tabRef("novelTable", "Genes with newly established links to heat shock response"))
+tab <- dplyr::filter(r_gene, novel==1, HSFpeak==1) %>% 
+  dplyr::select(`Gene Symbol`=SymbolReannotated,
+                `Fold Change`=logFC, 
+                `expression FDR`=adj.P.Val,
+                `Motif p-value`=pwm.p.value) %>%
+  dplyr::arrange(desc(`Fold Change`), `Motif p-value`)
+tab[["Fold Change"]] <- 2^tab[["Fold Change"]]
+pander(tab)
+```
+
 
 ## Global heat shock response
 
