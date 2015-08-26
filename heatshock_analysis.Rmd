@@ -1155,6 +1155,19 @@ r_promoter <- dplyr::select(r_promoter, -rank, -target, -id)
 r_promoter <- dplyr::select(r_promoter, ArrayAddress, NuID, 
                             EntrezReannotated, SymbolReannotated, GenomicLocation:B,
                             expr, novel, HSFpeak, raw.score, pwm.p.value=p.value, pwm.FDR)
+r_gene <- by(r_promoter, r_promoter$EntrezReannotated, function(x){
+  ans <- x[1,,drop=FALSE]
+  if(nrow(x) > 1){
+    exprCols <- c("ArrayAddress", "NuID", "GenomicLocation", "logFC", "AveExpr", "t", "P.Value", "adj.P.Val", "B", "expr")
+    pwmCols <- c("raw.score", "pwm.p.value", "pwm.FDR")
+    expr <- which.min(x$adj.P.Val)
+    ans[1, exprCols] <- x[expr, exprCols]
+    pwm <- which.min(x[,"pwm.p.value"])
+    ans[1, pwmCols] <- x[pwm, pwmCols]
+  }
+  ans
+})
+r_gene <- do.call(rbind, r_gene)
 ```
 
 
