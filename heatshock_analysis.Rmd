@@ -948,10 +948,20 @@ system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulat
 ```
 
 ## Gene annotions
-### Gene Ontology terms
 In addition to identifying common themes amongst differentially expressed genes the question
 arises to what extend these genes have been previously associated with the heat
-shock or, more generally, stress response. As a first step in highlighting genes 
+shock or, more generally, stress response. We use the set of genes previously
+linked directly to heat shock [@Richter] and from this create an extended set based 
+on GO terms and PubMed articles linking differentially expressed genes to heat shock
+response and closely related processes.
+
+```{r loadKnown}
+knownList <- list()
+knownList$known <- readLines("data/heatshock_genes.lst")
+```
+
+### Gene Ontology terms
+As a first step in highlighting genes 
 not previously known to play a role in this context we identify all significantly
 up regulated genes that lack GO annotations of obvious relevance to heat shock response.
 In addition to terms related to stress response and protein folding we also include
@@ -962,7 +972,8 @@ to be explained by the large scale changes in gene expression that are taking pl
 in response to heat shock.
 
 ```{r goTerms}
-sig.entrez <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$EntrezReannotated
+sig.entrez <- dplyr::filter(limmaTable, !SymbolReannotated %in% knownList$known, 
+                            adj.P.Val < fdrCut, logFC > fcCut)$EntrezReannotated
 mart <- useMart("ensembl",dataset="hsapiens_gene_ensembl")
 gene.data <- getBM(
   attributes=c('hgnc_symbol', 'entrezgene', 'go_id', 'name_1006', 'namespace_1003'), 
@@ -973,9 +984,11 @@ termFilter <- c("heat", "stress", "folding", "folded",
                 "cell cycle", "mitosis", "mitotic", "proliferation", 
                 "virus", "viral", "immune",
                 "transcription", "translation", "gene expression")
-knownGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, collapse="|")))
-selGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut & 
-                            !SymbolReannotated %in% knownGenes$hgnc_symbol)
+extendedGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, collapse="|")))
+knownList$extended <- extendedGenes$hgnc_symbol
+selGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut, logFC > fcCut, 
+                          !SymbolReannotated %in% extendedGenes$hgnc_symbol,
+                          !SymbolReannotated %in% knownList$known)
 ```
 
 ### PubMed
@@ -992,6 +1005,9 @@ queryEmpty <- query[sapply(query, QueryCount) == 0]
 queryFound <- query[sapply(query, QueryCount) != 0]
 
 pmids <- lapply(queryFound, function(x) PMID(EUtilsGet(x)))
+knownList$extended <- union(knownList$extended, names(queryFound))
+knownList$novel <- names(queryEmpty)
+
 putativeGenes <- dplyr::filter(selGenes, SymbolReannotated %in% names(queryEmpty))
 putativeGenes <- dplyr::left_join(putativeGenes, dplyr::select(gene.data, 
                                                                hgnc_symbol, go_id, name_1006), 
@@ -1090,8 +1106,9 @@ for(g in unique(peaks2genes$cond2) ){
                                  sigGenes_up=groupUp_in_anno_genes, sigGenes_down=groupDown_in_anno_genes) )
 }
 
-heatshock_novel_genes <- unique(putativeGenes$SymbolReannotated)
-genes_in_both$heatshock_novel_genes <- ifelse( genes_in_both$genes %in% heatshock_novel_genes, 1, 0)
+
+genes_in_both$heatshock_novel_genes <- ifelse( genes_in_both$genes %in% knownList$novel, 2, 
+                                               ifelse(genes_in_both$genes %in% knownList$extended, 1, 0))
 ```
 
 In addition to the direct evidence from the ChIP-seq data we carried out a
