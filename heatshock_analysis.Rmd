@@ -2043,7 +2043,7 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
 ## Gene annotations
 
 Of the `r length(unique(sig.entrez))` significantly up regulated genes 
-`r length(unique(dplyr::filter(limmaTable, SymbolReannotated %in% knownList$known, logFC > fcCut, adj.P.Val < fdrCut)$SymbolReannotated` have been directly linked to the heat shock response and 
+`r length(unique(dplyr::filter(limmaTable, SymbolReannotated %in% knownList$known, logFC > fcCut, adj.P.Val < fdrCut)$SymbolReannotated))` have been directly linked to the heat shock response and 
 `r length(setdiff(knownList$extended))))`
 are associated with GO terms that clearly relate to heat shock response or other relevant processes
 or are otherwise linked to the heat shock response in the literature. This leaves 
