@@ -951,7 +951,7 @@ system("tar -czf tmp/topGO.tar.gz -C tmp topGO_upregulated.tab topGO_downregulat
 In addition to identifying common themes amongst differentially expressed genes the question
 arises to what extend these genes have been previously associated with the heat
 shock or, more generally, stress response. We use the set of genes previously
-linked directly to heat shock [@Richter] and from this create an extended set based 
+linked directly to heat shock [@Richter10] and from this create an extended set based 
 on GO terms and PubMed articles linking differentially expressed genes to heat shock
 response and closely related processes.
 
