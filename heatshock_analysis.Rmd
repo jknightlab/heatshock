@@ -2042,11 +2042,12 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
 
 ## Gene annotations
 
-Of the `r length(unique(sig.entrez))` significantly up regulated genes `r length(unique(knownGenes$entrezgene))`
+Of the `r length(unique(sig.entrez))` significantly up regulated genes 
+`r length(unique(dplyr::filter(limmaTable, SymbolReannotated %in% knownList$known, logFC > fcCut, adj.P.Val < fdrCut)£SymbolReannotated` have been directly linked to the heat shock response and 
+`r length(setdiff(knownList$extended))))`
 are associated with GO terms that clearly relate to heat shock response or other relevant processes
-and a further `r length(pmids)` genes with at least one reference to heat shock or stress response 
-in the literature. This leaves `r length(queryEmpty)` genes with no obvious association to heat shock. Of these 
-`r sum(is.na(putativeGenes$go_id))` don't have any GO annotations. 
+or are otherwise linked to the heat shock response in the literature. This leaves 
+`r length(knownList$novel)` genes with no obvious association to heat shock.
 
 ```{r peakEnrichTab, cache=FALSE}
 condition <- str_replace(hsfPval$cond, "comb-C_", "basal ")
