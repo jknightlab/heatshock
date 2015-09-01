@@ -1672,8 +1672,8 @@ meBasal <- Matrix_eQTL_main(
     min.pv.by.genesnp = FALSE,
     noFDRsaveMemory = FALSE)
 
-stimEQTL <- formatEQTL(meStim, limmaTable)
-basalEQTL <- formatEQTL(meBasal, limmaTable)
+stimEQTL <- formatQTL(meStim, limmaTable)
+basalEQTL <- formatQTL(meBasal, limmaTable)
 ```
 
 The genes with significant associations (FDR < 0.05) in either condition are considered
