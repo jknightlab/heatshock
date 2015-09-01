@@ -1008,12 +1008,11 @@ selGenes <- dplyr::filter(selGenes, SymbolReannotated != "")
 queryString <- paste(unique(selGenes$SymbolReannotated), "AND (heat shock OR stress)")
 
 query <- vector(mode="list", length(queryString))
-for(i in seq(1, length(query), by=10)){
-  end <- min(i + 9, length(query))
-  query[i:end] <- tryCatch(lapply(queryString[i:end], EUtilsSummary),
+for(i in 1:length(query)){
+  query[[i]] <- tryCatch(EUtilsSummary(queryString[i]),
                            error=function(e) {
                              Sys.sleep(2)
-                             lapply(queryString[i:end], EUtilsSummary)
+                             EUtilsSummary(queryString[i])
                           })
 }
 names(query) <- unique(selGenes$SymbolReannotated)
