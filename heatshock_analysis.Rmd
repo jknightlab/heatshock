@@ -2118,7 +2118,7 @@ is enriched amongst up-regulated genes with corresponding protein binding eviden
 is less pronounced for down regulated genes  (`r format(downTest$p.value, digits=2)`).
 
 Further examining up-regulated genes for evidence of HSF binding reveals that
-`r nrow(dplyr::filter(r_gene, novel==1, HSFpeak==15))`
+`r nrow(dplyr::filter(r_gene, novel==2, HSFpeak==1))`
 genes not previously characterised as heat shock response genes have ChIP-seq peaks
 and of these
 `r nrow(dplyr::filter(r_gene, novel==2, HSFpeak==1, pwm.p.value < 0.05))` also
