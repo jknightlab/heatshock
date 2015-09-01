@@ -1004,7 +1004,7 @@ for(i in seq(1, length(query), by=10)){
   end <- min(i + 9, length(query))
   query[i:end] <- tryCatch(lapply(queryString[i:end], EUtilsSummary),
                            error=function(e) {
-                             wait(2)
+                             Sys.sleep(2)
                              lapply(queryString[i:end], EUtilsSummary)
                           })
 }
