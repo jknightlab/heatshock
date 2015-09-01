@@ -13,7 +13,7 @@ RUN cd /tmp && wget -q https://www.cog-genomics.org/static/bin/plink150727/plink
 
 ## Install additional R packages
 RUN Rscript -e "biocLite(c('sparcl', 'illuminaHumanv3.db', 'pander', 'ggdendro', 'sp', 'topGO', 'gdata', 'affy', 'vsn', 'limma', 'sva', 'scatterplot3d', 'pushoverr', 'SNPlocs.Hsapiens.dbSNP142.GRCh37', 'MatrixEQTL', 'plsdepot', 'TxDb.Hsapiens.UCSC.hg19.knownGene', 'MultiPhen', 'RISmed', 'PWMEnrich', 'PWMEnrich.Hsapiens.background', 'BSgenome.Hsapiens.UCSC.hg19', 'org.Hs.eg.db'))"
-RUN Rscript -e "devtools::install_github('jimhester/knitrBootstrap', ref='rmarkdown_template')"
+RUN Rscript -e "devtools::install_github('jimhester/knitrBootstrap', ref='rmarkdown_template') "
 RUN Rscript -e "devtools::install_github('gabraham/plink2R/plink2R')"
 
 ## Add basic instruction to display for interactive containers
