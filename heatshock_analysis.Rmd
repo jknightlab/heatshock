@@ -999,7 +999,15 @@ to find publications that link the gene to heat shock or stress response.
 selGenes <- dplyr::filter(selGenes, SymbolReannotated != "")
 queryString <- paste(unique(selGenes$SymbolReannotated), "AND (heat shock OR stress)")
 
-query <- lapply(queryString, EUtilsSummary)
+query <- vector(mode="list", length(queryString))
+for(i in seq(1, length(query), by=10)){
+  end <- min(i + 9, length(query))
+  query[i:end] <- tryCatch(lapply(queryString[i:end], EUtilsSummary),
+                           error=function(e) {
+                             wait(2)
+                             lapply(queryString[i:end], EUtilsSummary)
+                          })
+}
 names(query) <- unique(selGenes$SymbolReannotated)
 queryEmpty <- query[sapply(query, QueryCount) == 0]
 queryFound <- query[sapply(query, QueryCount) != 0]
