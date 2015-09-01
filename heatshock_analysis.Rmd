@@ -1020,7 +1020,17 @@ names(query) <- unique(selGenes$SymbolReannotated)
 queryEmpty <- query[sapply(query, QueryCount) == 0]
 queryFound <- query[sapply(query, QueryCount) != 0]
 
-pmids <- lapply(queryFound, function(x) PMID(EUtilsGet(x)))
+
+pmids <- vector(mode="list", length(queryFound))
+names(pmids) <- names(queryFound)
+for(i in 1:length(pmids)){
+  if(i %% 10 == 0) Sys.sleep(1)
+  pmids[[i]] <- tryCatch(PMID(EUtilsGet(queryFound[[i]])),
+                           error=function(e) {
+                             Sys.sleep(2)
+                             PMID(EUtilsGet(queryFound[[i]]))
+                          })
+}
 knownList$extended <- union(knownList$extended, names(queryFound))
 knownList$novel <- names(queryEmpty)
 
