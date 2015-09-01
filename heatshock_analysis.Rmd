@@ -1009,6 +1009,7 @@ queryString <- paste(unique(selGenes$SymbolReannotated), "AND (heat shock OR str
 
 query <- vector(mode="list", length(queryString))
 for(i in 1:length(query)){
+  if(i %% 10 == 0) Sys.sleep(1)
   query[[i]] <- tryCatch(EUtilsSummary(queryString[i]),
                            error=function(e) {
                              Sys.sleep(2)
