@@ -323,8 +323,8 @@ updateSampleList <- function(samples, sampleFile){
 formatQTL <- function (me, limmaTable) {
   eQTL <- me$all$eqtls
   eQTL <- dplyr::left_join(eQTL, dplyr::select(limmaTable, NuID, SymbolReannotated, logFC), by=c(gene="NuID"))
-  eQTL <- dplyr::select(eQTL, SNP, SymbolReannotated, NuID, beta:FDR, AveExpr, logFC)
-  eQTL <- dplyr::rename(eQTL, Gene="SymbolReannotated")
+  eQTL <- dplyr::select(eQTL, snps, SymbolReannotated, NuID, beta:FDR, AveExpr, logFC)
+  eQTL <- dplyr::rename(eQTL, SNP=snps, Gene=SymbolReannotated)
   eQTL
 }
 
