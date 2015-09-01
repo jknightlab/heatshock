@@ -2131,7 +2131,7 @@ hsfTab <- dplyr::filter(hsfTab, expression=="up") %>% dplyr::select(-expression)
 tab <- tidyr::spread(as.data.frame(table(hsfTab)), type, Freq)
 
 set.caption(tabRef("HSFnovel", "Summary of HSF binding evidence for the promoters of novel and established heat shock response genes."))
-pander(tab, emphasize.strong.cells=matrix(c(3,4,4,4), ncol=2))
+pander(tab, emphasize.strong.cells=matrix(c(3,4,5,5), ncol=2))
 ```
 
 ```{r novelTable, cache=FALSE}
