@@ -1485,7 +1485,7 @@ covar$fileSkipColumns <- 1
 covar$fileSliceSize <- 2000
 covar$LoadFile("tmp/covariates.tab")
 
-snpPos <- read.table("tmp/selected_probes_pos.tab", header=TRUE)
+probePos <- read.table("tmp/selected_probes_pos.tab", header=TRUE)
 ```
 
 ```{r runMatrixEQTL, results="hide", cache=FALSE}
