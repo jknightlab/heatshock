@@ -1329,10 +1329,11 @@ assoc$Results <- assoc$Results[,idx, , ]
 assoc$maf <- assoc$maf[idx]
 ```
 
+<!---
 Significance of the observed associations was assessed through a permutation test to account for the
 structure inherent to the data.
 
-```{r multiPhenoPerm, results='hide'}
+```{r multiPhenoPerm, results='hide', include=FALSE, eval=FALSE}
 set.seed(54864548L)
 nPerm <- 1000
 bins <- sapply(apply(cisGeno, 2, table), paste, collapse="_")
@@ -1359,7 +1360,7 @@ were randomly assigned to one of the observed set of genotypes `r nPerm` times a
 the joint model were computed for each permutation. From these we computed false discovery rates
 by comparing observed p-values to the empirical distribution of minimum p-values from each permutation.
 
-```{r permFDR}
+```{r permFDR, include=FALSE, eval=FALSE}
 minp <- apply(pPerm, 1, min)
 assoc$adj.p.val <- sapply(assoc$Results[, "JointModel", 2], function(x) sum(minp < x)/length(minp))
 names(assoc$adj.p.val) <- dimnames(assoc$Results)[[1]]
@@ -1370,6 +1371,7 @@ for(i in 1:ncol(pPerm)){
                                           function(x, p) sum(p < x)/length(p), pPerm[, i])
 }
 ```
+-->
 
 ## Response QTL analysis
 Having established the association between rs7789228 and the global response to 
@@ -2035,7 +2037,7 @@ pander(coef)
 ```
 
 
-```{r treatPLSpval, cache=FALSE, fig.cap=figRef("permPval", paste0("P-values observed after permutation of global response phenotype for SNP ", dimnames(assoc$Result)[[1]][1], " (left) and the minimum p-value observed in each iteration across all SNPs (right)."))}
+```{r treatPLSpval, cache=FALSE, include=FALSE, eval=FALSE, fig.cap=figRef("permPval", paste0("P-values observed after permutation of global response phenotype for SNP ", dimnames(assoc$Result)[[1]][1], " (left) and the minimum p-value observed in each iteration across all SNPs (right)."))}
 
 fig1 <- ggplot(data.frame(p.value=pPerm[,bins[dimnames(assoc$Result)[[1]][1]]]), aes(x=-log10(p.value))) + 
   geom_histogram(fill="lightgrey", binwidth=0.1) +
