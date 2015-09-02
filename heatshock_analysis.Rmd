@@ -1399,7 +1399,8 @@ write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE
 ```
 
 ```{r writeProbePos, cache=FALSE}
-write.table(probePos, file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(dplyr::select(selectedGenes, NuID, chrom:end), 
+            file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, row.names=FALSE)
 ```
 
 ```{r writeSNPpos, cache=FALSE, results="hide"}
