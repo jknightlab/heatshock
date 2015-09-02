@@ -1367,15 +1367,23 @@ for(i in 1:ncol(pPerm)){
 -->
 
 ## Response QTL analysis
-All probes considered to be differentially expressed following heat shock treatment
-(FDR < `r fdrCut` and fold change > `r 2^fcCut`) were further investigated for
-the presence of genetic variation that modulates their response to the stimulus.
+Genes associated with the heat shock response, either
+through previous work or implicated by the analysis presented here, were 
+selected for further analysis to determine genetic factors that modulate
+their response to the stimulus. To this end we chose all probes that were 
+significantly up regulated (FDR < `r fdrCut` and fold change > `r 2^fcCut`) 
+following heat shock and that were found to have HSF1 or HSF2 ChIP-seq peaks
+or binding motifs (P < 0.05) in their promoter region. 
 
-For each probe the observed response to the stimulus (as measured by the log~2~ 
-fold change) is tested for association with the genotypes within a $`r cisWindow`$bp window
-either side of the probe location. For this purpose only typed SNPs that passed
-QC were considered. Only genes and SNPs on autosomes were included in the 
-analysis.
+```{r selectProbes}
+selSymbol <- dplyr::filter(r_gene, expr == "up", HSFpeak == 1, pwm.p.value < 0.05)$SymbolReannotated
+selectedGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% selSymbol)
+```
+
+For each of the `r nrow(selectedGenes)` probes the observed response to the 
+stimulus (as measured by the log~2~fold change) is tested for association with 
+the genotypes within a $`r cisWindow`$bp window either side of the probe location. 
+For this purpose only typed SNPs that passed QC were considered.
 
 ```{r probeFC}
 selectedExpr <- sig.data.norm[selectedGenes$ArrayAddress,]
@@ -1576,7 +1584,7 @@ system("tar -czf tmp/reQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_G
 
 To further investigate potential genetic modulators of gene expression for genes that
 play a role in heat shock response we carried out a cis eQTL analysis for all genes identified
-as differentially expressed in response to heat shock.
+as heat shock response genes.
 
 ```{r selectedExpr}
 stimExpr <- selectedExpr[, stimIdx]
