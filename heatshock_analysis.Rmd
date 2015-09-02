@@ -1378,6 +1378,12 @@ or binding motifs (P < 0.05) in their promoter region.
 ```{r selectHeatShock}
 selSymbol <- dplyr::filter(r_gene, expr == "up", HSFpeak == 1 | pwm.p.value < 0.05)$SymbolReannotated
 selectedGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% selSymbol)
+probePos <- t(sapply(selectedGenes$GenomicLocation, 
+                     str_extract, c("^chr([[:digit:]]+|X)(_[[:alnum:]]+_hap[[:digit:]]+)*", 
+                                    ":[[:digit:]]+", "[[:digit:]]+:[+-]")))
+rownames(probePos) <- selectedGenes$NuID
+probePos[,2] <- str_replace(probePos[,2], ":", "")
+probePos[,3] <- str_replace_all(probePos[,3], "[:+-]", "")
 ```
 
 For each of the `r nrow(selectedGenes)` probes the observed response to the 
@@ -1400,7 +1406,8 @@ write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE
 
 ```{r writeProbePos, cache=FALSE}
 write.table(dplyr::select(selectedGenes, NuID, chrom:end), 
-            file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, row.names=FALSE)
+            file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, 
+            row.names=TRUE, col.names=c("probe", "chrom", "start", "end"))
 ```
 
 ```{r writeSNPpos, cache=FALSE, results="hide"}
