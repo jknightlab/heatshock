@@ -1495,7 +1495,7 @@ me <- Matrix_eQTL_main(
     cvrt = covar,
     output_file_name.cis = "tmp/reQTL_analysis",
     pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1e-3,
+    pvOutputThreshold.cis = 0.5,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
