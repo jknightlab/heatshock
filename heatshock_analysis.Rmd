@@ -1430,7 +1430,7 @@ write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
 ```
 
 ```{r fc_pc}
-nPC <- 3
+nPC <- 2
 pca <- prcomp(t(selectedFC), center=TRUE, scale = TRUE)
 pc <- pca$x
 ```
@@ -1611,7 +1611,7 @@ write.table(basalExpr, file="tmp/selected_probes_basal_expr.tab", sep="\t", quot
 ```
 
 ```{r expr_pc}
-nPC_expr <- 3
+nPC_expr <- 2
 pca_stim <- prcomp(t(stimExpr), center=TRUE, scale = TRUE)
 pc_stim <- pca_stim$x
 
