@@ -1384,6 +1384,7 @@ probePos <- t(sapply(selectedGenes$GenomicLocation,
 rownames(probePos) <- selectedGenes$NuID
 probePos[,2] <- str_replace(probePos[,2], ":", "")
 probePos[,3] <- str_replace_all(probePos[,3], "[:+-]", "")
+probePos <- cbind(rownames(probePos), probePos)
 ```
 
 For each of the `r nrow(selectedGenes)` probes the observed response to the 
@@ -1407,7 +1408,7 @@ write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE
 ```{r writeProbePos, cache=FALSE}
 write.table(probePos, 
             file="tmp/selected_probes_pos.tab", sep="\t", quote=FALSE, 
-            row.names=TRUE, col.names=c("probe", "chrom", "start", "end"))
+            row.names=FALSE, col.names=c("probe", "chrom", "start", "end"))
 ```
 
 ```{r writeSNPpos, cache=FALSE, results="hide"}
