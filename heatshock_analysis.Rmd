@@ -1356,7 +1356,7 @@ for(i in 1:nPerm){
 ```
 
 To this end the observed global response phenotype for each individual and covariates used in the model
-were randomly assigned to one of the observed set of genotypes `r nPerm` times and p-values for 
+were randomly assigned to one of the observed set of genotypes ` nPerm` times and p-values for 
 the joint model were computed for each permutation. From these we computed false discovery rates
 by comparing observed p-values to the empirical distribution of minimum p-values from each permutation.
 
