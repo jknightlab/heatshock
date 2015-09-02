@@ -1327,6 +1327,7 @@ assoc <- mPhen(cisGeno, globalPheno, covariates="sex")
 idx <- order(assoc$Results[1, , "JointModel" , 2])
 assoc$Results <- assoc$Results[,idx, , ]
 assoc$maf <- assoc$maf[idx]
+assoc$adj.p.val <- p.adjust(assoc$Results[,"JointModel", "pvalue"], "BH")
 ```
 
 <!---
