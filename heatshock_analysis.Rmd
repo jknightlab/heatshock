@@ -1376,7 +1376,7 @@ following heat shock and that were found to have HSF1 or HSF2 ChIP-seq peaks
 or binding motifs (P < 0.05) in their promoter region. 
 
 ```{r selectHeatShock}
-selSymbol <- dplyr::filter(r_gene, expr == "up", HSFpeak == 1, pwm.p.value < 0.05)$SymbolReannotated
+selSymbol <- dplyr::filter(r_gene, expr == "up", HSFpeak == 1 | pwm.p.value < 0.05)$SymbolReannotated
 selectedGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% selSymbol)
 ```
 
