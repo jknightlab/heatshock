@@ -2396,13 +2396,15 @@ if(nrow(tab)) pander(head(tab, 10))
 ```{r transGenePlot, cache=FALSE, include=length(known) > 0, eval=length(known) > 0, fig.cap=figRef("transGenesFC", paste("Fold change in gene expression in response to heat shock by genotype for", if(length(known) == 1) known[1] else "known heatshock genes."))}
 idx <-sapply(known, function(x) min(which(tab$Symbol == x)))
 plots <- vector(mode="list", length(known))
+j <- 1
 for(i in idx){
   plotData <- data.frame(genotype=geno$bed[tab$SNP[i], ], fc=selectedFC[meHSF$all$eqtls$snps[i]])
   plotData <- dplyr::filter(plotData, !is.na(genotype))
-  ggplot(plotData, aes(x=genotype, y=fc)) + 
+  plots[[j]] <- ggplot(plotData, aes(x=genotype, y=fc)) + 
     geom_point(position=position_jitter(width=0.1), size=2.5) +
     geom_boxplot(alpha=0.4, outlier.colour="white", outlier.size=0, fill="grey") +
     theme_bw() + xlab(tab$SNP[i]) + ylab(paste(tab$Symbol[i], "log fold change"))
+  j <- j+1
 }
 if(length(plots) == 1){
   plots[[1]]
