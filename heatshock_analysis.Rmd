@@ -2034,10 +2034,10 @@ ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) +
 ```
 
 ```{r heatmap, cache=FALSE, fig.cap=figRef("exprHeat", "Heatmap comparing gene expression for differentially expressed genes between basal and stimulated samples. Samples were clustered by gene  with stimulated (orange) and basal (purple) samples forming two distinct groups. Expression estimates for each gene were scaled and centred across samples. Blue cells correspond to lower and red cells to higher than average expression.")}
-idx <- dplyr::arrange(dplyr::filter(limmaTable, ArrayAddress %in% rownames(selectedExpr)), logFC)$ArrayAddress
+sortedTable <- dplyr::arrange(dplyr::filter(limmaTable, adj.P.Val < fdrCut, abs(logFC) > fcCut), desc(logFC))
 sideCols <- c(Basal="purple", Stim="orange")
 treat <- str_extract(colnames(selectedExpr), "(Basal|Stim)$")
-heatmap.2(selectedExpr[rev(idx),],trace = "none", Rowv=FALSE, Colv=TRUE, scale="row", dendrogram="column", col=rev(brewer.pal(11, "RdBu")), ColSideColors=sideCols[treat], key=FALSE, labRow="", labCol="", xlab="Samples", ylab="Genes")
+heatmap.2(sortedTable, trace = "none", Rowv=FALSE, Colv=TRUE, scale="row", dendrogram="column", col=rev(brewer.pal(11, "RdBu")), ColSideColors=sideCols[treat], key=FALSE, labRow="", labCol="", xlab="Samples", ylab="Genes")
 ```
 
 ## GO enrichment analysis
