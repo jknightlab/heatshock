@@ -2314,14 +2314,14 @@ in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`
 `r if(nrow(basalGenes) > 0) tabRef("topGeneSNPs_basal") else ""` 
 `r if(nrow(stimGenes) > 0 || nrow(basalGenes) > 0) "for a list of SNPs of interest for these genes." else ""`
 
-```{r topGeneSNPs_stim, cache=FALSE, include=geneSNPcount_stim[1] > 0, eval=geneSNPcount_stim[1] > 0}
+```{r topGeneSNPs_stim, cache=FALSE, include=nrow(stimGenes) > 0, eval=nrow(stimGenes) > 0}
 set.caption(tabRef("topGeneSNPs_stim", paste("Top eSNPs for", stimGenes$Symbol[1], "following heat shock.")))
 tab <- head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_stim[1], 20))
 tab$gene <- stimGenes$Symbol[1]
 pander(tab)
 ```
 
-```{r topGeneSNPs_basal, cache=FALSE, include=geneSNPcount_basal[1] > 0, eval=geneSNPcount_basal[1] > 0}
+```{r topGeneSNPs_basal, cache=FALSE, include=nrow(basalGenes) > 0, eval=nrow(basalGenes) > 0}
 set.caption(tabRef("topGeneSNPs_basal", paste("Top eSNPs for", basalGenes$Symbol[1], "in basal state.")))
 tab <- head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_basal[1], 20))
 tab$gene <- basalGenes$Symbol[1]
