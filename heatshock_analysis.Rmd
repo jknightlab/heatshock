@@ -1509,7 +1509,7 @@ me <- Matrix_eQTL_main(
 mainSNP <- dplyr::filter(me$cis$eqtls, !duplicated(gene))
 
 geneP <- me$cis$min.pv.gene * sapply(names(me$cis$min.pv.gene), 
-                                     function(x) length(geneSNPs[[x]]))
+                                     function(x) if(length(geneSNPs[[x]])) length(geneSNPs[[x]]) else 1)
 geneP <- sapply(geneP, min, 1)
 geneP <- p.adjust(geneP, "BH")
 geneP <- data.frame(NuID=names(geneP), Gene.FDR=geneP, stringsAsFactors=FALSE)
@@ -1705,7 +1705,7 @@ mainSNP_basal <- do.call(rbind, by(meBasal$cis$eqtls, meBasal$cis$eqtls$gene,
 mainSNP_basal <- dplyr::arrange(mainSNP_basal, pvalue)
 
 geneP_stim <- meStim$cis$min.pv.gene * sapply(names(meStim$cis$min.pv.gene), 
-                                     function(x) length(geneSNPs[[x]]))
+                                     function(x) if(length(geneSNPs[[x]])) length(geneSNPs[[x]]) else 1)
 geneP_stim <- sapply(geneP_stim, min, 1)
 geneP_stim <- p.adjust(geneP_stim, "BH")
 geneP_stim <- data.frame(NuID=names(geneP_stim), Gene.FDR=geneP_stim, stringsAsFactors=FALSE)
@@ -1719,7 +1719,7 @@ geneP_stim <- dplyr::rename(geneP_stim, Symbol=SymbolReannotated, SNP=snps, SNP.
 geneP_stim <- dplyr::arrange(geneP_stim, Gene.FDR, desc(abs(SNP.beta)))
 
 geneP_basal <- meBasal$cis$min.pv.gene * sapply(names(meBasal$cis$min.pv.gene), 
-                                     function(x) length(geneSNPs[[x]]))
+                                     function(x) if(length(geneSNPs[[x]])) length(geneSNPs[[x]]) else 1)
 geneP_basal <- sapply(geneP_basal, min, 1)
 geneP_basal <- p.adjust(geneP_basal, "BH")
 geneP_basal <- data.frame(NuID=names(geneP_basal), Gene.FDR=geneP_basal, stringsAsFactors=FALSE)
