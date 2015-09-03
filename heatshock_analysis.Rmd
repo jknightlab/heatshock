@@ -2397,7 +2397,7 @@ if(nrow(tab)) pander(head(tab, 10))
 idx <-sapply(known, function(x) min(which(tab$Symbol == x)))
 plots <- vector(mode="list", length(known))
 for(i in idx){
-  plotData <- data.frame(genotype=geno$bed[tab$SNP[i], ], fc=2^probeFC[meHSF$all$eqtls$SNP[i]])
+  plotData <- data.frame(genotype=geno$bed[tab$SNP[i], ], fc=selectedFC[meHSF$all$eqtls$SNP[i]])
   plotData <- dplyr::filter(plotData, !is.na(genotype))
   ggplot(plotData, aes(x=genotype, y=fc)) + 
     geom_points(position=position_jitter(width=0.1), size=2.5) +
