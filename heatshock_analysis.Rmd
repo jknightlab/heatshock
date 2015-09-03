@@ -1430,7 +1430,7 @@ write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
 ```
 
 ```{r fc_pc}
-nPC <- 3
+nPC <- 2
 pca <- prcomp(t(selectedFC), center=TRUE, scale = TRUE)
 pc <- pca$x
 ```
@@ -1484,6 +1484,8 @@ covar$fileSkipRows <- 1
 covar$fileSkipColumns <- 1
 covar$fileSliceSize <- 2000
 covar$LoadFile("tmp/covariates.tab")
+
+probePos <- read.table("tmp/selected_probes_pos.tab", header=TRUE)
 ```
 
 ```{r runMatrixEQTL, results="hide", cache=FALSE}
@@ -1493,7 +1495,7 @@ me <- Matrix_eQTL_main(
     cvrt = covar,
     output_file_name.cis = "tmp/reQTL_analysis",
     pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1e-3,
+    pvOutputThreshold.cis = 0.5,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
@@ -1667,7 +1669,7 @@ meStim <- Matrix_eQTL_main(
     cvrt = covarStim,
     output_file_name.cis = "tmp/eQTL_stim_analysis",
     pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1e-3,
+    pvOutputThreshold.cis = 0.5,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
@@ -1684,7 +1686,7 @@ meBasal <- Matrix_eQTL_main(
     cvrt = covarBasal,
     output_file_name.cis = "tmp/eQTL_basal_analysis",
     pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1e-3,
+    pvOutputThreshold.cis = 0.5,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
     snpspos = geno$bim,
