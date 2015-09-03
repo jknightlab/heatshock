@@ -2039,7 +2039,7 @@ ggplot(limmaTable, aes(x=logFC, y=-log10(adj.P.Val))) +
 sortedTable <- dplyr::arrange(dplyr::filter(limmaTable, adj.P.Val < fdrCut, abs(logFC) > fcCut), desc(logFC))
 sideCols <- c(Basal="purple", Stim="orange")
 treat <- str_extract(colnames(selectedExpr), "(Basal|Stim)$")
-heatmap.2(sortedTable, trace = "none", Rowv=FALSE, Colv=TRUE, scale="row", dendrogram="column", col=rev(brewer.pal(11, "RdBu")), ColSideColors=sideCols[treat], key=FALSE, labRow="", labCol="", xlab="Samples", ylab="Genes")
+heatmap.2(selectedExpr[sortedTable$ArrayAddress, ], trace = "none", Rowv=FALSE, Colv=TRUE, scale="row", dendrogram="column", col=rev(brewer.pal(11, "RdBu")), ColSideColors=sideCols[treat], key=FALSE, labRow="", labCol="", xlab="Samples", ylab="Genes")
 ```
 
 ## GO enrichment analysis
