@@ -1523,6 +1523,7 @@ geneP <- dplyr::select(geneP, SymbolReannotated, snps, NuID, ArrayAddress, Gene.
 geneP <- dplyr::rename(geneP, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
                        expression.FDR=adj.P.Val, SNP.beta=beta)
 geneP <- dplyr::arrange(geneP, Gene.FDR, SNP.pvalue)
+geneP <- dplyr::filter(geneP, !duplicated(Symbol))
 ```
 
 ```{r prepGeneMatrixEqtl, cache=FALSE}
@@ -1719,6 +1720,7 @@ geneP_stim <- dplyr::select(geneP_stim, SymbolReannotated, snps, NuID, ArrayAddr
 geneP_stim <- dplyr::rename(geneP_stim, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
                        expression.FDR=adj.P.Val, SNP.beta=beta)
 geneP_stim <- dplyr::arrange(geneP_stim, Gene.FDR, SNP.pvalue)
+geneP_stim <- dplyr::filter(geneP_stim, !duplicated(Symbol)) 
 
 geneP_basal <- meBasal$cis$min.pv.gene * sapply(names(meBasal$cis$min.pv.gene), 
                                      function(x) if(length(geneSNPs[[x]])) length(geneSNPs[[x]]) else 1)
@@ -1733,6 +1735,7 @@ geneP_basal <- dplyr::select(geneP_basal, SymbolReannotated, snps, NuID, ArrayAd
 geneP_basal <- dplyr::rename(geneP_basal, Symbol=SymbolReannotated, SNP=snps, SNP.pvalue=pvalue, 
                        expression.FDR=adj.P.Val, SNP.beta=beta)
 geneP_basal <- dplyr::arrange(geneP_basal, Gene.FDR, SNP.pvalue)
+geneP_basal <- dplyr::filter(geneP_basal, !duplicated(Symbol))
 ```
 
 ```{r prepGeneEqtl, cache=FALSE}
