@@ -2378,17 +2378,38 @@ plots <- list(stimPlot, basalPlot)
 plots <- plots[!sapply(plots, is.null)]
 multiplot(plotlist=plots)
 ```
+
 ## Trans associations for SNPs upstream of HSF1 and HSF2
 
 ```{r prepTransTable}
 tab <- dplyr::left_join(meHSF$all$eqtls, limmaTable, by=c(gene="NuID"))
 tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
 tab <- dplyr::select(tab, SNP, Symbol, statistic:beta, logFC, adj.P.Val)
+known <- unique(dplyr::filter(tab, Symbol %in% knownList$known)$Symbol)
 ```
 
 ```{r transGeneTable, cache=FALSE}
 set.caption(tabRef("transGenes", "List of genes with strongest evidence for trans associations between heat shock response and SNPs upstream of HSF1 and HSF2."))
 if(nrow(tab)) pander(head(tab, 10))
+```
+
+```{r transGenePlot, cache=FALSE, include=length(known) > 0, eval=length(known) > 0, fig.cap=figRef("transGenesFC", paste("Fold change in gene expression in response to heat shock by genotype for", if(length(known) == 1) known[1] else "known heatshock genes.")}
+idx <-sapply(known, function(x) min(which(tab$Symbol == x)))
+plots <- vector(mode="list", length(known))
+for(i in idx){
+  plotData <- data.frame(genotype=geno$bed[tab$SNP[i], ], fc=2^probeFC[meHSF$all$eqtls$SNP[i]])
+  plotData <- dplyr::filter(plotData, !is.na(genotype))
+  ggplot(plotData, aes(x=genotype, y=fc)) + 
+    geom_points(position=position_jitter(width=0.1), size=2.5) +
+    geom_boxplot(alpha=0.4, outlier.colour="white", outlier.size=0, fill="grey") +
+    theme_bw() + xlab(tab$SNP[i]) + ylab(paste(tab$Symbol[i], "log fold change"))
+}
+if(length(plots) == 1){
+  plots[[1]]
+} else{
+  cols <- if(length(plots) > 4) 3 else 2
+  multiplot(plotlist=plots, cols=cols)
+}
 ```
 
 ```{r prepTransStimTable}
