@@ -2307,11 +2307,12 @@ pander(dplyr::select(head(geneP_basal, rows), -ArrayAddress, -NuID),
 
 Condition specific associations were identified for `r nrow(stimGenes)` 
 gene`r if(nrow(stimGenes) != 1) "s" else ""` in the stimulated and for `r nrow(basalGenes)`
-in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`). See 
-`r if(geneSNPcount_stim[1] > 0) tabRef("topGeneSNPs_stim") else ""` 
-`r if(geneSNPcount_stim[1] > 0 && geneSNPcount_basal[1] > 0) "and" else ""`
-`r if(geneSNPcount_basal[1] > 0) tabRef("topGeneSNPs_basal") else ""` 
-for a list of SNPs of interest for these genes.
+in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`).
+`r if(nrow(stimGenes) > 0 || nrow(basalGenes) > 0) "See" else ""` 
+`r if(nrow(stimGenes) > 0) tabRef("topGeneSNPs_stim") else ""` 
+`r if(nrow(stimGenes) > 0 && nrow(basalGenes) > 0) "and" else ""`
+`r if(nrow(basalGenes) > 0) tabRef("topGeneSNPs_basal") else ""` 
+`r if(nrow(stimGenes) > 0 || nrow(basalGenes) > 0) "for a list of SNPs of interest for these genes." else ""`
 
 ```{r topGeneSNPs_stim, cache=FALSE, include=geneSNPcount_stim[1] > 0, eval=geneSNPcount_stim[1] > 0}
 set.caption(tabRef("topGeneSNPs_stim", paste("Top eSNPs for", stimGenes$Symbol[1], "following heat shock.")))
