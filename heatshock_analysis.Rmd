@@ -2393,7 +2393,7 @@ set.caption(tabRef("transGenes", "List of genes with strongest evidence for tran
 if(nrow(tab)) pander(head(tab, 10))
 ```
 
-```{r transGenePlot, cache=FALSE, include=length(known) > 0, eval=length(known) > 0, fig.cap=figRef("transGenesFC", paste("Fold change in gene expression in response to heat shock by genotype for", if(length(known) == 1) known[1] else "known heatshock genes.")}
+```{r transGenePlot, cache=FALSE, include=length(known) > 0, eval=length(known) > 0, fig.cap=figRef("transGenesFC", paste("Fold change in gene expression in response to heat shock by genotype for", if(length(known) == 1) known[1] else "known heatshock genes."))}
 idx <-sapply(known, function(x) min(which(tab$Symbol == x)))
 plots <- vector(mode="list", length(known))
 for(i in idx){
