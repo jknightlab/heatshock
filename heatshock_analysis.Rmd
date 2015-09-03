@@ -1609,7 +1609,7 @@ write.table(basalExpr, file="tmp/selected_probes_basal_expr.tab", sep="\t", quot
 ```
 
 ```{r expr_pc}
-nPC_expr <- 3
+nPC_expr <- 2
 pca_stim <- prcomp(t(stimExpr), center=TRUE, scale = TRUE)
 pc_stim <- pca_stim$x
 
