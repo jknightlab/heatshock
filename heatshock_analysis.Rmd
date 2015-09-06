@@ -2399,7 +2399,7 @@ plots <- vector(mode="list", length(known))
 j <- 1
 for(i in idx){
   probe <- meHSF$all$eqtls$gene[i]
-  snp - tab$SNP[i]
+  snp <- tab$SNP[i]
   transFit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covarHSF[[1]]))
   transOffset <- colSums(transFit$coefficients[-(1:2)]*covarHSF[[1]])
   
