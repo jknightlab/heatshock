@@ -1892,17 +1892,13 @@ write.table(targetGeno, file="tmp/genotypes_hsf.tab", sep="\t", quote=FALSE)
 ```
 
 ```{r runHSFtransFC, cache=FALSE, results="hide"}
-nPC_hsf <- 1
-write.table(geno$fam[2:(2+nPC_hsf), , drop=FALSE], 
-            file="tmp/covar_hsf_fc.tab", sep="\t", quote=FALSE)
-
 covarHSF <- SlicedData$new();
 covarHSF$fileDelimiter <- "\t"
 covarHSF$fileOmitCharacters <- "NA"
 covarHSF$fileSkipRows <- 1
 covarHSF$fileSkipColumns <- 1
 covarHSF$fileSliceSize <- 2000
-covarHSF$LoadFile(paste0("tmp/covar_hsf_fc.tab"))
+covarHSF$LoadFile(paste0("tmp/covariates.tab"))
  
 
 snpsHSF <- SlicedData$new();
@@ -1924,7 +1920,7 @@ pheno$LoadFile("tmp/selected_probes_fc.tab")
 meHSF <- Matrix_eQTL_main(
     snps = snpsHSF,
     gene = pheno,
-    cvrt = covar,
+    cvrt = covarHSF,
     output_file_name = "tmp/reQTL_hsf_analysis",
     pvOutputThreshold = 1e-3,
     pvOutputThreshold.cis = 0,
