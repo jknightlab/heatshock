@@ -2448,7 +2448,7 @@ transOffset <- colSums(transFit$coefficients[-(1:2)]*covarHSFstim[[1]])
   
 plotData <- data.frame(genotype=geno$bed[snp, ], expression=stimExpr[probe, ] - transOffset)
 plotData <- dplyr::filter(plotData, !is.na(genotype))
-plots[[1]] <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
+plots[[2]] <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
   geom_point(position=position_jitter(width=0.1), size=2.5) +
   geom_boxplot(alpha=0.4, outlier.colour="white", outlier.size=0, fill="grey") +
   theme_bw() + xlab(snp) + ylab(paste(probe, "expression"))
