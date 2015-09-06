@@ -2398,7 +2398,12 @@ idx <-sapply(known, function(x) min(which(tab$Symbol == x)))
 plots <- vector(mode="list", length(known))
 j <- 1
 for(i in idx){
-  plotData <- data.frame(genotype=geno$bed[tab$SNP[i], ], fc=selectedFC[meHSF$all$eqtls$snps[i], ])
+  probe <- meHSF$all$eqtls$gene[i]
+  snp - tab$SNP[i]
+  transFit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covarHSF[[1]]))
+  transOffset <- colSums(transFit$coefficients[-(1:2)]*covarHSF[[1]])
+  
+  plotData <- data.frame(genotype=geno$bed[snp, ], fc=selectedFC[probe, ] - transOffset)
   plotData <- dplyr::filter(plotData, !is.na(genotype))
   plots[[j]] <- ggplot(plotData, aes(x=factor(genotype), y=fc)) + 
     geom_point(position=position_jitter(width=0.1), size=2.5) +
