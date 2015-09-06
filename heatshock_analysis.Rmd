@@ -2443,7 +2443,7 @@ plots[[1]] <- ggplot(plotData, aes(x=factor(genotype), y=fc)) +
 
 probe <- as.character(meHSFstim$all$eqtls$gene[1])
 snp <- as.character(meHSFstim$all$eqtls$snps[1])
-transFit <- lm(selectedExpr[probe, ] ~ geno$bed[snp,] + t(covarHSFstim[[1]]))
+transFit <- lm(simExpr[probe, ] ~ geno$bed[snp,] + t(covarHSFstim[[1]]))
 transOffset <- colSums(transFit$coefficients[-(1:2)]*covarHSFstim[[1]])
   
 plotData <- data.frame(genotype=geno$bed[snp, ], expression=stimExpr[probe, ] - transOffset)
