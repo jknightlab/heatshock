@@ -2430,6 +2430,42 @@ set.caption(tabRef("transStimGenes", "List of genes with strongest evidence for 
 if(nrow(tab)) pander(head(tab, 10))
 ```
 
+```{r transGenePlot2, cache=FALSE, fig.cap=figRef("transGenesTop", paste("Genes with most evidence for genetic modulation of heat shock response based on log fold change and gene expression following stimulation."))}
+plots <- vector(mode="list", 2)
+
+probe <- as.character(meHSF$all$eqtls$gene[i])
+snp <- as.character(meHSF$all$eqtls$snps[1])
+transFit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covarHSF[[1]]))
+transOffset <- colSums(transFit$coefficients[-(1:2)]*covarHSF[[1]])
+  
+plotData <- data.frame(genotype=geno$bed[snp, ], fc=selectedFC[probe, ] - transOffset)
+plotData <- dplyr::filter(plotData, !is.na(genotype))
+plots[[1]] <- ggplot(plotData, aes(x=factor(genotype), y=fc)) + 
+  geom_point(position=position_jitter(width=0.1), size=2.5) +
+  geom_boxplot(alpha=0.4, outlier.colour="white", outlier.size=0, fill="grey") +
+  theme_bw() + xlab(snp) + ylab(paste(probe, "log fold change"))
+
+probe <- as.character(meHSFstim$all$eqtls$gene[i])
+snp <- as.character(meHSFstim$all$eqtls$snps[1])
+transFit <- lm(selectedExpr[probe, ] ~ geno$bed[snp,] + t(covarHSFstim[[1]]))
+transOffset <- colSums(transFit$coefficients[-(1:2)]*covarHSFstim[[1]])
+  
+plotData <- data.frame(genotype=geno$bed[snp, ], expression=selectedExpr[probe, ] - transOffset)
+plotData <- dplyr::filter(plotData, !is.na(genotype))
+plots[[1]] <- ggplot(plotData, aes(x=factor(genotype), y=expression)) + 
+  geom_point(position=position_jitter(width=0.1), size=2.5) +
+  geom_boxplot(alpha=0.4, outlier.colour="white", outlier.size=0, fill="grey") +
+  theme_bw() + xlab(snp) + ylab(paste(probe, "expression"))
+
+if(length(plots) == 1){
+  plots[[1]]
+} else{
+  cols <- if(length(plots) > 4) 3 else 2
+  multiplot(plotlist=plots, cols=cols)
+}
+```
+
+
 ```{r prepTransBasalTable}
 tab <- dplyr::left_join(meHSFbasal$all$eqtls, limmaTable, by=c(gene="NuID"))
 tab <- dplyr::rename(tab, Symbol=SymbolReannotated, SNP=snps)
