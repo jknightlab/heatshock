@@ -1796,21 +1796,18 @@ for(i in 1:nrow(selGenes_stim)){
     snps = snpsSub,
     gene = pheno,
     cvrt = covarStim,
-    output_file_name.cis = paste0("tmp/eQTL_", selGenes_stim$Symbol[i],"_stim_analysis"),
-    pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1,
+    output_file_name = paste0("tmp/eQTL_", selGenes_stim$Symbol[i],"_stim_analysis"),
+    pvOutputThreshold = 1,
+    pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
-    snpspos = geno$bim,
-    genepos = probePos,
-    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = TRUE,
     noFDRsaveMemory = FALSE)
 }
 
-geneSNPcount_stim <- sapply(meGene_stim, function(x) sum(x$cis$eqtls$FDR < 0.01))
+geneSNPcount_stim <- sapply(meGene_stim, function(x) sum(x$all$eqtls$FDR < 0.01))
 
 meGene_basal <- vector(mode="list", nrow(selGenes_basal))
 names(meGene_basal) <- selGenes_basal$NuID
@@ -1835,21 +1832,20 @@ for(i in 1:nrow(selGenes_basal)){
     snps = snpsSub,
     gene = pheno,
     cvrt = covarBasal,
-    output_file_name.cis = paste0("tmp/eQTL_", selGenes_basal$Symbol[i],"_basal_analysis"),
-    pvOutputThreshold = 0,
-    pvOutputThreshold.cis = 1,
+    output_file_name = paste0("tmp/eQTL_", selGenes_basal$Symbol[i],"_basal_analysis"),
+    pvOutputThreshold = 1,
+    pvOutputThreshold.cis = 0,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
-    snpspos = geno$bim,
-    genepos = probePos,
-    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = FALSE,
     noFDRsaveMemory = FALSE)
 }
-stimEQTL <- formatQTL(meStim, limmaTable)
-basalEQTL <- formatQTL(meBasal, limmaTable)
+geneSNPcount_basal <- sapply(meGene_basal, function(x) sum(x$all$eqtls$FDR < 0.01))
+
+stimEQTL <- do.call(rbind, lapply(meGene_stim, formatQTL, limmaTable))
+basalEQTL <- do.call(rbind, lapply(meGene_basal, formatQTL, limmaTable))
 ```
 
 The genes with significant associations (FDR < 0.05) in either condition are considered
