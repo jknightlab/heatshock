@@ -1421,7 +1421,7 @@ write.table(probePos,
 ```
 
 ```{r writeSNPpos, cache=FALSE, results="hide"}
-write.table(dplyr::filter(geno$bim, snp=="rs7789228"), file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
+write.table(geno$bim, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
 ```
 
 ```{r prepGeno}
@@ -1435,7 +1435,7 @@ if(any(flip)){
 ```
 
 ```{r writeGeno, cache=FALSE, results="hide"}
-write.table(geno$bed["rs7789228",,drop=FALSE], file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
+write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
 ```
 
 ```{r fc_pc}
