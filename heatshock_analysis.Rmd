@@ -1675,6 +1675,8 @@ meStim <- Matrix_eQTL_main(
     pvOutputThreshold.cis = 0.5,
     useModel = modelLINEAR, 
     errorCovariance = numeric(),
+    snpspos = geno$bim,
+    genepos = probePos,
     verbose = FALSE,
     pvalue.hist = FALSE,
     min.pv.by.genesnp = FALSE,
