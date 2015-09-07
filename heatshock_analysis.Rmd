@@ -1677,9 +1677,10 @@ meStim <- Matrix_eQTL_main(
     errorCovariance = numeric(),
     snpspos = geno$bim,
     genepos = probePos,
+    cisDist = cisWindow,
     verbose = FALSE,
     pvalue.hist = FALSE,
-    min.pv.by.genesnp = FALSE,
+    min.pv.by.genesnp = TRUE,
     noFDRsaveMemory = FALSE)
 
 meBasal <- Matrix_eQTL_main(
