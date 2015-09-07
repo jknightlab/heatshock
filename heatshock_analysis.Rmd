@@ -2389,8 +2389,8 @@ j <- 1
 for(i in idx){
   probe <- meHSF$all$eqtls$gene[i]
   snp <- tab$SNP[i]
-  transFit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covarHSF[[1]]))
-  transOffset <- colSums(transFit$coefficients[-(1:2)]*covarHSF[[1]])
+  transFit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covar[[1]]))
+  transOffset <- colSums(transFit$coefficients[-(1:2)]*covar[[1]])
   
   plotData <- data.frame(genotype=geno$bed[snp, ], fc=selectedFC[probe, ] - transOffset)
   plotData <- dplyr::filter(plotData, !is.na(genotype))
