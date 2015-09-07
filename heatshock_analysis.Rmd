@@ -2241,7 +2241,7 @@ plsPlot(plsComp, dimnames(assoc$Results)[[1]][1])
 
 ```{r reQTLGeneTable, cache=FALSE}
 set.caption(tabRef("reQTLgenes", "List of genes with strongest evidence for response QTL."))
-reQTLSigif <- dplyr::filter(geneP, FDR < 0.05)
+reQTLSigif <- dplyr::filter(geneP, Gene.FDR < 0.05)
 pander(dplyr::select(reQTLSigif, -NuID))
 ```
 
