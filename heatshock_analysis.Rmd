@@ -218,6 +218,7 @@ plsPlot <- function(plsComp, genotype, groups="treatment"){
   names(grps) <- groups
   treatAvg <- cbind(do.call(rbind, treatGrp), grps)
   if(length(groups) > 1) treatAvg$sample <- treatAvg[[groups[2]]]
+  else treatAvg$sample <- "avg"
   
   if(!missing(genotype)){
     plsComp[[genotype]] <- as.factor(plsComp[[genotype]])
@@ -234,7 +235,11 @@ plsPlot <- function(plsComp, genotype, groups="treatment"){
     }
   }
   
-  fig <- ggplot(plsComp, aes_string(x="t1", y="t2", group="sample", shape=if(length(groups > 1)) groups[2] else 16))
+  if(length(groups) > 1){
+    fig <- ggplot(plsComp, aes_string(x="t1", y="t2", group="sample", shape=groups[2]))
+  } else {
+    fig <- ggplot(plsComp, aes_string(x="t1", y="t2", group="sample"))
+  }
   if(missing(genotype)){
     fig <- fig + geom_point(data=treatAvg, aes_string(colour=groups[1]), size=5)
   } else {
