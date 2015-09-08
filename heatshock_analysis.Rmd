@@ -222,7 +222,7 @@ plsPlot <- function(plsComp, genotype, groups="treatment"){
   
   if(!missing(genotype)){
     plsComp[[genotype]] <- as.factor(plsComp[[genotype]])
-    grpMean <- by(dplyr::select(plsComp, t1, t2), list(plsComp[[genotype]], 
+    grpMean <- by(dplyr::select(plsComp, t1, t2), c(plsComp[genotype], 
                                                        plsComp[groups]), colMeans)
     grps <- do.call(expand.grid, dimnames(grpMean))
     grps <- dplyr::filter(grps, !sapply(grpMean, is.null))
