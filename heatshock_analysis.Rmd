@@ -2207,7 +2207,7 @@ These SNPs form `r countBlocks(geno$bed, assoc$adj.p.val)` group of highly corre
 likely due to local LD structure.
 
 ```{r treatPLStable, cache=FALSE}
-sel <- which(assoc$adj.p.val < 0.05)
+sel <- which(assoc$adj.p.val < 0.1)
 coef <- assoc$Results[sel, , 1]
 coef[, "JointModel"] <- assoc$adj.p.val[sel]
 colnames(coef)[ncol(coef)] <- "Joint model FDR"
