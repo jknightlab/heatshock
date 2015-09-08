@@ -210,29 +210,38 @@ outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID",
 			theme_bw() + scale_colour_discrete(guide="none")
 }
 
-plsPlot <- function(plsComp, genotype){
+plsPlot <- function(plsComp, genotype, groups="treatment"){
   treatGrp <- by(dplyr::select(plsComp, t1, t2), 
-                 list(plsComp$treatment, plsComp$sex), colMeans)
+                 plsComp[groups], colMeans)
   grps <- do.call(expand.grid, dimnames(treatGrp))
-    grps <- dplyr::filter(grps, !sapply(treatGrp, is.null))
-    names(grps) <- c("treatment", "sex")
+  grps <- dplyr::filter(grps, !sapply(treatGrp, is.null))
+  names(grps) <- groups
   treatAvg <- cbind(do.call(rbind, treatGrp), grps)
-  treatAvg$sample <- treatAvg$sex
+  if(length(groups) > 1) treatAvg$sample <- treatAvg[[groups[2]]]
+  else treatAvg$sample <- "avg"
   
   if(!missing(genotype)){
     plsComp[[genotype]] <- as.factor(plsComp[[genotype]])
-    grpMean <- by(dplyr::select(plsComp, t1, t2), list(plsComp[[genotype]], 
-                                                       plsComp$treatment, plsComp$sex), colMeans)
+    grpMean <- by(dplyr::select(plsComp, t1, t2), c(plsComp[genotype], 
+                                                       plsComp[groups]), colMeans)
     grps <- do.call(expand.grid, dimnames(grpMean))
     grps <- dplyr::filter(grps, !sapply(grpMean, is.null))
-    names(grps) <- c(genotype, "treatment", "sex")
-    genoAvg <- cbind(do.call(rbind, grpMean), grps) 
-    genoAvg$sample <- paste(genoAvg[[genotype]], genoAvg[["sex"]], sep="_")
+    names(grps) <- c(genotype, groups)
+    genoAvg <- cbind(do.call(rbind, grpMean), grps)
+    if(length(groups) > 1){
+      genoAvg$sample <- paste(genoAvg[[genotype]], genoAvg[[groups[2]]], sep="_")
+    } else{
+      genoAvg$sample <- genoAvg[[genotype]]
+    }
   }
   
-  fig <- ggplot(plsComp, aes(x=t1, y=t2, group=sample, shape=sex))
+  if(length(groups) > 1){
+    fig <- ggplot(plsComp, aes_string(x="t1", y="t2", group="sample", shape=groups[2]))
+  } else {
+    fig <- ggplot(plsComp, aes_string(x="t1", y="t2", group="sample"))
+  }
   if(missing(genotype)){
-    fig <- fig + geom_point(data=treatAvg, aes(colour=treatment), size=5)
+    fig <- fig + geom_point(data=treatAvg, aes_string(colour=groups[1]), size=5)
   } else {
       fig <- fig + geom_point(data=treatAvg, size=5, colour="black")
       fig <- fig + geom_point(data=genoAvg, aes_string(colour=genotype), size=5)
@@ -242,7 +251,7 @@ plsPlot <- function(plsComp, genotype){
   fig <- fig + geom_line(data=treatAvg, colour="black",  line.width=2,
               arrow=grid::arrow(type="closed", length=grid::unit(0.15, "inches"), angle=20))
   if(missing(genotype)){
-    fig <- fig + geom_point(aes(colour=treatment), size=3, alpha=0.6)
+    fig <- fig + geom_point(aes_string(colour=groups[1]), size=3, alpha=0.6)
     fig <- fig + scale_colour_manual(values=c(Basal="blue", Stim="red"))
   } else {
     fig <- fig + geom_point(aes_string(colour=genotype), size=3, alpha=0.6)
@@ -2198,7 +2207,7 @@ These SNPs form `r countBlocks(geno$bed, assoc$adj.p.val)` group of highly corre
 likely due to local LD structure.
 
 ```{r treatPLStable, cache=FALSE}
-sel <- which(assoc$adj.p.val < 0.05)
+sel <- which(assoc$adj.p.val < 0.1)
 coef <- assoc$Results[sel, , 1]
 coef[, "JointModel"] <- assoc$adj.p.val[sel]
 colnames(coef)[ncol(coef)] <- "Joint model FDR"
@@ -2222,19 +2231,23 @@ fig2 <- ggplot(data.frame(p.value=apply(pPerm,1, min)), aes(x=-log10(p.value))) 
 multiplot(fig1, fig2, cols=2)
 ```
 
-The SNP rs7789228 is located in an intron of RSBN1L and is annotated as falling within an
-enhancer by Ensembl's regulatory build (Ensembl release 81). Although none of the cell lines
-studied here are included in the regulatory build genome segmentation data are available for
-GM12878, a HapMap cell line of Caucasian ancestry, providing a useful reference for the
-samples in this study. In GM12878 the enhancer element is annotated as being active with
-evidence of CTCF and RAD21 binding.
+`r figRef("plsGenePlot")` shows two examples of genotypes associating with the
+global heat shock response. Note that the second one (`r dimnames(assoc$Results)[[1]][3]`)
+is located within a CTCF binding site immediately downstream of CDKN1A, 
+an important regulator of cell cycle progression. It may also be interesting to note that
+allele frequencies vary markedly across populations. While the frequency of the 
+ancestral T allele is 79% in the Yoruba 1000 genomes samples it is only observed with
+a frequency of 24% in European samples.
 
-```{r plsGenoPlot, cache=FALSE, fig.cap=figRef("plsGeno", "Global response to heat shock by genotype.")}
+
+```{r plsGenoPlot, cache=FALSE, fig.cap=figRef("plsGeno", paste0("Global response to heat shock by genotype for ", dimnames(assoc$Results)[[1]][1], "(left) and ", dimnames(assoc$Results)[[1]][3], "(right). Each individual is represented by two points corresponding to basal and stimulated state with arrows connecting paired samples. Genotypes are indicated by colour with blue corresponding to homozyguous carriers of the major allele, red to heterozygots and yellow indicating individuals that carry two copies of the minor allele."))}
 genotypes <- data.frame(sample=colnames(geno$bed), stringsAsFactors=FALSE)
 genotypes <- cbind(genotypes, t(geno$bed[dimnames(assoc$Results)[[1]][sel],]))
 plsComp <- dplyr::left_join(plsComp, genotypes, by="sample")
 
-plsPlot(plsComp, dimnames(assoc$Results)[[1]][1])
+fig1 <- plsPlot(plsComp, dimnames(assoc$Results)[[1]][1]) + guides(colour="none")
+fig2 <- plsPlot(plsComp, dimnames(assoc$Results)[[1]][3]) + guides(colour="none")
+multiplot(fig1, fig2, cols=2)
 ```
 
 ## Response QTL analysis
