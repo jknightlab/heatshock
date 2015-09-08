@@ -2425,8 +2425,8 @@ plots <- vector(mode="list", 2)
 probe <- as.character(meHSF$all$eqtls$gene[1])
 gene <- dplyr::filter(limmaTable, NuID == probe)$SymbolReannotated[1]
 snp <- as.character(meHSF$all$eqtls$snps[1])
-transFit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covarHSF[[1]]))
-transOffset <- colSums(transFit$coefficients[-(1:2)]*covarHSF[[1]])
+transFit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covar[[1]]))
+transOffset <- colSums(transFit$coefficients[-(1:2)]*covar[[1]])
   
 plotData <- data.frame(genotype=geno$bed[snp, ], fc=selectedFC[probe, ] - transOffset)
 plotData <- dplyr::filter(plotData, !is.na(genotype))
