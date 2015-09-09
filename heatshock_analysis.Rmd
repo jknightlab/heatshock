@@ -1395,6 +1395,7 @@ or binding motifs (P < 0.05) in their promoter region.
 
 ```{r selectHeatShock}
 selSymbol <- dplyr::filter(r_gene, expr == "up", HSFpeak == 1 | pwm.p.value < 0.05)$SymbolReannotated
+selSymbol <- union(selSymbol, "CDKN1A")
 selectedGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% selSymbol)
 probePos <- t(sapply(selectedGenes$GenomicLocation, 
                      str_extract, c("^chr([[:digit:]]+|X)(_[[:alnum:]]+_hap[[:digit:]]+)*", 
@@ -2295,7 +2296,7 @@ ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
 
 ```{r eQTLStimGeneTable, cache=FALSE}
 set.caption(tabRef("eQTLstimGenes", "List of genes with strongest evidence for genetic modulation of gene expression after heat shock treatment. Significant associations only observed after heat shock treatment are highlight."))
-highlight <- which(head(geneP_stim)$Symbol %in% stimGenes$Symbol)
+highlight <- which(head(geneP_stim)$Symbol %in% stimGenes$Gene)
 rows <- max(6, max(which(geneP_stim$Gene.FDR < 0.05)))
 pander(dplyr::select(head(geneP_stim, rows), -ArrayAddress, -NuID), 
        emphasize.strong.rows=if(length(highlight)) highlight else NULL)
@@ -2319,25 +2320,24 @@ in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`
 `r if(nrow(stimGenes) > 0 || nrow(basalGenes) > 0) "for a list of SNPs of interest for these genes." else ""`
 
 ```{r topGeneSNPs_stim, cache=FALSE, include=nrow(stimGenes) > 0, eval=nrow(stimGenes) > 0}
-set.caption(tabRef("topGeneSNPs_stim", paste("Top eSNPs for", stimGenes$Symbol[1], "following heat shock.")))
-tab <- head(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_stim[1], 20))
-tab$gene <- stimGenes$Symbol[1]
+set.caption(tabRef("topGeneSNPs_stim", paste("Top eSNPs for", stimGenes$Gene[1], "following heat shock.")))
+tab <- head(meGene_stim[[stimGenes$NuID[1]]]$all$eqtls, min(geneSNPcount_stim[1], 20))
+tab$gene <- stimGenes$Gene[1]
 pander(tab)
 ```
 
 ```{r topGeneSNPs_basal, cache=FALSE, include=nrow(basalGenes) > 0, eval=nrow(basalGenes) > 0}
 set.caption(tabRef("topGeneSNPs_basal", paste("Top eSNPs for", basalGenes$Symbol[1], "in basal state.")))
-tab <- head(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls, min(geneSNPcount_basal[1], 20))
+tab <- head(meGene_basal[[basalGenes$NuID[1]]]$all$eqtls, min(geneSNPcount_basal[1], 20))
 tab$gene <- basalGenes$Symbol[1]
 pander(tab)
 ```
 
 ```{r topEgeneSNPplot, cache=FALSE, fig.cap=figRef("topEgeneSNP", paste("Gene expression by genotype for genes showing evidence of condition specific eQTL. Gene expression estimates were corrected for the effect of covariates.")), include=nrow(basalGenes) + nrow(stimGenes) > 0, eval=nrow(basalGenes) + nrow(stimGenes) > 0}
-
 stimPlot <- NULL
 if(nrow(stimGenes)){
-  snp <- as.character(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls$snps[1])
-  gene <- stimGenes$Symbol[1]
+  snp <- as.character(meGene_stim[[stimGenes$NuID[1]]]$all$eqtls$snps[1])
+  gene <- stimGenes$Gene[1]
   probe <- stimGenes$NuID[1]
   
   stimFit <- lm(stimExpr[probe, ] ~ geno$bed[snp,] + t(covarStim[[1]]))
@@ -2358,7 +2358,7 @@ if(nrow(stimGenes)){
 
 basalPlot <- NULL
 if(nrow(basalGenes)){
-  snp <- as.character(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls$snps[1])
+  snp <- as.character(meGene_basal[[basalGenes$NuID[1]]]$all$eqtls$snps[1])
   gene <- basalGenes$Symbol[1]
   probe <- basalGenes$NuID[1]
   
