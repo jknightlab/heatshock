@@ -2254,8 +2254,9 @@ multiplot(fig1, fig2, cols=2)
 
 ```{r reQTLGeneTable, cache=FALSE}
 set.caption(tabRef("reQTLgenes", "List of genes with strongest evidence for response QTL."))
-reQTLSigif <- dplyr::filter(geneP, Gene.FDR < 0.05)
-pander(dplyr::select(reQTLSigif, -NuID))
+nrows <- max(which(geneP$Gene.FDR <= max(0.05, geneP$Gene.FDR[1])))
+nrows <- min(max(nrows, 5), 20)
+pander(dplyr::select(geneP[1:nrows,], -NuID))
 ```
 
 The association test designed to identify genetic modulators of gene expression response to 
