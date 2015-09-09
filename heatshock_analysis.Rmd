@@ -2320,9 +2320,9 @@ in the basal state (`r tabRef("eQTLstimGenes")` and `r tabRef("eQTLbasalGenes")`
 `r if(nrow(stimGenes) > 0 || nrow(basalGenes) > 0) "for a list of SNPs of interest for these genes." else ""`
 
 ```{r topGeneSNPs_stim, cache=FALSE, include=nrow(stimGenes) > 0, eval=nrow(stimGenes) > 0}
-set.caption(tabRef("topGeneSNPs_stim", paste("Top eSNPs for", stimGenenes$Gene[1], "following heat shock.")))
+set.caption(tabRef("topGeneSNPs_stim", paste("Top eSNPs for", stimGenes$Gene[1], "following heat shock.")))
 tab <- head(meGene_stim[[stimGenes$NuID[1]]]$all$eqtls, min(geneSNPcount_stim[1], 20))
-tab$gene <- stimGenenes$Gene[1]
+tab$gene <- stimGenes$Gene[1]
 pander(tab)
 ```
 
@@ -2337,7 +2337,7 @@ pander(tab)
 stimPlot <- NULL
 if(nrow(stimGenes)){
   snp <- as.character(meGene_stim[[stimGenes$NuID[1]]]$all$eqtls$snps[1])
-  gene <- stimGenenes$Gene[1]
+  gene <- stimGenes$Gene[1]
   probe <- stimGenes$NuID[1]
   
   stimFit <- lm(stimExpr[probe, ] ~ geno$bed[snp,] + t(covarStim[[1]]))
