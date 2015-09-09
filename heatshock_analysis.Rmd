@@ -2333,10 +2333,9 @@ pander(tab)
 ```
 
 ```{r topEgeneSNPplot, cache=FALSE, fig.cap=figRef("topEgeneSNP", paste("Gene expression by genotype for genes showing evidence of condition specific eQTL. Gene expression estimates were corrected for the effect of covariates.")), include=nrow(basalGenes) + nrow(stimGenes) > 0, eval=nrow(basalGenes) + nrow(stimGenes) > 0}
-
 stimPlot <- NULL
 if(nrow(stimGenes)){
-  snp <- as.character(meGene_stim[[stimGenes$NuID[1]]]$cis$eqtls$snps[1])
+  snp <- as.character(meGene_stim[[stimGenes$NuID[1]]]$all$eqtls$snps[1])
   gene <- stimGenes$Symbol[1]
   probe <- stimGenes$NuID[1]
   
@@ -2358,7 +2357,7 @@ if(nrow(stimGenes)){
 
 basalPlot <- NULL
 if(nrow(basalGenes)){
-  snp <- as.character(meGene_basal[[basalGenes$NuID[1]]]$cis$eqtls$snps[1])
+  snp <- as.character(meGene_basal[[basalGenes$NuID[1]]]$all$eqtls$snps[1])
   gene <- basalGenes$Symbol[1]
   probe <- basalGenes$NuID[1]
   
