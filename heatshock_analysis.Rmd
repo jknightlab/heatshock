@@ -2232,7 +2232,7 @@ fig2 <- ggplot(data.frame(p.value=apply(pPerm,1, min)), aes(x=-log10(p.value))) 
 multiplot(fig1, fig2, cols=2)
 ```
 
-`r figRef("plsGenePlot")` shows two examples of genotypes associating with the
+`r figRef("plsGeno")` shows two examples of genotypes associating with the
 global heat shock response. Note that the second one (`r dimnames(assoc$Results)[[1]][3]`)
 is located within a CTCF binding site immediately downstream of CDKN1A, 
 an important regulator of cell cycle progression. It may also be interesting to note that
