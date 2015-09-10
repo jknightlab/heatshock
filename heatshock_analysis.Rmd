@@ -2248,7 +2248,7 @@ ancestral T allele is 79% in the Yoruba 1000 genomes samples it is only observed
 a frequency of 24% in European samples.
 
 
-```{r plsGenoPlot, cache=FALSE, fig.cap=figRef("plsGeno", paste0("Global response to heat shock by genotype for ", dimnames(assoc$Results)[[1]][1], "(left) and ", dimnames(assoc$Results)[[1]][3], "(right). Each individual is represented by two points corresponding to basal and stimulated state with arrows connecting paired samples. Genotypes are indicated by colour with blue corresponding to homozyguous carriers of the major allele and red indicating the presence of at least one minor allele."))}
+```{r plsGenoPlot, cache=FALSE, fig.cap=figRef("plsGeno", paste0("Global response to heat shock by genotype for ", dimnames(assoc$Results)[[1]][1], " (left) and ", dimnames(assoc$Results)[[1]][3], " (right). Each individual is represented by two points corresponding to basal and stimulated state with arrows connecting paired samples. Genotypes are indicated by colour with blue corresponding to homozyguous carriers of the major allele and red indicating the presence of at least one minor allele."))}
 genotypes <- data.frame(sample=colnames(geno$bed), stringsAsFactors=FALSE)
 genotypes <- cbind(genotypes, t(geno$bed[dimnames(assoc$Results)[[1]][sel],]))
 plsComp <- dplyr::left_join(plsComp, genotypes, by="sample")
