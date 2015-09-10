@@ -211,7 +211,8 @@ outlierPlot <- function(data, x="PC1", y="PC2", group="Sentrix_ID",
 			theme_bw() + scale_colour_discrete(guide="none")
 }
 
-plsPlot <- function(plsComp, genotype, groups="treatment"){
+plsPlot <- function(plsComp, genotype, groups="treatment", type=c("present", "genotype")){
+  type <- match.arg(type)
   treatGrp <- by(dplyr::select(plsComp, t1, t2), 
                  plsComp[groups], colMeans)
   grps <- do.call(expand.grid, dimnames(treatGrp))
@@ -222,6 +223,9 @@ plsPlot <- function(plsComp, genotype, groups="treatment"){
   else treatAvg$sample <- "avg"
   
   if(!missing(genotype)){
+    if(type == "present"){
+      plsComp[[genotype]] <- pmin(plsComp[[genotype]], 1)
+    }
     plsComp[[genotype]] <- as.factor(plsComp[[genotype]])
     grpMean <- by(dplyr::select(plsComp, t1, t2), c(plsComp[genotype], 
                                                        plsComp[groups]), colMeans)
