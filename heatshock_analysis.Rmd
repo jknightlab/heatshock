@@ -1600,8 +1600,9 @@ geneSNPcount <- sapply(meGene, function(x) sum(x$cis$eqtls$FDR < 0.01))
 
 ```
 
-```{r bundleReQTLinput, cache=FALSE, include=FALSE}
+```{r bundleReQTL, cache=FALSE, include=FALSE}
 system("tar -czf tmp/reQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GRCh37.tab selected_probes_fc.tab genotypes_GRCh37.tab covariates.tab")
+system(paste("tar -czf tmp/reQTL_result.tar.gz -C tmp reQTL_analysis", paste(paste0("reQTL_", selGenes$Symbol,"analysis"), collapse=" ")))
 ```
 
 ## Analysis of eQTL in basal and stimulated cells
@@ -1870,8 +1871,9 @@ stimGenes <- dplyr::filter(stimEQTL, FDR < 0.05 & !Gene %in% basal_extended)
 basalGenes <- dplyr::filter(basalEQTL, FDR < 0.05 & !Gene %in% stim_extended)
 ```
 
-```{r bundleEQTLinput, cache=FALSE, include=FALSE}
+```{r bundleEQTL, cache=FALSE, include=FALSE}
 system("tar -czf tmp/eQTL_input.tar.gz -C tmp selected_probes_pos.tab snp_loc_GRCh37.tab selected_probes_stim_expr.tab selected_probes_basal_expr.tab covar_expr_stim.tab covar_expr_basal.tab")
+system(paste("tar -czf tmp/eQTL_result.tar.gz -C tmp eQTL_basal_analysis eQTL_stim_analysis", paste(paste0("eQTL_", selGenes_basal$Symbol,"_basal_analysis"), collapse=" "), paste(paste0("eQTL_", selGenes_basal$Symbol,"_stim_analysis"), collapse=" ")))
 ```
 
 ## Trans associations for SNPs upstream of HSF1 and HSF2
