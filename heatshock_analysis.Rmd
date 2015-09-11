@@ -1411,9 +1411,19 @@ probePos[,3] <- str_replace_all(probePos[,3], "[:+-]", "")
 probePos <- cbind(rownames(probePos), probePos)
 ```
 
+```{r prepGeno}
+rownames(geno$bed) <- str_extract(rownames(geno$bed), "NA[[:digit:]]+")
+geno$bed <- geno$bed[colnames(selectedFC), geno$bim$snp]
+geno$bed <- t(geno$bed)
+flip <- rowSums(geno$bed, na.rm=TRUE) > ncol(geno$bed)
+if(any(flip)){
+  geno$bed[flip, ] <- -geno$bed[flip]+2
+}
+```
+
 ```{r selectSNPs}
 selGlobal <- dimnames(assoc$Result)[[1]][which(assoc$adj.p.val < 0.1)]
-globalSNPs <- t(geno$bed[, selGlobal, drop=FALSE])
+globalSNPs <- geno$bed[selGlobal, ,drop=FALSE]
 ```
 
 ```{r writeGlobalSNPs, cache=FALSE}
@@ -1610,16 +1620,6 @@ write.table(probePos,
 
 ```{r writeSNPpos, cache=FALSE, results="hide"}
 write.table(geno$bim, file="tmp/snp_loc_GRCh37.tab", quote=FALSE, sep="\t")
-```
-
-```{r prepGeno}
-rownames(geno$bed) <- str_extract(rownames(geno$bed), "NA[[:digit:]]+")
-geno$bed <- geno$bed[colnames(selectedFC), geno$bim$snp]
-geno$bed <- t(geno$bed)
-flip <- rowSums(geno$bed, na.rm=TRUE) > ncol(geno$bed)
-if(any(flip)){
-  geno$bed[flip, ] <- -geno$bed[flip]+2
-}
 ```
 
 ```{r writeGeno, cache=FALSE, results="hide"}
