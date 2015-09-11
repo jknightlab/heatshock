@@ -2387,7 +2387,7 @@ pander(tab)
 ```{r globalSNPGenes_stim, cache=FALSE}
 tab <- meGlobalStim$all$eqtls
 cut <- tab$FDR[5]
-n <- min(max(which(tab$FDR) <= cut), 20)
+n <- min(max(which(tab$FDR <= cut)), 20)
 tab <- head(tab, n)
 tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
 tab <- dplyr::select(tab, -gene) %>% dplyr::rename(Gene=SymbolReannotated)
@@ -2398,7 +2398,7 @@ pander(tab)
 ```{r globalSNPGenes_basal, cache=FALSE}
 tab <- meGlobalBasal$all$eqtls
 cut <- tab$FDR[5]
-n <- min(max(which(tab$FDR) <= cut), 20)
+n <- min(max(which(tab$FDR <= cut)), 20)
 tab <- head(tab, n)
 tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
 tab <- dplyr::select(tab, -gene) %>% dplyr::rename(Gene=SymbolReannotated)
