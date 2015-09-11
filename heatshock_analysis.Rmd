@@ -1491,7 +1491,7 @@ if(nPC_expr > 0){
   pc_basal <- pca_basal$x
 }
 covarBasal <- geno$fam[-1, , drop=FALSE]
-if(nPC_expr > 0) covarbasal <- rbind(covarbasal, t(pc_basal[, 1:nPC_expr]))
+if(nPC_expr > 0) covarbasal <- rbind(covarBasal, t(pc_basal[, 1:nPC_expr]))
 ```
 
 ```{r writeExprCovar, cache=FALSE}
