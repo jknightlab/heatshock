@@ -1413,7 +1413,7 @@ probePos <- cbind(rownames(probePos), probePos)
 
 ```{r selectSNPs}
 selGlobal <- dimnames(assoc$Result)[[1]][which(assoc$adj.p.val < 0.1)]
-globalSNPs <- geno$bed[selGlobal,]
+globalSNPs <- t(geno$bed[, selGlobal, drop=FALSE])
 ```
 
 ```{r writeGlobalSNPs, cache=FALSE}
