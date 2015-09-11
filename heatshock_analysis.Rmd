@@ -1490,7 +1490,7 @@ if(nPC_expr > 0){
   pca_basal <- prcomp(t(basalExpr), center=TRUE, scale = TRUE)
   pc_basal <- pca_basal$x
 }
-covarbasal <- geno$fam[-1, , drop=FALSE]
+covarBasal <- geno$fam[-1, , drop=FALSE]
 if(nPC_expr > 0) covarbasal <- rbind(covarbasal, t(pc_basal[, 1:nPC_expr]))
 ```
 
