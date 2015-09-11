@@ -2333,6 +2333,41 @@ fig2 <- plsPlot(plsComp, dimnames(assoc$Results)[[1]][3]) + guides(colour="none"
 multiplot(fig1, fig2, cols=2)
 ```
 
+
+```{r globalSNPGenes_fc, cache=FALSE}
+tab <- meGlobal$all$eqtls
+cut <- tab$FDR[5]
+n <- min(max(which(tab$FDR <= cut)), 20)
+tab <- head(tab, n)
+tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
+tab <- dplyr::select(tab, -gene) %>% dplyr::rename(Gene=SymbolReannotated)
+set.caption(tabRef("globalSNPGenes_fc", "Associations between global response SNPs and gene level heat shock response."))
+pander(tab)
+```
+
+```{r globalSNPGenes_stim, cache=FALSE}
+tab <- meGlobalStim$all$eqtls
+cut <- tab$FDR[5]
+n <- min(max(which(tab$FDR <= cut)), 20)
+tab <- head(tab, n)
+tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
+tab <- dplyr::select(tab, -gene) %>% dplyr::rename(Gene=SymbolReannotated)
+set.caption(tabRef("globalSNPGenes_stim", "Associations between global response SNPs and gene expression following heat shock."))
+pander(tab)
+```
+
+```{r globalSNPGenes_basal, cache=FALSE}
+tab <- meGlobalBasal$all$eqtls
+cut <- tab$FDR[5]
+n <- min(max(which(tab$FDR <= cut)), 20)
+tab <- head(tab, n)
+tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
+tab <- dplyr::select(tab, -gene) %>% dplyr::rename(Gene=SymbolReannotated)
+set.caption(tabRef("globalSNPGenes_stim", "Associations between global response SNPs and gene expression in basal state."))
+pander(tab)
+```
+
+
 ## Response QTL analysis
 
 ```{r reQTLGeneTable, cache=FALSE}
@@ -2371,39 +2406,6 @@ ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
   geom_point(position=position_jitter(width=0.1), size=2.5) +
   geom_boxplot(alpha=0.4, outlier.colour="white", fill="grey") +
   theme_bw() + xlab(snp) + ylab("log fold change")
-```
-
-```{r globalSNPGenes_fc, cache=FALSE}
-tab <- meGlobal$all$eqtls
-cut <- tab$FDR[5]
-n <- min(max(which(tab$FDR <= cut)), 20)
-tab <- head(tab, n)
-tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
-tab <- dplyr::select(tab, -gene) %>% dplyr::rename(Gene=SymbolReannotated)
-set.caption(tabRef("globalSNPGenes_fc", "Associations between global response SNPs and gene level heat shock response."))
-pander(tab)
-```
-
-```{r globalSNPGenes_stim, cache=FALSE}
-tab <- meGlobalStim$all$eqtls
-cut <- tab$FDR[5]
-n <- min(max(which(tab$FDR <= cut)), 20)
-tab <- head(tab, n)
-tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
-tab <- dplyr::select(tab, -gene) %>% dplyr::rename(Gene=SymbolReannotated)
-set.caption(tabRef("globalSNPGenes_stim", "Associations between global response SNPs and gene expression following heat shock."))
-pander(tab)
-```
-
-```{r globalSNPGenes_basal, cache=FALSE}
-tab <- meGlobalBasal$all$eqtls
-cut <- tab$FDR[5]
-n <- min(max(which(tab$FDR <= cut)), 20)
-tab <- head(tab, n)
-tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
-tab <- dplyr::select(tab, -gene) %>% dplyr::rename(Gene=SymbolReannotated)
-set.caption(tabRef("globalSNPGenes_stim", "Associations between global response SNPs and gene expression in basal state."))
-pander(tab)
 ```
 
 
