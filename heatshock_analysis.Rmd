@@ -1506,7 +1506,7 @@ snpsGlobal$fileOmitCharacters <- "NA"
 snpsGlobal$fileSkipRows <- 1
 snpsGlobal$fileSkipColumns <- 1
 snpsGlobal$fileSliceSize <- 2000
-snpsGlobal$LoadFile("tmp/genotypes_GRCh37.tab")
+snpsGlobal$LoadFile("tmp/global_geno.tab")
 
 pheno <- SlicedData$new();
 pheno$fileDelimiter <- "\t"
