@@ -1484,14 +1484,14 @@ if(nPC_expr > 0){
   pc_stim <- pca_stim$x
 }
 covarStim <- geno$fam[-1, , drop=FALSE]
-if(nPC_stim > 0) covarStim <- rbind(covarStim, t(pc_stim[, 1:nPC_stim]))
+if(nPC_expr > 0) covarStim <- rbind(covarStim, t(pc_stim[, 1:nPC_stim]))
 
 if(nPC_expr > 0){
   pca_basal <- prcomp(t(basalExpr), center=TRUE, scale = TRUE)
   pc_basal <- pca_basal$x
 }
 covarbasal <- geno$fam[-1, , drop=FALSE]
-if(nPC_basal > 0) covarbasal <- rbind(covarbasal, t(pc_basal[, 1:nPC_basal]))
+if(nPC_expr > 0) covarbasal <- rbind(covarbasal, t(pc_basal[, 1:nPC_basal]))
 ```
 
 ```{r writeExprCovar, cache=FALSE}
