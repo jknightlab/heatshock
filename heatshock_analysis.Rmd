@@ -1416,6 +1416,10 @@ selGlobal <- dimnames(assoc$Result)[[1]][which(assoc$adj.p.val < 0.1)]
 globalSNPs <- geno$bed[selGlobal,]
 ```
 
+```{r writeGlobalSNPs, cache=FALSE}
+writeTable(globalSNPs, file="tmp/global_geno.tab", sep="\t", quote=FALSE)
+```
+
 ```{r probeFC}
 selectedExpr <- sig.data.norm[selectedGenes$ArrayAddress,]
 basalIdx <- grep("_Basal", colnames(selectedExpr))
@@ -1485,7 +1489,105 @@ write.table(covarStim, file = "tmp/covar_expr_stim.tab", sep="\t", quote=FALSE)
 write.table(covarBasal, file = "tmp/covar_expr_basal.tab", sep="\t", quote=FALSE)
 ```
 
+```{r prepGlobalQTL, results="hide", cache=FALSE}
+snpsGlobal <- SlicedData$new();
+snpsGlobal$fileDelimiter <- "\t"
+snpsGlobal$fileOmitCharacters <- "NA"
+snpsGlobal$fileSkipRows <- 1
+snpsGlobal$fileSkipColumns <- 1
+snpsGlobal$fileSliceSize <- 2000
+snpsGlobal$LoadFile("tmp/genotypes_GRCh37.tab")
 
+pheno <- SlicedData$new();
+pheno$fileDelimiter <- "\t"
+pheno$fileOmitCharacters <- "NA"
+pheno$fileSkipRows <- 1
+pheno$fileSkipColumns <- 1
+pheno$fileSliceSize <- 2000
+pheno$LoadFile("tmp/selected_probes_fc.tab")
+
+covar <- SlicedData$new();
+covar$fileDelimiter <- "\t"
+covar$fileOmitCharacters <- "NA"
+covar$fileSkipRows <- 1
+covar$fileSkipColumns <- 1
+covar$fileSliceSize <- 2000
+covar$LoadFile("tmp/covariates.tab")
+```
+
+```{r runGlobalMatrixEQTL, results="hide", cache=FALSE}
+meGlobal <- Matrix_eQTL_main(
+    snps = snpsGlobal,
+    gene = pheno,
+    cvrt = covar,
+    output_file_name = "tmp/reQTL_global_analysis",
+    pvOutputThreshold = 1,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    noFDRsaveMemory = FALSE)
+```
+
+```{r prepEQTL, results="hide", cache=FALSE}
+phenoStim <- SlicedData$new();
+phenoStim$fileDelimiter <- "\t"
+phenoStim$fileOmitCharacters <- "NA"
+phenoStim$fileSkipRows <- 1
+phenoStim$fileSkipColumns <- 1
+phenoStim$fileSliceSize <- 2000
+phenoStim$LoadFile("tmp/selected_probes_stim_expr.tab")
+
+covarStim <- SlicedData$new();
+covarStim$fileDelimiter <- "\t"
+covarStim$fileOmitCharacters <- "NA"
+covarStim$fileSkipRows <- 1
+covarStim$fileSkipColumns <- 1
+covarStim$fileSliceSize <- 2000
+covarStim$LoadFile("tmp/covar_expr_stim.tab")
+
+phenoBasal <- SlicedData$new();
+phenoBasal$fileDelimiter <- "\t"
+phenoBasal$fileOmitCharacters <- "NA"
+phenoBasal$fileSkipRows <- 1
+phenoBasal$fileSkipColumns <- 1
+phenoBasal$fileSliceSize <- 2000
+phenoBasal$LoadFile("tmp/selected_probes_basal_expr.tab")
+
+covarBasal <- SlicedData$new();
+covarBasal$fileDelimiter <- "\t"
+covarBasal$fileOmitCharacters <- "NA"
+covarBasal$fileSkipRows <- 1
+covarBasal$fileSkipColumns <- 1
+covarBasal$fileSliceSize <- 2000
+covarBasal$LoadFile("tmp/covar_expr_basal.tab")
+```
+
+```{r runEQTL, cache=FALSE, results="hide"}
+meGlobalStim <- Matrix_eQTL_main(
+    snps = snpsGlobal,
+    gene = phenoStim,
+    cvrt = covarStim,
+    output_file_name.cis = "tmp/eQTL_stim_global_analysis",
+    pvOutputThreshold = 1,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    noFDRsaveMemory = FALSE)
+
+meGlobalBasal <- Matrix_eQTL_main(
+    snps = snpsGlobal,
+    gene = phenoBasal,
+    cvrt = covarBasal,
+    output_file_name.cis = "tmp/eQTL_basal_global_analysis",
+    pvOutputThreshold = 1,
+    useModel = modelLINEAR, 
+    errorCovariance = numeric(),
+    verbose = FALSE,
+    pvalue.hist = FALSE,
+    noFDRsaveMemory = FALSE)
+```
 
 
 ## Response QTL analysis
@@ -1536,22 +1638,6 @@ snps$fileSkipRows <- 1
 snps$fileSkipColumns <- 1
 snps$fileSliceSize <- 2000
 snps$LoadFile("tmp/genotypes_GRCh37.tab")
-
-pheno <- SlicedData$new();
-pheno$fileDelimiter <- "\t"
-pheno$fileOmitCharacters <- "NA"
-pheno$fileSkipRows <- 1
-pheno$fileSkipColumns <- 1
-pheno$fileSliceSize <- 2000
-pheno$LoadFile("tmp/selected_probes_fc.tab")
-
-covar <- SlicedData$new();
-covar$fileDelimiter <- "\t"
-covar$fileOmitCharacters <- "NA"
-covar$fileSkipRows <- 1
-covar$fileSkipColumns <- 1
-covar$fileSliceSize <- 2000
-covar$LoadFile("tmp/covariates.tab")
 
 probePos <- read.table("tmp/selected_probes_pos.tab", header=TRUE)
 ```
@@ -1669,40 +1755,6 @@ as heat shock response genes.
 
 The analysis was carried out with Matrix-eQTL using an approach equivalent to the one
 used for the [response QTL analysis](#response-qtl-analysis).
-
-```{r prepEQTL, results="hide", cache=FALSE}
-phenoStim <- SlicedData$new();
-phenoStim$fileDelimiter <- "\t"
-phenoStim$fileOmitCharacters <- "NA"
-phenoStim$fileSkipRows <- 1
-phenoStim$fileSkipColumns <- 1
-phenoStim$fileSliceSize <- 2000
-phenoStim$LoadFile("tmp/selected_probes_stim_expr.tab")
-
-covarStim <- SlicedData$new();
-covarStim$fileDelimiter <- "\t"
-covarStim$fileOmitCharacters <- "NA"
-covarStim$fileSkipRows <- 1
-covarStim$fileSkipColumns <- 1
-covarStim$fileSliceSize <- 2000
-covarStim$LoadFile("tmp/covar_expr_stim.tab")
-
-phenoBasal <- SlicedData$new();
-phenoBasal$fileDelimiter <- "\t"
-phenoBasal$fileOmitCharacters <- "NA"
-phenoBasal$fileSkipRows <- 1
-phenoBasal$fileSkipColumns <- 1
-phenoBasal$fileSliceSize <- 2000
-phenoBasal$LoadFile("tmp/selected_probes_basal_expr.tab")
-
-covarBasal <- SlicedData$new();
-covarBasal$fileDelimiter <- "\t"
-covarBasal$fileOmitCharacters <- "NA"
-covarBasal$fileSkipRows <- 1
-covarBasal$fileSkipColumns <- 1
-covarBasal$fileSliceSize <- 2000
-covarBasal$LoadFile("tmp/covar_expr_basal.tab")
-```
 
 ```{r runEQTL, cache=FALSE, results="hide"}
 meStim <- Matrix_eQTL_main(
