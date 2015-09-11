@@ -1417,7 +1417,7 @@ globalSNPs <- t(geno$bed[, selGlobal, drop=FALSE])
 ```
 
 ```{r writeGlobalSNPs, cache=FALSE}
-writeTable(globalSNPs, file="tmp/global_geno.tab", sep="\t", quote=FALSE)
+write.table(globalSNPs, file="tmp/global_geno.tab", sep="\t", quote=FALSE)
 ```
 
 ```{r probeFC}
