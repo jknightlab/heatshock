@@ -1423,7 +1423,7 @@ if(any(flip)){
 
 ```{r selectSNPs}
 selGlobal <- dimnames(assoc$Result)[[1]][which(assoc$adj.p.val < 0.1)]
-globalSNPs <- geno$bed[selGlobal, ,drop=FALSE]
+globalSNPs <- geno$bed[selGlobal[c(1,3)], ,drop=FALSE]
 ```
 
 ```{r writeGlobalSNPs, cache=FALSE}
