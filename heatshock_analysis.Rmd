@@ -1529,7 +1529,7 @@ meGlobal <- Matrix_eQTL_main(
     noFDRsaveMemory = FALSE)
 ```
 
-```{r prepEQTL, results="hide", cache=FALSE}
+```{r prepGlobalEQTL, results="hide", cache=FALSE}
 phenoStim <- SlicedData$new();
 phenoStim$fileDelimiter <- "\t"
 phenoStim$fileOmitCharacters <- "NA"
@@ -1563,7 +1563,7 @@ covarBasal$fileSliceSize <- 2000
 covarBasal$LoadFile("tmp/covar_expr_basal.tab")
 ```
 
-```{r runEQTL, cache=FALSE, results="hide"}
+```{r runGlobalEQTL, cache=FALSE, results="hide"}
 meGlobalStim <- Matrix_eQTL_main(
     snps = snpsGlobal,
     gene = phenoStim,
