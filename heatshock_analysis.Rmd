@@ -1390,12 +1390,10 @@ for(i in 1:ncol(pPerm)){
 ```
 -->
 
-## Response QTL analysis
-
-Genes associated with the heat shock response, either
-through previous work or implicated by the analysis presented here, were 
-selected for further analysis to determine genetic factors that modulate
-their response to the stimulus. To this end we chose all probes that were 
+Following up on the observed associations between SNPs and the global heat shock response we 
+investigated possible associations between these SNPs and differentially expreressed
+genes implicated in the heat shock response. Here we define the gene set of interest
+as those genes that were 
 significantly up regulated (FDR < `r fdrCut` and fold change > `r 2^fcCut`) 
 following heat shock and that were found to have HSF1 or HSF2 ChIP-seq peaks
 or binding motifs (P < 0.05) in their promoter region. 
@@ -1413,10 +1411,10 @@ probePos[,3] <- str_replace_all(probePos[,3], "[:+-]", "")
 probePos <- cbind(rownames(probePos), probePos)
 ```
 
-For each of the `r nrow(selectedGenes)` probes the observed response to the 
-stimulus (as measured by the log~2~fold change) is tested for association with 
-the genotypes within a $`r cisWindow`$bp window either side of the probe location. 
-For this purpose only typed SNPs that passed QC were considered.
+```{r selectSNPs}
+selGlobal <- dimnames(assoc$Result)[[1]][which(assoc$adj.p.val < 0.1)]
+globalSNPs <- geno$bed[selGlobal,]
+```
 
 ```{r probeFC}
 selectedExpr <- sig.data.norm[selectedGenes$ArrayAddress,]
@@ -1430,6 +1428,77 @@ rownames(selectedFC) <- selectedGenes$NuID
 ```{r writeFcFile, cache=FALSE}
 write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE)
 ```
+
+```{r selectedExpr}
+stimExpr <- selectedExpr[, stimIdx]
+basalExpr <- selectedExpr[, basalIdx]
+colnames(stimExpr) <- str_extract(colnames(stimExpr), "NA[[:digit:]]+")
+colnames(basalExpr) <- str_extract(colnames(basalExpr), "NA[[:digit:]]+")
+rownames(stimExpr) <- rownames(basalExpr) <- selectedGenes$NuID
+```
+
+```{r writeSelExpr, cache=FALSE}
+write.table(stimExpr, file="tmp/selected_probes_stim_expr.tab", sep="\t", quote=FALSE)
+write.table(basalExpr, file="tmp/selected_probes_basal_expr.tab", sep="\t", quote=FALSE)
+```
+
+```{r fc_pc}
+nPC <- 2
+if(nPC > 0){
+  pca <- prcomp(t(selectedFC), center=TRUE, scale = TRUE)
+  pc <- pca$x
+}
+```
+
+```{r covariates}
+geno$fam <- dplyr::filter(dplyr::select(geno$fam, 2, 5), V2 %in% colnames(geno$bed))
+geno$fam <- t(geno$fam)
+colnames(geno$fam) <- geno$fam[1,]
+geno$fam <- geno$fam[, colnames(selectedFC)]
+covarFC <- geno$fam[-1, , drop=FALSE]
+if(nPC > 0) covarFC <- rbind(covarFC, t(pc[, 1:nPC]))
+```
+
+```{r writeCovar, cache=FALSE, echo=FALSE}
+write.table(covarFC, file="tmp/covariates.tab", quote=FALSE, sep="\t")
+```
+
+```{r expr_pc}
+nPC_expr <- 2
+if(nPC_expr > 0){
+  pca_stim <- prcomp(t(stimExpr), center=TRUE, scale = TRUE)
+  pc_stim <- pca_stim$x
+}
+covarStim <- geno$fam[-1, , drop=FALSE]
+if(nPC_stim > 0) covarStim <- rbind(covarStim, t(pc_stim[, 1:nPC_stim]))
+
+if(nPC_expr > 0){
+  pca_basal <- prcomp(t(basalExpr), center=TRUE, scale = TRUE)
+  pc_basal <- pca_basal$x
+}
+covarbasal <- geno$fam[-1, , drop=FALSE]
+if(nPC_basal > 0) covarbasal <- rbind(covarbasal, t(pc_basal[, 1:nPC_basal]))
+```
+
+```{r writeExprCovar, cache=FALSE}
+write.table(covarStim, file = "tmp/covar_expr_stim.tab", sep="\t", quote=FALSE)
+write.table(covarBasal, file = "tmp/covar_expr_basal.tab", sep="\t", quote=FALSE)
+```
+
+
+
+
+## Response QTL analysis
+
+Genes associated with the heat shock response, either
+through previous work or implicated by the analysis presented here, were 
+selected for further analysis as above to determine genetic factors that modulate
+their response to the stimulus.
+
+For each of the `r nrow(selectedGenes)` probes the observed response to the 
+stimulus (as measured by the log~2~fold change) is tested for association with 
+the genotypes within a $`r cisWindow`$bp window either side of the probe location. 
+For this purpose only typed SNPs that passed QC were considered.
 
 ```{r writeProbePos, cache=FALSE}
 write.table(probePos, 
@@ -1455,29 +1524,9 @@ if(any(flip)){
 write.table(geno$bed, file="tmp/genotypes_GRCh37.tab", quote=FALSE, sep="\t")
 ```
 
-```{r fc_pc}
-nPC <- 2
-if(nPC > 0){
-  pca <- prcomp(t(selectedFC), center=TRUE, scale = TRUE)
-  pc <- pca$x
-}
-```
-
 We tested for associations between genotype and heat shock response using
 a linear model as implemented in Matrix-eQTL [@Shabalin12], correcting for
 sex as well as the first `r nPC` principle components of the treatment response. 
-
-```{r covariates}
-geno$fam <- dplyr::filter(dplyr::select(geno$fam, 2, 5), V2 %in% colnames(geno$bed))
-geno$fam <- t(geno$fam)
-colnames(geno$fam) <- geno$fam[1,]
-geno$fam <- geno$fam[, colnames(selectedFC)]
-if(nPC > 0) geno$fam <- rbind(geno$fam, t(pc[, 1:nPC]))
-```
-
-```{r writeCovar, cache=FALSE, echo=FALSE}
-write.table(geno$fam[-1, , drop=FALSE], file="tmp/covariates.tab", quote=FALSE, sep="\t")
-```
 
 ```{r prepQTL, results="hide", cache=FALSE}
 snps <- SlicedData$new();
@@ -1617,34 +1666,6 @@ system(paste("tar -czf tmp/reQTL_result.tar.gz -C tmp reQTL_analysis", paste(pas
 To further investigate potential genetic modulators of gene expression for genes that
 play a role in heat shock response we carried out a cis eQTL analysis for all genes identified
 as heat shock response genes.
-
-```{r selectedExpr}
-stimExpr <- selectedExpr[, stimIdx]
-basalExpr <- selectedExpr[, basalIdx]
-colnames(stimExpr) <- str_extract(colnames(stimExpr), "NA[[:digit:]]+")
-colnames(basalExpr) <- str_extract(colnames(basalExpr), "NA[[:digit:]]+")
-rownames(stimExpr) <- rownames(basalExpr) <- selectedGenes$NuID
-```
-
-```{r writeSelExpr, cache=FALSE}
-write.table(stimExpr, file="tmp/selected_probes_stim_expr.tab", sep="\t", quote=FALSE)
-write.table(basalExpr, file="tmp/selected_probes_basal_expr.tab", sep="\t", quote=FALSE)
-```
-
-```{r expr_pc}
-nPC_expr <- 2
-pca_stim <- prcomp(t(stimExpr), center=TRUE, scale = TRUE)
-pc_stim <- pca_stim$x
-
-pca_basal <- prcomp(t(basalExpr), center=TRUE, scale = TRUE)
-pc_basal <- pca_basal$x
-```
-
-```{r writeExprCovar, cache=FALSE}
-write.table(t(pc_stim)[1:nPC_expr, , drop=FALSE], file = "tmp/covar_expr_stim.tab", sep="\t", quote=FALSE)
-write.table(t(pc_basal)[1:nPC_expr, , drop=FALSE], file = "tmp/covar_expr_basal.tab", sep="\t", quote=FALSE)
-```
-
 
 The analysis was carried out with Matrix-eQTL using an approach equivalent to the one
 used for the [response QTL analysis](#response-qtl-analysis).
