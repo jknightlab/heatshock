@@ -2346,6 +2346,30 @@ set.caption(tabRef("globalSNPGenes_fc", "Associations between global response SN
 pander(tab)
 ```
 
+```{r globalSNPGenes_fcPlot, cache=FALSE, fig.cap=figRef("globalGenesFC", "Heat shock response by genotype.")}
+n <- sum(tab$FDR < 0.05)
+fig <- vector(mode="list", n)
+
+for(i in 1:n){
+  snp <- tab$SNP[i]
+  gene <- tab$Gene[i]
+  probe <- meGlobal$all$eqtls$gene[i]
+  
+  fit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covar[[1]]))
+  offset <- colSums(fit$coefficients[-(1:2)]*covar[[1]])
+  
+  plotData <- data.frame(genotype=geno$bed[snp,], fold_change=selectedFC[probe, ]-offset)
+  fig[[i]] <- ggplot(plotData, aes(x=factor(genotype), y=fold_change)) + 
+    geom_point(position=position_jitter(width=0.1), size=2.5) +
+    geom_boxplot(alpha=0.4, outlier.colour="white", fill="grey") +
+    theme_bw() + xlab(snp) + ylab(paste(gene, "(log fold change)"))
+}
+cols <- 1
+if(n > 1) cols <- 2
+if(n > 4) cols <- 3
+multiplot(plotlist=fig, cols=cols)
+```
+
 ```{r globalSNPGenes_stim, cache=FALSE}
 tab <- meGlobalStim$all$eqtls
 cut <- tab$FDR[5]
