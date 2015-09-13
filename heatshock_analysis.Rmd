@@ -2351,9 +2351,9 @@ n <- sum(tab$FDR < 0.05)
 fig <- vector(mode="list", n)
 
 for(i in 1:n){
-  snp <- tab$SNP[i]
-  gene <- tab$Gene[i]
-  probe <- tab$NuID[i]
+  snp <- as.character(tab$SNP[i])
+  gene <- as.character(tab$Gene[i])
+  probe <- as.character(tab$NuID[i])
   
   fit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covar[[1]]))
   offset <- colSums(fit$coefficients[-(1:2)]*covar[[1]])
