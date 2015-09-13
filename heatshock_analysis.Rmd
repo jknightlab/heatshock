@@ -1411,6 +1411,19 @@ probePos[,3] <- str_replace_all(probePos[,3], "[:+-]", "")
 probePos <- cbind(rownames(probePos), probePos)
 ```
 
+```{r probeFC}
+selectedExpr <- sig.data.norm[selectedGenes$ArrayAddress,]
+basalIdx <- grep("_Basal", colnames(selectedExpr))
+stimIdx <- grep("_Stim", colnames(selectedExpr))
+selectedFC <- selectedExpr[, stimIdx] - selectedExpr[, basalIdx]
+colnames(selectedFC) <- str_extract(colnames(selectedFC), "NA[[:digit:]]+")
+rownames(selectedFC) <- selectedGenes$NuID
+```
+
+```{r writeFcFile, cache=FALSE}
+write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE)
+```
+
 ```{r prepGeno}
 rownames(geno$bed) <- str_extract(rownames(geno$bed), "NA[[:digit:]]+")
 geno$bed <- geno$bed[colnames(selectedFC), geno$bim$snp]
@@ -1428,19 +1441,6 @@ globalSNPs <- geno$bed[selGlobal[c(1,3)], ,drop=FALSE]
 
 ```{r writeGlobalSNPs, cache=FALSE}
 write.table(globalSNPs, file="tmp/global_geno.tab", sep="\t", quote=FALSE)
-```
-
-```{r probeFC}
-selectedExpr <- sig.data.norm[selectedGenes$ArrayAddress,]
-basalIdx <- grep("_Basal", colnames(selectedExpr))
-stimIdx <- grep("_Stim", colnames(selectedExpr))
-selectedFC <- selectedExpr[, stimIdx] - selectedExpr[, basalIdx]
-colnames(selectedFC) <- str_extract(colnames(selectedFC), "NA[[:digit:]]+")
-rownames(selectedFC) <- selectedGenes$NuID
-```
-
-```{r writeFcFile, cache=FALSE}
-write.table(selectedFC, file="tmp/selected_probes_fc.tab", sep="\t", quote=FALSE)
 ```
 
 ```{r selectedExpr}
