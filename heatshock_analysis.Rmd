@@ -2198,9 +2198,9 @@ if(any(hsfPval$down < 0.01 & hsfPval$down > 0.001))
 pander(tab, emphasize.cells=highlight, emphasize.strong.cells=highlightStrong)
 ```
 
-There are `r nrow(dplyr::filter(r_promoter, HSFpeak == 1, novel == 2))` up-regulated
+There are `r length(unique(dplyr::filter(r_promoter, HSFpeak == 1, novel == 2)$SymbolReannotated))` up-regulated
 genes without an established role and
-`r nrow(dplyr::filter(r_promoter, HSFpeak == 1, novel == 1))` genes with limited 
+`r length(unique(dplyr::filter(r_promoter, HSFpeak == 1, novel == 1)$SymbolReannotated))` genes with limited 
 evidence for their involvement in the heat shock response that show evidence of 
 heat shock factor binding in their promoter region. Further evidence for the
 binding of HSF1 and HSF2 in these regions is provided by scanning for the presence
