@@ -2650,7 +2650,7 @@ if(file.exists(pdfDir) && length(dir(pdfDir, "*.pdf")) &&
 ```
 
 ## Custom functions used
-```{r, ref.label="functions", eval=FALSE, echo=TRUE}
+```{r, ref.label="functions", eval=FALSE, echo=output=="html"}
 ```
 
 ## Session Info
