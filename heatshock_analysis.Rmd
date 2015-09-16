@@ -2654,7 +2654,7 @@ if(file.exists(pdfDir) && length(dir(pdfDir, "*.pdf")) &&
 ```
 
 ## Session Info
-```{r sessionInfo, echo=FALSE}
+```{r sessionInfo, echo=FALSE, results='asis'}
 sessionInfo()
 ```
 
