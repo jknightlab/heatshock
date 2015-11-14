@@ -26,7 +26,8 @@ RUN echo 'cp /tmp/.Rprofile /home/$USER/' >> /usr/bin/userconf.sh
 
 ## control access to websites
 COPY config/access.conf /etc/nginx/conf.d/access.conf
-COPY config/access.conf /etc/rstudio/ip-rules
+COPY config/htpasswd /etc/nginx/.htpasswd
+
 
 ## Add additional programs to run at startup
 COPY config/supervisored.conf /tmp/
