@@ -1597,6 +1597,32 @@ meGlobalBasal <- Matrix_eQTL_main(
     noFDRsaveMemory = FALSE)
 ```
 
+### Interpreting the PLS components
+Further considering the two PLS components it is apparent that the first
+component has a strong correspondence with the heat shock response, i.e. it 
+separates basal from stimulated samples, whereas the interpretation of the 
+second component is less obvious. We note that treated samples exhibit
+increased variance in the second component compared to basal samples. We note 
+that the second component does reveal some structure, presenting three distinct
+clusters, within the stimulated samples but it is not immediately obvious what 
+is underlying this grouping. In an attempted ti elucidate the drivers behind this 
+structure we first assigned each stimulated sample to one of three clusters and
+then considered patterns of differential expression between them.
+
+```{r plsCluster}
+t2Stim <- plsComp$t2[plsComp$treatment=="Stim"]
+names(t2Stim) <- plsComp$sample[plsComp$treatment == "Stim"]
+plsClust <- hclust(dist(t2Stim))
+cutHeight <- 40
+plsClusters <- cut(as.dendrogram(plsClust), cutHeight)
+clustID <- integer(length(t2Stim))
+names(clustID) <- names(t2Stim)
+for(i in 1:length(plsClusters$lower)){
+  clustID[labels(plsClusters$lower[[i]])] <- i
+}
+plsComp$cluster <- as.factor(rep(clustID, each=2))
+```
+
 
 ## Response QTL analysis
 
@@ -2277,9 +2303,12 @@ two PLS components account for `r format(sum(plsFit$R2[1:2]*100), nsmall=1, digi
 in the variation observed due to 
 heat shock and provide clear separation of the two treatment groups (`r figRef("treatPLS")`).
 
-```{r treatPLSplot, cache=FALSE, fig.cap=figRef("treatPLS", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock.")}
+
+```{r treatPLSplot, cache=FALSE, fig.cap=figRef("treatPLS", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock. Stimulated samples show evidence of three distinct groups.")}
 plsComp <- cbind(plsComp, sex=factor(globalPheno[plsComp$sample, "sex"]))
-plsPlot(plsComp)
+fig1 <- plsPlot(plsComp, group=c('treatment', 'cluster'))
+fig2 <- ggdendrogram(plsClust) + geom_hline(yint=cutHeight, col='red')
+multiplot(fig1, fig2, cols=2)
 ```
 
 Of the `r length(assoc$adj.p.val)` SNPs tested for association with the global response phenotype
