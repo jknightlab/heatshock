@@ -378,6 +378,34 @@ promoterScan <- function(seqs, pwms, group){
   cbind(report,  EntrezReannotated=names(seqs), expr=group)
 }
 
+plsLimma <- function(data, cluster) {
+  design <- model.matrix(~ 0 + cluster)
+  contrasts <- makeContrasts(cluster3-cluster1, cluster3-cluster2, cluster1-cluster2, levels=design)
+  clusterFit <- lmFit(data, design)
+  clusterFit2 <- contrasts.fit(clusterFit, contrasts)
+  clusterFit2 <- eBayes(clusterFit2)
+  
+  clust3_1Table <- topTable(clusterFit2, coef=1, n=dim(clusterFit2)[1], adjust="BH")
+  clust3_2Table <- topTable(clusterFit2, coef=2, n=dim(clusterFit2)[1],adjust="BH")
+  clust1_2Table <- topTable(clusterFit2, coef=3, n=dim(clusterFit2)[1], adjust="BH")
+  
+  clust3_1Table <- cbind(ArrayAddress=rownames(clust3_1Table), clust3_1Table)
+  clust3_1Table <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, EntrezReannotated, GenomicLocation),
+      clust3_1Table)
+  clust3_1Table <- clust3_1Table[order(clust3_1Table$P.Value),]
+  
+  clust3_2Table <- cbind(ArrayAddress=rownames(clust3_2Table), clust3_2Table)
+  clust3_2Table <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, EntrezReannotated, GenomicLocation),
+      clust3_2Table)
+  clust3_2Table <- clust3_2Table[order(clust3_2Table$P.Value),]
+  
+  clust1_2Table <- cbind(ArrayAddress=rownames(clust1_2Table), clust1_2Table)
+  clust1_2Table <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, EntrezReannotated, GenomicLocation),
+      clust1_2Table)
+  clust1_2Table <- clust1_2Table[order(clust1_2Table$P.Value),]
+  list(clust3_1Table=clust3_1Table, clust3_2Table=clust3_2Table, clust1_2Table=clust1_2Table)
+}
+
 figRef <- local({
     tag <- numeric()
     created <- logical()
@@ -1657,32 +1685,9 @@ state <- factor(sapply(labels, "[[", 2), levels=c("Basal", "Stim"))
 cluster <- factor(clustID[as.character(sample)])
 stimIdx <- which(state == "Stim")
 
-sample <- sample[stimIdx]
 cluster <- cluster[stimIdx]
-design <- model.matrix(~ 0 + cluster)
-contrasts <- makeContrasts(cluster3-cluster1, cluster3-cluster2, cluster1-cluster2, levels=design)
-clusterFit <- lmFit(sig.data.norm[,stimIdx], design)
-clusterFit2 <- contrasts.fit(clusterFit, contrasts)
-clusterFit2 <- eBayes(clusterFit2)
-
-clust3_1Table <- topTable(clusterFit2, coef=1, n=dim(clusterFit2)[1], adjust="BH")
-clust3_2Table <- topTable(clusterFit2, coef=2, n=dim(clusterFit2)[1],adjust="BH")
-clust1_2Table <- topTable(clusterFit2, coef=3, n=dim(clusterFit2)[1], adjust="BH")
-
-clust3_1Table <- cbind(ArrayAddress=rownames(clust3_1Table), clust3_1Table)
-clust3_1Table <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, EntrezReannotated, GenomicLocation),
-  	clust3_1Table)
-clust3_1Table <- clust3_1Table[order(clust3_1Table$P.Value),]
-
-clust3_2Table <- cbind(ArrayAddress=rownames(clust3_2Table), clust3_2Table)
-clust3_2Table <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, EntrezReannotated, GenomicLocation),
-    clust3_2Table)
-clust3_2Table <- clust3_2Table[order(clust3_2Table$P.Value),]
-
-clust1_2Table <- cbind(ArrayAddress=rownames(clust1_2Table), clust1_2Table)
-clust1_2Table <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReannotated, EntrezReannotated, GenomicLocation),
-    clust1_2Table)
-clust1_2Table <- clust1_2Table[order(clust1_2Table$P.Value),]
+plsLimma_stim <- plsLimma(sig.data.norm[,stimIdx], cluster)
+clust1_2Table <- plsLimma_stim$clust1_2Table
 ```
 
 ```{r writeClusterDiffExpr, cache=FALSE}
