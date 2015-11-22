@@ -2304,7 +2304,7 @@ in the variation observed due to
 heat shock and provide clear separation of the two treatment groups (`r figRef("treatPLS")`).
 
 
-```{r treatPLSplot, cache=FALSE, fig.cap=figRef("treatPLS", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock. Stimulated samples show evidence of three distinct groups.")}
+```{r treatPLSplot, cache=FALSE, fig.width=10, fig.cap=figRef("treatPLS", "Samples separate clearly by treatment, showing a consistent global effect on gene expression from heat shock. Stimulated samples show evidence of three distinct groups.")}
 plsComp <- cbind(plsComp, sex=factor(globalPheno[plsComp$sample, "sex"]))
 fig1 <- plsPlot(plsComp, group=c('treatment', 'cluster'))
 fig2 <- ggdendrogram(plsClust) + geom_hline(yint=cutHeight, col='red')
