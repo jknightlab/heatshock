@@ -1623,6 +1623,27 @@ for(i in 1:length(plsClusters$lower)){
 plsComp$cluster <- as.factor(rep(clustID, each=2))
 ```
 
+```{r plsLimma}
+labels <- strsplit(colnames(sig.data.norm), "_")
+sample <- factor(sapply(labels, "[[", 1))
+state <- factor(sapply(labels, "[[", 2), levels=c("Basal", "Stim"))
+cluster <- factor(clustID[as.character(sample)])
+stimIdx <- which(state == "Stim")
+
+sample <- sample[stimIdx]
+cluster <- cluster[stimIdx]
+design <- model.matrix(~ 0 + cluster)
+contrasts <- makeContrasts(cluster3-cluster1, cluster3-cluster2, cluster1-cluster2, levels=design)
+clusterFit <- lmFit(sig.data.norm[,stimIdx], design)
+clusterFit2 <- contrasts.fit(clusterFit, contrasts)
+clusterFit2 <- eBayes(clusterFit2)
+
+clust3_1Table <- topTable(clusterFit2, coef=1, n=dim(clusterFit2)[1], adjust="BH")
+clust3_2Table <- topTable(clusterFit2, coef=2, n=dim(clusterFit2)[1],adjust="BH")
+clust1_2Table <- topTable(clusterFit2, coef=3, n=dim(clusterFit2)[1], adjust="BH")
+
+```
+
 
 ## Response QTL analysis
 
