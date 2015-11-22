@@ -1685,6 +1685,9 @@ clust1_2Table <- inner_join(dplyr::select(annot, ArrayAddress, NuID, SymbolReann
 clust1_2Table <- clust1_2Table[order(clust1_2Table$P.Value),]
 ```
 
+```{r writeDiffExpr, cache=FALSE}
+write.table(clust1_2Table, file="/analysis/tmp/cluster_1_2_diff_expression.tab", row.names=FALSE, quote=FALSE, sep="\t")
+```
 
 ## Response QTL analysis
 
