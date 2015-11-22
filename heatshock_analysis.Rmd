@@ -2468,6 +2468,29 @@ set.caption(tabRef("globalSNPGenes_stim", "Associations between global response 
 pander(tab)
 ```
 
+Investigating the differences in gene expression between cluster 1 and 2 of the second PLS component
+we identified a total of `r nrow(filter(clust1_2Table, adj.P.Val < fdrCut))` probes as differentially
+expressed at an FDR threshold of `r fdrCut` (see `r tabRef("clusterTopTable")`
+for the top 20 results). Of these `r nrow(filter(clust1_2Table, adj.P.Val < fdrCut & logFC > 0))` 
+are up and `r nrow(filter(clust1_2Table, adj.P.Val < fdrCut & logFC < 0))` down regulated
+in cluster 2 compared to expression levels in cluster 1. Almost all of these (`r nrow(filter(clust1_2Table, adj.P.Val < fdrCut & abs(logFC) > fcCut))`) have a fold change of at least `r 2^fcCut`. 
+`r figRef("clusterVolcano")` shows a smoothed volcano plot highlighting probes of particular interest. 
+
+```{r clusterTopTable, cache=FALSE}
+set.caption(tabRef("clusterTopTable", "Top 20 differentially expressed probes."))
+rownames(clust1_2Table) <- NULL
+pander(head(dplyr::select(clust1_2Table, -ArrayAddress, -EntrezReannotated, -GenomicLocation), 20))
+```
+
+```{r clusterLimmaPlot, cache=FALSE, fig.cap=figRef("clusterVolcano", "Volcano plot of differential expression results between clusters 1 and 2. Probes with an adjusted p-value below 0.01 and a log fold cange of at least 0.5 are shown as yellow and red dots.")}
+volcanoPlot(clust1_2Table, fcCut=fcCut, fdrCut=fdrCut)
+```
+
+```{r clusterHeatmap, cache=FALSE, fig.cap=figRef("clusterExprHeat", "Heatmap comparing gene expression for genes differentially expressed between clusters 1 and 2. Expression estimates for each gene were scaled and centred across samples. Blue cells correspond to lower and red cells to higher than average expression.")}
+sortedTable <- dplyr::arrange(dplyr::filter(clust1_2Table, adj.P.Val < fdrCut, abs(logFC) > fcCut), desc(logFC))
+sideCols <- c(cluster1="purple", cluster2="orange", cluster3="white")
+heatmap.2(sig.data.norm[sortedTable$ArrayAddress, plsComp$treatment == "Stim"], trace = "none", Rowv=FALSE, Colv=as.dendrogram(plsClust), dendrogram="column", scale="row", col=rev(brewer.pal(11, "RdBu")), ColSideColors=sideCols[plsComp$cluster][plsComp$treatment == "Stim"], key=FALSE, labRow="", labCol="", xlab="Samples", ylab="Genes")
+```
 
 ## Response QTL analysis
 
