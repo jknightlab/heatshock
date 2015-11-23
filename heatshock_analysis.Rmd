@@ -2531,7 +2531,7 @@ heatmap.2(sig.data.norm[sortedTable$ArrayAddress, plsComp$treatment == "Stim"], 
 ```
 
 To further characterise the differnces in gene expression we carried out a GO enrichment analysis
-for genes differentially expressed between clusters 1 and 2.
+for genes differentially expressed between clusters 1 and 2. 
 
 ```{r tablePlsTopGOUp, chache=FALSE}
 set.caption(tabRef("plsTopGOUp", "Top 20 GO categories enriched for genes up regulated in cluster 1"))
@@ -2540,7 +2540,7 @@ pander(GenTable(tg_pls$up, up=resultPlsUp, down=resultPlsDown, topNodes=20, orde
 
 ```{r tablePlsTopGODown, chache=FALSE}
 set.caption(tabRef("plsTopGODown", "Top 20 GO categories enriched for genes up regulated in cluster 2"))
-pander(GenTable(tg_pls$down, down=resultPlsDown, up=resultUp, topNodes=20, orderBy="down"))
+pander(GenTable(tg_pls$down, down=resultPlsDown, up=resultPlsUp, topNodes=20, orderBy="down"))
 ```
 
 ```{r goPlsPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlsPlot", "GO category enrichment for genes differentially expressed between PLS clusters.")}
