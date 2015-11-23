@@ -2239,18 +2239,18 @@ and *chemokine production* [GO:0032602].
 
 ```{r tableTopGOUp, chache=FALSE}
 set.caption(tabRef("topGOUp", "Top 20 GO categories enriched for up regulated genes."))
-pander(GenTable(tgUp, up=resultUp, down=resultDown, topNodes=20, orderBy="up"))
+pander(GenTable(tg$up, up=resultUp, down=resultDown, topNodes=20, orderBy="up"))
 ```
 
 ```{r tableTopGODown, chache=FALSE}
 set.caption(tabRef("topGODown", "Top 20 GO categories enriched for down regulated genes"))
-pander(GenTable(tgDown, down=resultDown, up=resultUp, topNodes=20, orderBy="down"))
+pander(GenTable(tg$down, down=resultDown, up=resultUp, topNodes=20, orderBy="down"))
 ```
 
 ```{r goPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlot", "GO category enrichment for differentially expressed genes.")}
-tblUp <- GenTable(tgUp, up=resultUp, topNodes=length(score(resultUp)))
+tblUp <- GenTable(tg$up, up=resultUp, topNodes=length(score(resultUp)))
 tblUp$up <- as.numeric(tblUp$up)
-tblDown <- GenTable(tgDown, down=resultDown, topNodes=length(score(resultDown)))
+tblDown <- GenTable(tg$down, down=resultDown, topNodes=length(score(resultDown)))
 tblDown$down <- as.numeric(tblDown$down)
 tbl <- bind_rows(gather(tblUp, "direction", "p.value", up), gather(tblDown, "direction", "p.value", down))
 ggplot(tbl, aes(x=Expected, y=Significant)) + 
@@ -2528,6 +2528,33 @@ volcanoPlot(clust1_2Table, fcCut=fcCut, fdrCut=fdrCut)
 sortedTable <- dplyr::arrange(dplyr::filter(clust1_2Table, adj.P.Val < fdrCut, abs(logFC) > fcCut), desc(logFC))
 sideCols <- c(cluster1="purple", cluster2="orange", cluster3="white")
 heatmap.2(sig.data.norm[sortedTable$ArrayAddress, plsComp$treatment == "Stim"], trace = "none", Rowv=FALSE, Colv=as.dendrogram(plsClust), dendrogram="column", scale="row", col=rev(brewer.pal(11, "RdBu")), ColSideColors=sideCols[plsComp$cluster][plsComp$treatment == "Stim"], key=FALSE, labRow="", labCol="", xlab="Samples", ylab="Genes")
+```
+
+
+
+```{r tablePlsTopGOUp, chache=FALSE}
+set.caption(tabRef("plsTopGOUp", "Top 20 GO categories enriched for genes up regulated in cluster 1"))
+pander(GenTable(tg_pls$up, up=resultPlsUp, down=resultPlsDown, topNodes=20, orderBy="up"))
+```
+
+```{r tablePlsTopGODown, chache=FALSE}
+set.caption(tabRef("plsTopGODown", "Top 20 GO categories enriched for genes up regulated in cluster 2"))
+pander(GenTable(tg_pls$down, down=resultPlsDown, up=resultUp, topNodes=20, orderBy="down"))
+```
+
+```{r goPlsPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlsPlot", "GO category enrichment for genes differentially expressed between PLS clusters.")}
+tblUp <- GenTable(tg_pls$up, up=resultPlsUp, topNodes=length(score(resultPlsUp)))
+tblUp$up <- as.numeric(tblUp$up)
+tblDown <- GenTable(tg_pls$down, down=resultPlsDown, topNodes=length(score(resultPlsDown)))
+tblDown$down <- as.numeric(tblDown$down)
+tbl <- bind_rows(gather(tblUp, "direction", "p.value", up), gather(tblDown, "direction", "p.value", down))
+ggplot(tbl, aes(x=Expected, y=Significant)) + 
+    geom_point(data=dplyr::filter(tbl, p.value >= 1e-4), colour="grey") +
+    geom_point(data=dplyr::filter(tbl, p.value < 1e-4), aes(fill=-log10(p.value), shape=direction), 
+        size=2.5) +
+    geom_abline(intercept=0, slope=1) +
+    scale_shape_manual(values=c(up=24, down=25)) +
+    theme_bw()
 ```
 
 ## Response QTL analysis
