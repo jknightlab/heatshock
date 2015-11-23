@@ -405,6 +405,33 @@ plsLimma <- function(data, cluster) {
   clust1_2Table <- clust1_2Table[order(clust1_2Table$P.Value),]
   list(clust3_1Table=clust3_1Table, clust3_2Table=clust3_2Table, clust1_2Table=clust1_2Table)
 }
+prep_topGO <- function (limmaTable, fdrCut, fcCut) {
+  groupUp <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC > fcCut, 1, 0)
+  groupDown <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC < -fcCut, 1, 0)
+  groupAll <- ifelse(limmaTable$adj.P.Val < fdrCut & abs(limmaTable$logFC) > fcCut, 1, 0)
+  
+  universeUp <- factor(groupUp)
+  names(universeUp) <- limmaTable$EntrezReannotated
+  universeUp <- universeUp[!is.na(names(universeUp))]
+  universeDown <- factor(groupDown)
+  names(universeDown) <- limmaTable$EntrezReannotated
+  universeDown <- universeDown[!is.na(names(universeDown))]
+  universeAll <- factor(groupAll)
+  names(universeAll) <- limmaTable$EntrezReannotated
+  universeAll <- universeAll[!is.na(names(universeAll))]
+  
+  tgUp <- new("topGOdata", ontology="BP", allGenes=universeUp, nodeSize=10,
+    		description="Genes up-regulated after heat shock",
+  			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+  tgDown <- new("topGOdata", ontology="BP", allGenes=universeDown, nodeSize=10,
+  			description="Genes down-regulated after heat shock",
+  			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+  tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, nodeSize=10,
+  			description="Genes differentially expressed in response to heat shock",
+  			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+  
+  list(up=tgUp, down=tgDown, any=tgAny)
+}
 
 figRef <- local({
     tag <- numeric()
@@ -984,37 +1011,16 @@ was used to determine enrichment separately for significantly (FDR < 0.01) up
 ```{r preTopGO}
 fdrCut <- 0.01
 fcCut <- log2(1.2)
-groupUp <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC > fcCut, 1, 0)
-groupDown <- ifelse(limmaTable$adj.P.Val < fdrCut & limmaTable$logFC < -fcCut, 1, 0)
-groupAll <- ifelse(limmaTable$adj.P.Val < fdrCut & abs(limmaTable$logFC) > fcCut, 1, 0)
 
-universeUp <- factor(groupUp)
-names(universeUp) <- limmaTable$EntrezReannotated
-universeUp <- universeUp[!is.na(names(universeUp))]
-universeDown <- factor(groupDown)
-names(universeDown) <- limmaTable$EntrezReannotated
-universeDown <- universeDown[!is.na(names(universeDown))]
-universeAll <- factor(groupAll)
-names(universeAll) <- limmaTable$EntrezReannotated
-universeAll <- universeAll[!is.na(names(universeAll))]
-
-tgUp <- new("topGOdata", ontology="BP", allGenes=universeUp, nodeSize=10,
-			description="Genes up-regulated after heat shock",
-			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
-tgDown <- new("topGOdata", ontology="BP", allGenes=universeDown, nodeSize=10,
-			description="Genes down-regulated after heat shock",
-			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
-tgAny <- new("topGOdata", ontology="BP", allGenes=universeAll, nodeSize=10,
-			description="Genes differentially expressed in response to heat shock",
-			annotationFun=annFUN.org, mapping="org.Hs.eg.db")
+tg <- prep_topGO(limmaTable, fdrCut, fcCut)
 ```
 
 ```{r testTopGO}
-resultUp <- runTest(tgUp, algorithm="classic", statistic="fisher")
-resultDown <- runTest(tgDown, algorithm="classic", statistic="fisher")
-goTabUp <- GenTable(tgUp, up = resultUp, down = resultDown, 
+resultUp <- runTest(tg$up, algorithm="classic", statistic="fisher")
+resultDown <- runTest(tg$down, algorithm="classic", statistic="fisher")
+goTabUp <- GenTable(tg$up, up = resultUp, down = resultDown, 
                      topNodes = length(score(resultUp)), orderBy = "up")
-goTabDown <- GenTable(tgDown, up = resultUp, down = resultDown, 
+goTabDown <- GenTable(tg$down, up = resultUp, down = resultDown, 
                      topNodes = length(score(resultDown)), orderBy = "down")
 ```
 
