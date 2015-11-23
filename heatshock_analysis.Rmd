@@ -1020,7 +1020,7 @@ resultUp <- runTest(tg$up, algorithm="classic", statistic="fisher")
 resultDown <- runTest(tg$down, algorithm="classic", statistic="fisher")
 goTabUp <- GenTable(tg$up, up = resultUp, down = resultDown, 
                      topNodes = length(score(resultUp)), orderBy = "up")
-goTabDown <- GenTable(tg$down, up = resultUp, down = resultDown, 
+goTabDown <- GenTable(tg$down, down = resultDown, up = resultUp, 
                      topNodes = length(score(resultDown)), orderBy = "down")
 ```
 
@@ -1711,7 +1711,7 @@ resultPlsUp <- runTest(tg_pls$up, algorithm="classic", statistic="fisher")
 resultPlsDown <- runTest(tg_pls$down, algorithm="classic", statistic="fisher")
 goTabPlsUp <- GenTable(tg_pls$up, up = resultPlsUp, down = resultPlsDown, 
                      topNodes = length(score(resultPlsUp)), orderBy = "up")
-goTabPlsDown <- GenTable(tg_pls$down, up = resultPlsUp, down = resultPlsDown, 
+goTabPlsDown <- GenTable(tg_pls$down, down = resultPlsDown, up = resultPlsUp, 
                      topNodes = length(score(resultPlsDown)), orderBy = "down")
 ```
 
@@ -2530,7 +2530,8 @@ sideCols <- c(cluster1="purple", cluster2="orange", cluster3="white")
 heatmap.2(sig.data.norm[sortedTable$ArrayAddress, plsComp$treatment == "Stim"], trace = "none", Rowv=FALSE, Colv=as.dendrogram(plsClust), dendrogram="column", scale="row", col=rev(brewer.pal(11, "RdBu")), ColSideColors=sideCols[plsComp$cluster][plsComp$treatment == "Stim"], key=FALSE, labRow="", labCol="", xlab="Samples", ylab="Genes")
 ```
 
-
+To further characterise the differnces in gene expression we carried out a GO enrichment analysis
+for genes differentially expressed between clusters 1 and 2.
 
 ```{r tablePlsTopGOUp, chache=FALSE}
 set.caption(tabRef("plsTopGOUp", "Top 20 GO categories enriched for genes up regulated in cluster 1"))
