@@ -2531,7 +2531,9 @@ heatmap.2(sig.data.norm[sortedTable$ArrayAddress, plsComp$treatment == "Stim"], 
 ```
 
 To further characterise the differnces in gene expression we carried out a GO enrichment analysis
-for genes differentially expressed between clusters 1 and 2. 
+for genes differentially expressed between clusters 1 and 2. This reveals that genes with incresed
+expression in cluster 1 (`r tabRef('tablePlsTopGOUp')`) are enriched for biological processes related to DNA replication whereas those
+with increased expression in cluster 2 (`r tabRef('tablePlsTopGODown')`) are annotated with processes related to the heat shock response.
 
 ```{r tablePlsTopGOUp, chache=FALSE}
 set.caption(tabRef("plsTopGOUp", "Top 20 GO categories enriched for genes up regulated in cluster 1"))
