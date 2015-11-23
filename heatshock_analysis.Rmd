@@ -1685,9 +1685,10 @@ state <- factor(sapply(labels, "[[", 2), levels=c("Basal", "Stim"))
 cluster <- factor(clustID[as.character(sample)])
 stimIdx <- which(state == "Stim")
 
-cluster <- cluster[stimIdx]
-plsLimma_stim <- plsLimma(sig.data.norm[,stimIdx], cluster)
+plsLimma_stim <- plsLimma(sig.data.norm[,stimIdx], cluster[stimIdx])
 clust1_2Table <- plsLimma_stim$clust1_2Table
+
+plsLimma_basal <- plsLimma(sig.data.norm[, -stimIdx], cluster[-stimIdx])
 ```
 
 ```{r writeClusterDiffExpr, cache=FALSE}
