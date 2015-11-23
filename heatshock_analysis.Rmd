@@ -1701,6 +1701,29 @@ plsLimma_basal <- plsLimma(sig.data.norm[, -stimIdx], cluster[-stimIdx])
 write.table(clust1_2Table, file="/analysis/tmp/cluster_1_2_diff_expression.tab", row.names=FALSE, quote=FALSE, sep="\t")
 ```
 
+
+```{r preTopGO_pls}
+tg_pls <- prep_topGO(clust1_2Table, fdrCut, fcCut)
+```
+
+```{r testTopGO_pls}
+resultPlsUp <- runTest(tg_pls$up, algorithm="classic", statistic="fisher")
+resultPlsDown <- runTest(tg_pls$down, algorithm="classic", statistic="fisher")
+goTabPlsUp <- GenTable(tg_pls$up, up = resultPlsUp, down = resultPlsDown, 
+                     topNodes = length(score(resultPlsUp)), orderBy = "up")
+goTabPlsDown <- GenTable(tg_pls$down, up = resultPlsUp, down = resultPlsDown, 
+                     topNodes = length(score(resultPlsDown)), orderBy = "down")
+```
+
+```{r writeTopGO_pls, include=FALSE, cache=FALSE}
+write.table(goTabPlsUp,
+            file="tmp/topGO_pls_cluster_upregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(goTabDown,
+            file="tmp/topGO_pls_cluster_downregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
+system("tar -czf tmp/topGO_pls_cluster.tar.gz -C tmp topGO_pls_cluster_upregulated.tab topGO_pls_cluster_downregulated.tab")
+```
+
+
 ## Response QTL analysis
 
 Genes associated with the heat shock response, either
