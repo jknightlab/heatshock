@@ -2248,11 +2248,11 @@ pander(GenTable(tg$down, down=resultDown, up=resultUp, topNodes=20, orderBy="dow
 ```
 
 ```{r goPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlot", "GO category enrichment for differentially expressed genes.")}
-tblUp <- GenTable(tg$up, up=resultUp, topNodes=length(score(resultUp)))
-tblUp$up <- as.numeric(tblUp$up)
-tblDown <- GenTable(tg$down, down=resultDown, topNodes=length(score(resultDown)))
-tblDown$down <- as.numeric(tblDown$down)
-tbl <- bind_rows(gather(tblUp, "direction", "p.value", up), gather(tblDown, "direction", "p.value", down))
+tblUp <- GenTable(tg$up, cluster1=resultUp, topNodes=length(score(resultUp)))
+tblUp$cluster1 <- as.numeric(tblUp$cluster1)
+tblDown <- GenTable(tg$down, cluster2=resultDown, topNodes=length(score(resultDown)))
+tblDown$cluster2 <- as.numeric(tblDown$cluster2)
+tbl <- bind_rows(gather(tblUp, "direction", "p.value", cluster1), gather(tblDown, "direction", "p.value", cluster2))
 ggplot(tbl, aes(x=Expected, y=Significant)) +
     geom_point(data=dplyr::filter(tbl, p.value >= 1e-4), colour="grey") +
     geom_point(data=dplyr::filter(tbl, p.value < 1e-4), aes(fill=-log10(p.value), shape=direction),
