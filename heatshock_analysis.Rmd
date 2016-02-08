@@ -1718,7 +1718,7 @@ goTabPlsDown <- GenTable(tg_pls$down, down = resultPlsDown, up = resultPlsUp,
 ```{r writeTopGO_pls, include=FALSE, cache=FALSE}
 write.table(goTabPlsUp,
             file="tmp/topGO_pls_cluster_upregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
-write.table(goTabDown,
+write.table(goTabPlsDown,
             file="tmp/topGO_pls_cluster_downregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
 system("tar -czf tmp/topGO_pls_cluster.tar.gz -C tmp topGO_pls_cluster_upregulated.tab topGO_pls_cluster_downregulated.tab")
 ```
