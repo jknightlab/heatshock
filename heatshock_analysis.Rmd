@@ -1064,13 +1064,20 @@ gene.data <- getBM(
   attributes=c('hgnc_symbol', 'entrezgene', 'go_id', 'name_1006', 'namespace_1003'),
   filters = 'entrezgene', values = sig.entrez, mart = mart)
 gene.data <- dplyr::filter(gene.data, namespace_1003=="biological_process")
-termFilter <- c("heat", "stress", "folding", "folded",
-                "death", "apoptosis", "apoptotic",
+termFilter_strict <- c("heat", "stress", "folding", "folded")
+termFilter_viral <- c("virus", "viral", "immune")
+termFilter_extended <- c("death", "apoptosis", "apoptotic",
                 "cell cycle", "mitosis", "mitotic", "proliferation",
-                "virus", "viral", "immune",
                 "transcription", "translation", "gene expression")
+termFilter <- c(termFilter_strict, termFilter_viral,
+                termFilter_extended)
+strictGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter_strict, collapse="|")))
 extendedGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, collapse="|")))
+knownList$strict <- strictGenes$hgnc_symbol
 knownList$extended <- extendedGenes$hgnc_symbol
+selGenes_strict <- dplyr::filter(limmaTable, adj.P.Val < fdrCut, logFC > fcCut,
+                          !SymbolReannotated %in% knownList$strict,
+                          !SymbolReannotated %in% knownList$known)
 selGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut, logFC > fcCut,
                           !SymbolReannotated %in% knownList$extended,
                           !SymbolReannotated %in% knownList$known)
@@ -1082,7 +1089,8 @@ to find publications that link the gene to heat shock or stress response.
 
 ```{r pubmed}
 selGenes <- dplyr::filter(selGenes, SymbolReannotated != "")
-queryString <- paste(unique(selGenes$SymbolReannotated), "AND (heat shock OR stress)")
+selGenes_strict <- dplyr::filter(selGenes_strict, SymbolReannotated != "")
+queryString <- paste(unique(selGenes_strict$SymbolReannotated), "AND (heat shock OR stress)")
 
 query <- vector(mode="list", length(queryString))
 for(i in 1:length(query)){
@@ -1093,7 +1101,7 @@ for(i in 1:length(query)){
                              EUtilsSummary(queryString[i])
                           })
 }
-names(query) <- unique(selGenes$SymbolReannotated)
+names(query) <- unique(selGenes_strict$SymbolReannotated)
 queryEmpty <- query[sapply(query, QueryCount) == 0]
 queryFound <- query[sapply(query, QueryCount) != 0]
 
@@ -1109,18 +1117,25 @@ for(i in 1:length(pmids)){
                           })
 }
 knownList$extended <- union(knownList$extended, names(queryFound))
-knownList$novel <- names(queryEmpty)
+knownList$novel <- setdiff(names(queryEmpty), knownList$extended)
 
-putativeGenes <- dplyr::filter(selGenes, SymbolReannotated %in% names(queryEmpty))
+putativeGenes <- dplyr::filter(selGenes, SymbolReannotated %in% knownList$novel)
 putativeGenes <- dplyr::left_join(putativeGenes, dplyr::select(gene.data,
                                                                hgnc_symbol, go_id, name_1006),
                                   by=c(SymbolReannotated="hgnc_symbol"))
+putativeGenes_strict <- dplyr::filter(selGenes_strict, SymbolReannotated %in% names(queryEmpty))
+putativeGenes_strict <- dplyr::left_join(putativeGenes_strict, dplyr::select(gene.data,
+                                                               hgnc_symbol, go_id, name_1006),
+                                  by=c(SymbolReannotated="hgnc_symbol"))
+
 ```
 
 ```{r geneRecords, cache=FALSE}
 write.table(data.frame(gene=names(queryFound), pmid=sapply(pmids, paste, collapse=",")),
             file="tmp/heatshock_pmid.txt", row.names=FALSE, quote=FALSE, sep="\t")
 write.table(putativeGenes, file="tmp/heatshock_novel.tab", sep="\t",
+            quote=FALSE, row.names=FALSE)
+write.table(putativeGenes_strict, file="tmp/heatshock_novel_strict.tab", sep="\t",
             quote=FALSE, row.names=FALSE)
 ```
 
@@ -1295,7 +1310,7 @@ r_gene <- do.call(rbind, r_gene)
 write.table(hsfPval, "tmp/hsf_genes_pvalue.txt", sep="\t", quote=FALSE, row.names=FALSE)
 write.table(genes_in_both, "tmp/hsf_genes.txt" , sep="\t", quote=FALSE, row.names=FALSE)
 write.table(r_promoter, "tmp/hsf_motif_genes.txt", sep="\t", quote=FALSE, row.names=FALSE)
-system("tar -czf tmp/gene_annotation.tar.gz -C tmp heatshock_pmid.txt heatshock_novel.tab hsf_genes.txt hsf_genes_pvalue.txt hsf_motif_genes.txt")
+system("tar -czf tmp/gene_annotation.tar.gz -C tmp heatshock_pmid.txt heatshock_novel.tab heatshock_novel_strict.tab hsf_genes.txt hsf_genes_pvalue.txt hsf_motif_genes.txt")
 ```
 
 ## Global heat shock response
