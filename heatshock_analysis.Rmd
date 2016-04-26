@@ -2576,12 +2576,12 @@ with increased expression in cluster 2 (`r tabRef('tablePlsTopGODown')`) are ann
 
 ```{r tablePlsTopGOUp, chache=FALSE}
 set.caption(tabRef("plsTopGOUp", "Top 20 GO categories enriched for genes up regulated in cluster 1"))
-pander(dplyr::select(goTabPlsUp, -cluster1, -cluster2))
+pander(dplyr::select(head(goTabPlsUp, 20), -cluster1, -cluster2))
 ```
 
 ```{r tablePlsTopGODown, chache=FALSE}
 set.caption(tabRef("plsTopGODown", "Top 20 GO categories enriched for genes up regulated in cluster 2"))
-pander(dplyr::select(goTabPlsDown, -cluster1, -cluster2))
+pander(dplyr::select(head(goTabPlsDown, 20), -cluster1, -cluster2))
 ```
 
 ```{r goPlsPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlsPlot", "GO category enrichment for genes differentially expressed between PLS clusters.")}
