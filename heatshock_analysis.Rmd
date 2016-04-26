@@ -2250,16 +2250,17 @@ heatmap.2(sig.data.norm[sortedTable$ArrayAddress, ], trace = "none", Rowv=FALSE,
 
 ## GO enrichment analysis
 The GO analysis highlights several categories that are significantly enriched among
-the up and down regulated genes (`r sum(goTabUp[['up FDR']] < 0.01)` and
-`r sum(goTabDown[['down FDR']] < 0.01)` categories with an FDR < 0.01 respectively).
+the up and down regulated genes (`r sum(goTabUp[['up FDR']] < 0.05)` and
+`r sum(goTabDown[['down FDR']] < 0.05)` categories with an FDR < 0.05 respectively).
 Considering the top categories (`r tabRef("topGOUp")` and `r tabRef("topGODown")`)
 it appears that genes up regulated in response to heat shock are predominantly
 related to stress response (including *response to heat* [GO:0009408])
 and protein folding (including *response to unfolded protein* [GO:0006986] and
-*protein refolding* [GO:0042026]) whereas down regulated genes
+*protein refolding* [GO:0042026]) whereas the leading GO categories for down regulated genes
 broadly relate to cell proliferation and normal lymphocyte function and
 include *positive regulation of cell cycle* [GO:0045787], *spindle assembly* [GO:0051225]
-and *chemokine production* [GO:0032602].
+and *chemokine production* [GO:0032602] but are not sufficiently enriched to be 
+considered significant.
 
 ```{r tableTopGOUp, chache=FALSE}
 set.caption(tabRef("topGOUp", "Top 20 GO categories enriched for up regulated genes."))
@@ -2558,27 +2559,29 @@ sideCols <- c(cluster1="purple", cluster2="orange", cluster3="white")
 heatmap.2(sig.data.norm[sortedTable$ArrayAddress, plsComp$treatment == "Stim"], trace = "none", Rowv=FALSE, Colv=as.dendrogram(plsClust), dendrogram="column", scale="row", col=rev(brewer.pal(11, "RdBu")), ColSideColors=sideCols[plsComp$cluster][plsComp$treatment == "Stim"], key=FALSE, labRow="", labCol="", xlab="Samples", ylab="Genes")
 ```
 
+```{r tablePlsTopGOPrep}
+goTabPlsUp[["cluster1 FDR"]] <- p.adjust(goTabPlsUp$cluster1)
+goTabPlsUp[["cluster2 FDR"]] <- p.adjust(goTabPlsUp$cluster2)
+goTabPlsDown[["cluster1 FDR"]] <- p.adjust(goTabPlsDown$cluster1)
+goTabPlsDown[["cluster2 FDR"]] <- p.adjust(goTabPlsDown$cluster2)
+```
+
+
 To further characterise the differnces in gene expression we carried out a GO enrichment analysis
-for genes differentially expressed between clusters 1 and 2. This reveals that genes with incresed
+for genes differentially expressed between clusters 1 and 2. This reveals strong enrichment for several 
+GO categories (`r sum(goTabPlsUp[["cluster1 FDR"]] < 0.05)` and `r sum(goTabPlsDown[["cluster2 FDR"]] < 0.05)`
+enriched with FDR < 0.05 in cluster 1 and cluster 2 respectively). Genes with increased
 expression in cluster 1 (`r tabRef('tablePlsTopGOUp')`) are enriched for biological processes related to DNA replication whereas those
 with increased expression in cluster 2 (`r tabRef('tablePlsTopGODown')`) are annotated with processes related to the heat shock response.
 
 ```{r tablePlsTopGOUp, chache=FALSE}
 set.caption(tabRef("plsTopGOUp", "Top 20 GO categories enriched for genes up regulated in cluster 1"))
-tab <- GenTable(tg_pls$up, cluster1=resultPlsUp, cluster2=resultPlsDown, topNodes=20, orderBy="cluster1")
-tab[["cluster1 FDR"]] <- p.adjust(tab$cluster1)
-tab[["cluster2 FDR"]] <- p.adjust(tab$cluster2)
-tab <- dplyr::select(tab, -cluster1, -cluster2)
-pander(tab)
+pander(dplyr::select(goTabPlsUp, -cluster1, -cluster2))
 ```
 
 ```{r tablePlsTopGODown, chache=FALSE}
 set.caption(tabRef("plsTopGODown", "Top 20 GO categories enriched for genes up regulated in cluster 2"))
-tab <- GenTable(tg_pls$down, cluster2=resultPlsDown, cluster1=resultPlsUp, topNodes=20, orderBy="cluster2")
-tab[["cluster1 FDR"]] <- p.adjust(tab$cluster1)
-tab[["cluster2 FDR"]] <- p.adjust(tab$cluster2)
-tab <- dplyr::select(tab, -cluster1, -cluster2)
-pander(tab)
+pander(dplyr::select(goTabPlsDown, -cluster1, -cluster2))
 ```
 
 ```{r goPlsPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlsPlot", "GO category enrichment for genes differentially expressed between PLS clusters.")}
