@@ -2557,12 +2557,20 @@ with increased expression in cluster 2 (`r tabRef('tablePlsTopGODown')`) are ann
 
 ```{r tablePlsTopGOUp, chache=FALSE}
 set.caption(tabRef("plsTopGOUp", "Top 20 GO categories enriched for genes up regulated in cluster 1"))
-pander(GenTable(tg_pls$up, cluster1=resultPlsUp, cluster2=resultPlsDown, topNodes=20, orderBy="cluster1"))
+tab <- GenTable(tg_pls$up, cluster1=resultPlsUp, cluster2=resultPlsDown, topNodes=20, orderBy="cluster1")
+tab[["cluster1 FDR"]] <- p.adjust(tab$cluster1)
+tab[["cluster2 FDR"]] <- p.adjust(tab$cluster2)
+tab <- select(tab, -cluster1, -cluster2)
+pander(tab)
 ```
 
 ```{r tablePlsTopGODown, chache=FALSE}
 set.caption(tabRef("plsTopGODown", "Top 20 GO categories enriched for genes up regulated in cluster 2"))
-pander(GenTable(tg_pls$down, cluster2=resultPlsDown, cluster1=resultPlsUp, topNodes=20, orderBy="cluster2"))
+tab <- GenTable(tg_pls$down, cluster2=resultPlsDown, cluster1=resultPlsUp, topNodes=20, orderBy="cluster2")
+tab[["cluster1 FDR"]] <- p.adjust(tab$cluster1)
+tab[["cluster2 FDR"]] <- p.adjust(tab$cluster2)
+
+pander(tab)
 ```
 
 ```{r goPlsPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlsPlot", "GO category enrichment for genes differentially expressed between PLS clusters.")}
