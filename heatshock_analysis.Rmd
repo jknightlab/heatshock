@@ -1020,8 +1020,12 @@ resultUp <- runTest(tg$up, algorithm="classic", statistic="fisher")
 resultDown <- runTest(tg$down, algorithm="classic", statistic="fisher")
 goTabUp <- GenTable(tg$up, up = resultUp, down = resultDown,
                      topNodes = length(score(resultUp)), orderBy = "up")
+goTabUp[["up FDR"]] <- p.adjust(goTabUp$up)
+goTabUp[["down FDR"]] <- p.adjust(goTabUp$down)
 goTabDown <- GenTable(tg$down, down = resultDown, up = resultUp,
                      topNodes = length(score(resultDown)), orderBy = "down")
+goTabDown[["up FDR"]] <- p.adjust(goTabDown$up)
+goTabDown[["down FDR"]] <- p.adjust(goTabDown$down)
 ```
 
 ```{r writeTopGO, include=FALSE, cache=FALSE}
@@ -2246,8 +2250,8 @@ heatmap.2(sig.data.norm[sortedTable$ArrayAddress, ], trace = "none", Rowv=FALSE,
 
 ## GO enrichment analysis
 The GO analysis highlights several categories that are significantly enriched among
-the up and down regulated genes (`r sum(score(resultUp) < 0.01)` and
-`r sum(score(resultDown) < 0.01)` categories with a p-value < 0.01 respectively).
+the up and down regulated genes (`r sum(goTabUp[['up FDR']] < 0.01)` and
+`r sum(goTabDown[['down FDR']] < 0.01)` categories with an FDR < 0.01 respectively).
 Considering the top categories (`r tabRef("topGOUp")` and `r tabRef("topGODown")`)
 it appears that genes up regulated in response to heat shock are predominantly
 related to stress response (including *response to heat* [GO:0009408])
@@ -2259,12 +2263,12 @@ and *chemokine production* [GO:0032602].
 
 ```{r tableTopGOUp, chache=FALSE}
 set.caption(tabRef("topGOUp", "Top 20 GO categories enriched for up regulated genes."))
-pander(GenTable(tg$up, up=resultUp, down=resultDown, topNodes=20, orderBy="up"))
+pander(head(dplyr::select(goTabUp, -up, -down), 20))
 ```
 
 ```{r tableTopGODown, chache=FALSE}
 set.caption(tabRef("topGODown", "Top 20 GO categories enriched for down regulated genes"))
-pander(GenTable(tg$down, down=resultDown, up=resultUp, topNodes=20, orderBy="down"))
+pander(head(dplyr::select(goTabDown, -up, -down), 20))
 ```
 
 ```{r goPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlot", "GO category enrichment for differentially expressed genes.")}
