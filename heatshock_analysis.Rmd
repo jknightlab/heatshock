@@ -1117,7 +1117,7 @@ for(i in 1:length(pmids)){
                           })
 }
 knownList$extended <- union(knownList$extended, names(queryFound))
-knownList$strict <- union(knownList$extended, names(queryFound))
+knownList$strict <- union(knownList$strict, names(queryFound))
 knownList$novel <- setdiff(names(queryEmpty), knownList$extended)
 
 putativeGenes <- dplyr::filter(selGenes, SymbolReannotated %in% knownList$novel)
