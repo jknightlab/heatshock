@@ -1732,6 +1732,10 @@ goTabPlsDown <- GenTable(tg_pls$down, cluster2 = resultPlsDown, cluster1 = resul
 ```
 
 ```{r writeTopGO_pls, include=FALSE, cache=FALSE}
+goTabPlsUp[["cluster1 FDR"]] <- p.adjust(goTabPlsUp$cluster1)
+goTabPlsUp[["cluster2 FDR"]] <- p.adjust(goTabPlsUp$cluster2)
+goTabPlsDown[["cluster1 FDR"]] <- p.adjust(goTabPlsDown$cluster1)
+goTabPlsDown[["cluster2 FDR"]] <- p.adjust(goTabPlsDown$cluster2)
 write.table(goTabPlsUp,
             file="tmp/topGO_pls_cluster_upregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
 write.table(goTabPlsDown,
