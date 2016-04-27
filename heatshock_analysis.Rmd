@@ -2312,7 +2312,7 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
 
 ## Gene annotations
 
-Of the `r sum(sig.genes)` significantly up regulated genes
+Of the `r length(unique(dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$SymbolReannotated))` significantly up regulated genes
 `r sum(goKnownList$known %in% dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$SymbolReannotated)`
 have been directly linked to the heat shock response and
 `r length(goKnownList$strict)`
