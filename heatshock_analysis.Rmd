@@ -1074,6 +1074,7 @@ termFilter_extended <- c("death", "apoptosis", "apoptotic",
                 "cell cycle", "mitosis", "mitotic", "proliferation",
                 "transcription", "translation", "gene expression")
 termFilter <- c(termFilter_strict, termFilter_extended)
+
 strictGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter_strict, collapse="|")), 
                              !str_detect(name_1006, paste(termFilter_viral, collapse="|")))
 extendedGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, collapse="|")),
@@ -1086,6 +1087,25 @@ selGenes_strict <- dplyr::filter(limmaTable, adj.P.Val < fdrCut, logFC > fcCut,
 selGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut, logFC > fcCut,
                           !SymbolReannotated %in% knownList$extended,
                           !SymbolReannotated %in% knownList$known)
+```
+
+```{r goTermTotals}
+goKnownList <- knownList
+gene.data_all <- getBM(
+  attributes=c('hgnc_symbol', 'entrezgene', 'go_id', 'name_1006', 'namespace_1003'),
+  filters = 'entrezgene', values = unique(limmaTable$EntrezReannotated), mart = mart)
+filterTotal_strict <- dplyr::filter(gene.data_all, str_detect(name_1006, paste(termFilter_strict, collapse="|")), 
+                             !str_detect(name_1006, paste(termFilter_viral, collapse="|")))
+filterTotal_extended <- dplyr::filter(gene.data_all, str_detect(name_1006, paste(termFilter, collapse="|")),
+                               !str_detect(name_1006, paste(termFilter_viral, collapse="|")))
+```
+
+```{r goTermTest}
+sig.genes <- with(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)
+genes_strict <- with(limmaTable, EntrezReannotated %in% filterTotal_strict$entrezgene)
+genes_extended <- with(limmaTable, EntrezReannotated %in% filterTotal_extended$entrezgene)
+go.test_strict <- fisher.test(sig.genes, genes_strict, alternative='g')
+go.test_extended <- fisher.test(sig.genes, genes_extended, alternative='g')
 ```
 
 ### PubMed
@@ -2292,12 +2312,13 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
 
 ## Gene annotations
 
-Of the `r length(unique(dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$SymbolReannotated))`
-significantly up regulated genes
-`r sum(knownList$known %in% dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$SymbolReannotated)` have been directly linked to the heat shock response and
-`r length(knownList$strict)`
-are associated with GO terms that clearly relate to heat shock response
-or are otherwise linked to the heat shock response in the literature. This leaves
+Of the `r sum(sig.genes)` significantly up regulated genes
+`r sum(goKnownList$known %in% dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$SymbolReannotated)`
+have been directly linked to the heat shock response and
+`r length(goKnownList$strict)`
+are associated with GO terms that clearly relate to heat shock response (Fisher's exact test P-value: `r go.test_strict$p.value`)
+and a further `r length(knownList$strict) - length(goKnownList$strict)` are otherwise linked to the heat shock 
+response in the literature. This leaves
 `r length(knownList$novel) + length(setdiff(knownList$extended, knownList$strict))` genes with no obvious 
 association to heat shock. Using a more inclusive definition of heat shock related processes, 
 also including GO terms related to cell death and proliferation, accounts for an additional
