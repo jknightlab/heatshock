@@ -1281,7 +1281,7 @@ r_promoter <- dplyr::left_join(r_promoter, limmaTable, by="EntrezReannotated")
 ```{r pwmAnnotate}
 r_promoter$HSFpeak <- ifelse( r_promoter$SymbolReannotated %in% peaks2genes$genes, 1, 0)
 r_promoter$novel <- ifelse(r_promoter$SymbolReannotated %in% knownList$novel, 3, 
-                           ifelse(r_promoter$SymbolReannotated %in% knownList$extended, 2,
+                           ifelse(r_promoter$SymbolReannotated %in% knownList$extended & !r_promoter$SymbolReannotated %in% knownList$strict, 2,
                                   ifelse(r_promoter$SymbolReannotated %in% knownList$strict, 1,0)))
 
 trx_numbers <- data.frame(table(r_promoter$SymbolReannotated))
