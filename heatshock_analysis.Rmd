@@ -2568,7 +2568,7 @@ Noting that the minor allele frequency of rs12207548 varies considerably between
 wether there is evidence of selection at this locus. To this end we calculated F~ST~ between the Yoruban and Central
 European populations for this SNP and compare it to all SNPs with similar MAF in the Yoruban samples.
 
-```{r Fst}
+```{r Fst, results='hide'}
 yri <- getSS("hmyriB36", paste0('',1:22))
 yri <- yri[,phenoData(yri)$isFounder == 1]
 yri <- MAFfilter(yri, 0.17, 0.21)
@@ -2584,8 +2584,8 @@ fst <- unlist(fst)
 names(fst) <- unlist(lapply(geno.yri, colnames))
 ```
 
-This estimates the F~ST~ for rs12207548 to be `r pander(fst['rs12207548'])`. Of the `r pander(sum(!is.na(fst)))` SNPs tested
-`r pander(round(sum(fst > fst['rs12207548'], na.rm=TRUE)/sum(!is.na(fst)) * 100), 2)`% have a more extreme value.
+This estimates the F~ST~ for rs12207548 to be `r round(fst['rs12207548'], 2)`. Of the `r sum(!is.na(fst))` SNPs tested
+`r round(sum(fst > fst['rs12207548'], na.rm=TRUE)/sum(!is.na(fst)) * 100, 2)`% have a more extreme value.
 
 Investigating the differences in gene expression between cluster 1 and 2 of the second PLS component
 we identified a total of `r nrow(filter(clust1_2Table, adj.P.Val < fdrCut))` probes as differentially
