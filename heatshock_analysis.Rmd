@@ -69,6 +69,9 @@ library(RISmed)
 library(biomaRt)
 library(PWMEnrich)
 library(PWMEnrich.Hsapiens.background)
+library(snpStats)
+library(hmyriB36)
+library(ceuhm3)
 
 output <- opts_knit$get("rmarkdown.pandoc.to")
 opts_chunk$set(autodep=TRUE)
@@ -1020,8 +1023,12 @@ resultUp <- runTest(tg$up, algorithm="classic", statistic="fisher")
 resultDown <- runTest(tg$down, algorithm="classic", statistic="fisher")
 goTabUp <- GenTable(tg$up, up = resultUp, down = resultDown,
                      topNodes = length(score(resultUp)), orderBy = "up")
+goTabUp[["up FDR"]] <- p.adjust(goTabUp$up)
+goTabUp[["down FDR"]] <- p.adjust(goTabUp$down)
 goTabDown <- GenTable(tg$down, down = resultDown, up = resultUp,
                      topNodes = length(score(resultDown)), orderBy = "down")
+goTabDown[["up FDR"]] <- p.adjust(goTabDown$up)
+goTabDown[["down FDR"]] <- p.adjust(goTabDown$down)
 ```
 
 ```{r writeTopGO, include=FALSE, cache=FALSE}
@@ -1064,16 +1071,44 @@ gene.data <- getBM(
   attributes=c('hgnc_symbol', 'entrezgene', 'go_id', 'name_1006', 'namespace_1003'),
   filters = 'entrezgene', values = sig.entrez, mart = mart)
 gene.data <- dplyr::filter(gene.data, namespace_1003=="biological_process")
-termFilter <- c("heat", "stress", "folding", "folded",
-                "death", "apoptosis", "apoptotic",
+termFilter_strict <- c("heat", "stress", "folding", "folded")
+termFilter_viral <- c("virus", "viral", "immune")
+termFilter_extended <- c("death", "apoptosis", "apoptotic",
                 "cell cycle", "mitosis", "mitotic", "proliferation",
-                "virus", "viral", "immune",
                 "transcription", "translation", "gene expression")
-extendedGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, collapse="|")))
+termFilter <- c(termFilter_strict, termFilter_extended)
+
+strictGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter_strict, collapse="|")), 
+                             !str_detect(name_1006, paste(termFilter_viral, collapse="|")))
+extendedGenes <- dplyr::filter(gene.data, str_detect(name_1006, paste(termFilter, collapse="|")),
+                               !str_detect(name_1006, paste(termFilter_viral, collapse="|")))
+knownList$strict <- strictGenes$hgnc_symbol
 knownList$extended <- extendedGenes$hgnc_symbol
+selGenes_strict <- dplyr::filter(limmaTable, adj.P.Val < fdrCut, logFC > fcCut,
+                          !SymbolReannotated %in% knownList$strict,
+                          !SymbolReannotated %in% knownList$known)
 selGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut, logFC > fcCut,
                           !SymbolReannotated %in% knownList$extended,
                           !SymbolReannotated %in% knownList$known)
+```
+
+```{r goTermTotals}
+goKnownList <- knownList
+gene.data_all <- getBM(
+  attributes=c('hgnc_symbol', 'entrezgene', 'go_id', 'name_1006', 'namespace_1003'),
+  filters = 'entrezgene', values = unique(limmaTable$EntrezReannotated), mart = mart)
+filterTotal_strict <- dplyr::filter(gene.data_all, str_detect(name_1006, paste(termFilter_strict, collapse="|")), 
+                             !str_detect(name_1006, paste(termFilter_viral, collapse="|")))
+filterTotal_extended <- dplyr::filter(gene.data_all, str_detect(name_1006, paste(termFilter, collapse="|")),
+                               !str_detect(name_1006, paste(termFilter_viral, collapse="|")))
+```
+
+```{r goTermTest}
+sig.genes <- with(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)
+genes_strict <- with(limmaTable, EntrezReannotated %in% filterTotal_strict$entrezgene)
+genes_extended <- with(limmaTable, EntrezReannotated %in% filterTotal_extended$entrezgene)
+go.test_strict <- fisher.test(sig.genes, genes_strict, alternative='g')
+go.test_extended <- fisher.test(sig.genes, genes_extended, alternative='g')
 ```
 
 ### PubMed
@@ -1082,7 +1117,8 @@ to find publications that link the gene to heat shock or stress response.
 
 ```{r pubmed}
 selGenes <- dplyr::filter(selGenes, SymbolReannotated != "")
-queryString <- paste(unique(selGenes$SymbolReannotated), "AND (heat shock OR stress)")
+selGenes_strict <- dplyr::filter(selGenes_strict, SymbolReannotated != "")
+queryString <- paste(unique(selGenes_strict$SymbolReannotated), "AND (heat shock OR stress)")
 
 query <- vector(mode="list", length(queryString))
 for(i in 1:length(query)){
@@ -1093,7 +1129,7 @@ for(i in 1:length(query)){
                              EUtilsSummary(queryString[i])
                           })
 }
-names(query) <- unique(selGenes$SymbolReannotated)
+names(query) <- unique(selGenes_strict$SymbolReannotated)
 queryEmpty <- query[sapply(query, QueryCount) == 0]
 queryFound <- query[sapply(query, QueryCount) != 0]
 
@@ -1109,18 +1145,26 @@ for(i in 1:length(pmids)){
                           })
 }
 knownList$extended <- union(knownList$extended, names(queryFound))
-knownList$novel <- names(queryEmpty)
+knownList$strict <- union(knownList$strict, names(queryFound))
+knownList$novel <- setdiff(names(queryEmpty), knownList$extended)
 
-putativeGenes <- dplyr::filter(selGenes, SymbolReannotated %in% names(queryEmpty))
+putativeGenes <- dplyr::filter(selGenes, SymbolReannotated %in% knownList$novel)
 putativeGenes <- dplyr::left_join(putativeGenes, dplyr::select(gene.data,
                                                                hgnc_symbol, go_id, name_1006),
                                   by=c(SymbolReannotated="hgnc_symbol"))
+putativeGenes_strict <- dplyr::filter(selGenes_strict, SymbolReannotated %in% names(queryEmpty))
+putativeGenes_strict <- dplyr::left_join(putativeGenes_strict, dplyr::select(gene.data,
+                                                               hgnc_symbol, go_id, name_1006),
+                                  by=c(SymbolReannotated="hgnc_symbol"))
+
 ```
 
 ```{r geneRecords, cache=FALSE}
 write.table(data.frame(gene=names(queryFound), pmid=sapply(pmids, paste, collapse=",")),
             file="tmp/heatshock_pmid.txt", row.names=FALSE, quote=FALSE, sep="\t")
 write.table(putativeGenes, file="tmp/heatshock_novel.tab", sep="\t",
+            quote=FALSE, row.names=FALSE)
+write.table(putativeGenes_strict, file="tmp/heatshock_novel_strict.tab", sep="\t",
             quote=FALSE, row.names=FALSE)
 ```
 
@@ -1260,7 +1304,9 @@ r_promoter <- dplyr::left_join(r_promoter, limmaTable, by="EntrezReannotated")
 
 ```{r pwmAnnotate}
 r_promoter$HSFpeak <- ifelse( r_promoter$SymbolReannotated %in% peaks2genes$genes, 1, 0)
-r_promoter$novel <- ifelse(r_promoter$SymbolReannotated %in% knownList$novel, 2, ifelse(r_promoter$SymbolReannotated %in% knownList$extended, 1, 0))
+r_promoter$novel <- ifelse(r_promoter$SymbolReannotated %in% knownList$novel, 3, 
+                           ifelse(r_promoter$SymbolReannotated %in% knownList$extended & !r_promoter$SymbolReannotated %in% knownList$strict, 2,
+                                  ifelse(r_promoter$SymbolReannotated %in% knownList$strict, 1,0)))
 
 trx_numbers <- data.frame(table(r_promoter$SymbolReannotated))
 colnames(trx_numbers) <- c("SymbolReannotated", "trx_numbers")
@@ -1295,7 +1341,7 @@ r_gene <- do.call(rbind, r_gene)
 write.table(hsfPval, "tmp/hsf_genes_pvalue.txt", sep="\t", quote=FALSE, row.names=FALSE)
 write.table(genes_in_both, "tmp/hsf_genes.txt" , sep="\t", quote=FALSE, row.names=FALSE)
 write.table(r_promoter, "tmp/hsf_motif_genes.txt", sep="\t", quote=FALSE, row.names=FALSE)
-system("tar -czf tmp/gene_annotation.tar.gz -C tmp heatshock_pmid.txt heatshock_novel.tab hsf_genes.txt hsf_genes_pvalue.txt hsf_motif_genes.txt")
+system("tar -czf tmp/gene_annotation.tar.gz -C tmp heatshock_pmid.txt heatshock_novel.tab heatshock_novel_strict.tab hsf_genes.txt hsf_genes_pvalue.txt hsf_motif_genes.txt")
 ```
 
 ## Global heat shock response
@@ -1716,6 +1762,10 @@ goTabPlsDown <- GenTable(tg_pls$down, cluster2 = resultPlsDown, cluster1 = resul
 ```
 
 ```{r writeTopGO_pls, include=FALSE, cache=FALSE}
+goTabPlsUp[["cluster1 FDR"]] <- p.adjust(goTabPlsUp$cluster1)
+goTabPlsUp[["cluster2 FDR"]] <- p.adjust(goTabPlsUp$cluster2)
+goTabPlsDown[["cluster1 FDR"]] <- p.adjust(goTabPlsDown$cluster1)
+goTabPlsDown[["cluster2 FDR"]] <- p.adjust(goTabPlsDown$cluster2)
 write.table(goTabPlsUp,
             file="tmp/topGO_pls_cluster_upregulated.tab", sep="\t", quote=FALSE, row.names=FALSE)
 write.table(goTabPlsDown,
@@ -2226,25 +2276,26 @@ heatmap.2(sig.data.norm[sortedTable$ArrayAddress, ], trace = "none", Rowv=FALSE,
 
 ## GO enrichment analysis
 The GO analysis highlights several categories that are significantly enriched among
-the up and down regulated genes (`r sum(score(resultUp) < 0.01)` and
-`r sum(score(resultDown) < 0.01)` categories with a p-value < 0.01 respectively).
+the up and down regulated genes (`r sum(goTabUp[['up FDR']] < 0.05)` and
+`r sum(goTabDown[['down FDR']] < 0.05)` categories with an FDR < 0.05 respectively).
 Considering the top categories (`r tabRef("topGOUp")` and `r tabRef("topGODown")`)
 it appears that genes up regulated in response to heat shock are predominantly
 related to stress response (including *response to heat* [GO:0009408])
 and protein folding (including *response to unfolded protein* [GO:0006986] and
-*protein refolding* [GO:0042026]) whereas down regulated genes
+*protein refolding* [GO:0042026]) whereas the leading GO categories for down regulated genes
 broadly relate to cell proliferation and normal lymphocyte function and
 include *positive regulation of cell cycle* [GO:0045787], *spindle assembly* [GO:0051225]
-and *chemokine production* [GO:0032602].
+and *chemokine production* [GO:0032602] but are not sufficiently enriched to be 
+considered significant.
 
 ```{r tableTopGOUp, chache=FALSE}
 set.caption(tabRef("topGOUp", "Top 20 GO categories enriched for up regulated genes."))
-pander(GenTable(tg$up, up=resultUp, down=resultDown, topNodes=20, orderBy="up"))
+pander(head(dplyr::select(goTabUp, -up, -down), 20))
 ```
 
 ```{r tableTopGODown, chache=FALSE}
 set.caption(tabRef("topGODown", "Top 20 GO categories enriched for down regulated genes"))
-pander(GenTable(tg$down, down=resultDown, up=resultUp, topNodes=20, orderBy="down"))
+pander(head(dplyr::select(goTabDown, -up, -down), 20))
 ```
 
 ```{r goPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlot", "GO category enrichment for differentially expressed genes.")}
@@ -2264,13 +2315,18 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
 
 ## Gene annotations
 
-Of the `r length(unique(dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$SymbolReannotated))`
-significantly up regulated genes
-`r sum(knownList$known %in% dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$SymbolReannotated)` have been directly linked to the heat shock response and
-`r length(knownList$extended)`
-are associated with GO terms that clearly relate to heat shock response or other relevant processes
-or are otherwise linked to the heat shock response in the literature. This leaves
-`r length(knownList$novel)` genes with no obvious association to heat shock.
+Of the `r length(unique(dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$SymbolReannotated))` significantly up regulated genes
+`r sum(goKnownList$known %in% dplyr::filter(limmaTable, adj.P.Val < fdrCut & logFC > fcCut)$SymbolReannotated)`
+have been directly linked to the heat shock response and
+`r length(goKnownList$strict)`
+are associated with GO terms that clearly relate to heat shock response (Fisher's exact test P-value: `r pander(go.test_strict$p.value)`)
+and a further `r length(knownList$strict) - length(goKnownList$strict)` are otherwise linked to the heat shock 
+response in the literature. This leaves
+`r length(knownList$novel) + length(setdiff(knownList$extended, knownList$strict))` genes with no obvious 
+association to heat shock. Using a more inclusive definition of heat shock related processes, 
+also including GO terms related to cell death and proliferation, accounts for an additional
+`r length(setdiff(knownList$extended, knownList$strict))` genes, leaving `r length(knownList$novel)`
+genes without any known heatshock association.
 
 ```{r peakEnrichTab, cache=FALSE}
 condition <- str_replace(hsfPval$cond, "comb-C_", "basal ")
@@ -2296,10 +2352,12 @@ if(any(hsfPval$down < 0.01 & hsfPval$down > 0.001))
 pander(tab, emphasize.cells=highlight, emphasize.strong.cells=highlightStrong)
 ```
 
-There are `r length(unique(dplyr::filter(r_promoter, HSFpeak == 1, novel == 2)$SymbolReannotated))` up-regulated
-genes without an established role and
-`r length(unique(dplyr::filter(r_promoter, HSFpeak == 1, novel == 1)$SymbolReannotated))` genes with limited
-evidence for their involvement in the heat shock response that show evidence of
+There are `r length(unique(dplyr::filter(r_promoter, HSFpeak == 1, novel == 3)$SymbolReannotated))` up-regulated
+genes without any established role,
+`r length(unique(dplyr::filter(r_promoter, HSFpeak == 1, novel == 2)$SymbolReannotated))` genes with limited
+evidence and `r length(unique(dplyr::filter(r_promoter, HSFpeak == 1, novel == 1)$SymbolReannotated))` 
+with substantial evidence
+for their involvement in the heat shock response that show
 heat shock factor binding in their promoter region. Further evidence for the
 binding of HSF1 and HSF2 in these regions is provided by scanning for the presence
 of the HSF1 binding motif. While this provides less direct evidence than the presence
@@ -2314,7 +2372,7 @@ compared to those that don't (`r figRef("pwmPlot")`).
 ggplot(dplyr::filter(r_gene, expr=="up"),
        aes(x=factor(HSFpeak, levels=c("0", "1"), labels=c("absent", "present")),
            y=-log10(pwm.p.value),
-           fill=factor(novel, levels=c("0", "1", "2"), labels=c("established", "limited", "novel")))) +
+           fill=factor(novel, levels=c("0", "1", "2", "3"), labels=c("established", "strong", "limited", "novel")))) +
   geom_boxplot() + theme_bw() + xlab("HSF peak") + ylab(expression(-log[10]("p-value"))) +
   scale_fill_discrete(name="heat shock association")
 ```
@@ -2506,6 +2564,29 @@ set.caption(tabRef("globalSNPGenes_stim", "Associations between global response 
 pander(tab)
 ```
 
+Noting that the minor allele frequency of rs12207548 varies considerably between populations we thought to investigate
+wether there is evidence of selection at this locus. To this end we calculated F~ST~ between the Yoruban and Central
+European populations for this SNP and compare it to all SNPs with similar MAF in the Yoruban samples.
+
+```{r Fst, results='hide'}
+yri <- getSS("hmyriB36", paste0('',1:22))
+yri <- yri[,phenoData(yri)$isFounder == 1]
+yri <- MAFfilter(yri, 0.17, 0.21)
+geno.yri <- smList(yri)
+
+ceu <- getSS('ceuhm3', paste0('chr', 1:22))
+ceu <- ceu[,phenoData(ceu)$isFounder == 1]
+geno.ceu <- smList(ceu)
+geno.ceu <- mapply(function(x,y) {snps <- colnames(y);snps <- snps[snps %in% colnames(x)]; x[,snps]}, geno.ceu, geno.yri, SIMPLIFY=FALSE)
+geno.yri <- mapply(function(x,y) {snps <- colnames(y);snps <- snps[snps %in% colnames(x)]; x[,snps]}, geno.yri, geno.ceu, SIMPLIFY=FALSE)
+fst <- mapply(function(x,y) Fst(rbind(x, y), rep(c('ceu', 'yri'), c(nrow(x), nrow(y))))$Fst, geno.ceu, geno.yri, SIMPLIFY=FALSE)
+fst <- unlist(fst)
+names(fst) <- unlist(lapply(geno.yri, colnames))
+```
+
+This estimates the F~ST~ for rs12207548 to be `r round(fst['rs12207548'], 2)`. Of the `r sum(!is.na(fst))` SNPs tested
+`r round(sum(fst > fst['rs12207548'], na.rm=TRUE)/sum(!is.na(fst)) * 100, 2)`% have a more extreme value.
+
 Investigating the differences in gene expression between cluster 1 and 2 of the second PLS component
 we identified a total of `r nrow(filter(clust1_2Table, adj.P.Val < fdrCut))` probes as differentially
 expressed at an FDR threshold of `r fdrCut` (see `r tabRef("clusterTopTable")`
@@ -2530,19 +2611,29 @@ sideCols <- c(cluster1="purple", cluster2="orange", cluster3="white")
 heatmap.2(sig.data.norm[sortedTable$ArrayAddress, plsComp$treatment == "Stim"], trace = "none", Rowv=FALSE, Colv=as.dendrogram(plsClust), dendrogram="column", scale="row", col=rev(brewer.pal(11, "RdBu")), ColSideColors=sideCols[plsComp$cluster][plsComp$treatment == "Stim"], key=FALSE, labRow="", labCol="", xlab="Samples", ylab="Genes")
 ```
 
+```{r tablePlsTopGOPrep}
+goTabPlsUp[["cluster1 FDR"]] <- p.adjust(goTabPlsUp$cluster1)
+goTabPlsUp[["cluster2 FDR"]] <- p.adjust(goTabPlsUp$cluster2)
+goTabPlsDown[["cluster1 FDR"]] <- p.adjust(goTabPlsDown$cluster1)
+goTabPlsDown[["cluster2 FDR"]] <- p.adjust(goTabPlsDown$cluster2)
+```
+
+
 To further characterise the differnces in gene expression we carried out a GO enrichment analysis
-for genes differentially expressed between clusters 1 and 2. This reveals that genes with incresed
+for genes differentially expressed between clusters 1 and 2. This reveals strong enrichment for several 
+GO categories (`r sum(goTabPlsUp[["cluster1 FDR"]] < 0.05)` and `r sum(goTabPlsDown[["cluster2 FDR"]] < 0.05)`
+enriched with FDR < 0.05 in cluster 1 and cluster 2 respectively). Genes with increased
 expression in cluster 1 (`r tabRef('tablePlsTopGOUp')`) are enriched for biological processes related to DNA replication whereas those
 with increased expression in cluster 2 (`r tabRef('tablePlsTopGODown')`) are annotated with processes related to the heat shock response.
 
 ```{r tablePlsTopGOUp, chache=FALSE}
 set.caption(tabRef("plsTopGOUp", "Top 20 GO categories enriched for genes up regulated in cluster 1"))
-pander(GenTable(tg_pls$up, cluster1=resultPlsUp, cluster2=resultPlsDown, topNodes=20, orderBy="cluster1"))
+pander(dplyr::select(head(goTabPlsUp, 20), -cluster1, -cluster2))
 ```
 
 ```{r tablePlsTopGODown, chache=FALSE}
 set.caption(tabRef("plsTopGODown", "Top 20 GO categories enriched for genes up regulated in cluster 2"))
-pander(GenTable(tg_pls$down, cluster2=resultPlsDown, cluster1=resultPlsUp, topNodes=20, orderBy="cluster2"))
+pander(dplyr::select(head(goTabPlsDown, 20), -cluster1, -cluster2))
 ```
 
 ```{r goPlsPlot, cache=FALSE, fig.width=10, fig.height=6, fig.cap=figRef("goPlsPlot", "GO category enrichment for genes differentially expressed between PLS clusters.")}
