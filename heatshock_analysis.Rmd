@@ -2533,8 +2533,8 @@ for(i in 1:n){
   gene <- as.character(tab$Gene[i])
   probe <- as.character(tab$NuID[i])
 
-  fit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covar[[1]]))
-  offset <- colSums(fit$coefficients[-(1:2)]*covar[[1]])
+  fit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covarFC))
+  offset <- colSums(fit$coefficients[-(1:2)]*covarFC)
 
   plotData <- data.frame(genotype=geno$bed[snp,], fold_change=selectedFC[probe, ]-offset)
   fig[[i]] <- ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
