@@ -1365,7 +1365,8 @@ the length and direction of the response vector, i.e. the vector between the bas
 and stimulated sample for each individual in the space spanned by the first two PLS
 components, together with the location of the basal sample in the same space as a
 multivariate phenotype. This was then tested for association with
-genotypes for SNPs close to differentially expressed genes using the *MultiPhen* R
+genotypes for SNPs close to differentially expressed genes and their upstream 
+regulators (identified via Ingenuity Pathway Analysis) using the *MultiPhen* R
 package [@OReilly12]. The GRCh37 coordinates
 for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142.GRCh37*
 Bioconductor package [@Pages14] and gene coordinates via the
@@ -1394,8 +1395,14 @@ geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
 cisWindow <- 1e4
 
 exclChrom <- c("chrX", "chrY", "chrM")
+regs <- readr::read_tsv('data/upstream_regulators.tab', progres=FALSE)
+regs[[1]] <- stringr::str_extract(regs[[1]], '\\S+')
+regs[["FDR"]] <- p.adjust(regs[['P-value']], method='BH')
+regs <- dplyr::filter(regs, FDR <= 0.01, !`Upstream Regulator` %in% selectedGenes$SymbolReannotated, 
+                      `Upstream Regulator` %in% limmaTable$SymbolReannotated)
 selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
                                  !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
+selectedGenes <- rbind(selectedGenes, dplyr::filter(limmaTable, SymbolReannotated %in% regs[["Upstream Regulator"]]))
 selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation, EntrezReannotated, SymbolReannotated)
 
 selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation,
@@ -1501,20 +1508,12 @@ genes implicated in the heat shock response. Here we define the gene set of inte
 as those genes that were
 significantly up regulated (FDR < `r fdrCut` and fold change > `r 2^fcCut`)
 following heat shock and that were found to have HSF1 or HSF2 ChIP-seq peaks
-or binding motifs (P < 0.05) in their promoter region as well as known upstream
-regulators, as defined by an Ingenuity Pathway Analysis, of the differentially
-expressed genes.
+or binding motifs (P < 0.05) in their promoter region.
 
 ```{r selectHeatShock}
 selSymbol <- dplyr::filter(r_gene, expr == "up", HSFpeak == 1 | pwm.p.value < 0.05)$SymbolReannotated
 selSymbol <- union(selSymbol, "CDKN1A")
 selectedGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% selSymbol)
-regs <- readr::read_tsv('data/upstream_regulators.tab', progres=FALSE)
-regs[[1]] <- stringr::str_extract(regs[[1]], '\\S+')
-regs[["FDR"]] <- p.adjust(regs[['P-value']], method='BH')
-regs <- dplyr::filter(regs, FDR <= 0.01, !`Upstream Regulator` %in% selectedGenes$SymbolReannotated, 
-                      `Upstream Regulator` %in% limmaTable$SymbolReannotated)
-selectedGenes <- rbind(selectedGenes, dplyr::filter(limmaTable, SymbolReannotated %in% regs[["Upstream Regulator"]]))
 probePos <- t(sapply(selectedGenes$GenomicLocation,
                      str_extract, c("^chr([[:digit:]]+|X)(_[[:alnum:]]+_hap[[:digit:]]+)*",
                                     ":[[:digit:]]+", "[[:digit:]]+:[+-]")))
