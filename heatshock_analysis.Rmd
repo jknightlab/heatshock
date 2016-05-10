@@ -1501,12 +1501,20 @@ genes implicated in the heat shock response. Here we define the gene set of inte
 as those genes that were
 significantly up regulated (FDR < `r fdrCut` and fold change > `r 2^fcCut`)
 following heat shock and that were found to have HSF1 or HSF2 ChIP-seq peaks
-or binding motifs (P < 0.05) in their promoter region.
+or binding motifs (P < 0.05) in their promoter region as well as known upstream
+regulators, as defined by an Ingenuity Pathway Analysis, of the differentially
+expressed genes.
 
 ```{r selectHeatShock}
 selSymbol <- dplyr::filter(r_gene, expr == "up", HSFpeak == 1 | pwm.p.value < 0.05)$SymbolReannotated
 selSymbol <- union(selSymbol, "CDKN1A")
 selectedGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% selSymbol)
+regs <- readr::read_tsv('data/upstream_regulators.tab', progres=FALSE)
+regs[[1]] <- stringr::str_extract(regs[[1]], '\\S+')
+regs[["FDR"]] <- p.adjust(regs[['P-value']], method='BH')
+regs <- dplyr::filter(regs, FDR <= 0.01, !`Upstream Regulator` %in% selectedGenes$SymbolReannotated, 
+                      `Upstream Regulator` %in% limmaTable$SymbolReannotated)
+selectedGenes <- rbind(selectedGenes, regs)
 probePos <- t(sapply(selectedGenes$GenomicLocation,
                      str_extract, c("^chr([[:digit:]]+|X)(_[[:alnum:]]+_hap[[:digit:]]+)*",
                                     ":[[:digit:]]+", "[[:digit:]]+:[+-]")))
@@ -1779,7 +1787,7 @@ system("tar -czf tmp/topGO_pls_cluster.tar.gz -C tmp topGO_pls_cluster_upregulat
 Genes associated with the heat shock response, either
 through previous work or implicated by the analysis presented here, were
 selected for further analysis as above to determine genetic factors that modulate
-their response to the stimulus.
+their response to the stimulus. 
 
 For each of the `r nrow(selectedGenes)` probes the observed response to the
 stimulus (as measured by the log~2~fold change) is tested for association with
