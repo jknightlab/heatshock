@@ -1514,7 +1514,7 @@ regs[[1]] <- stringr::str_extract(regs[[1]], '\\S+')
 regs[["FDR"]] <- p.adjust(regs[['P-value']], method='BH')
 regs <- dplyr::filter(regs, FDR <= 0.01, !`Upstream Regulator` %in% selectedGenes$SymbolReannotated, 
                       `Upstream Regulator` %in% limmaTable$SymbolReannotated)
-selectedGenes <- rbind(selectedGenes, regs)
+selectedGenes <- rbind(selectedGenes, dplyr::filter(limmaTable, SymbolReannotated %in% regs[["Upstream Regulator"]]))
 probePos <- t(sapply(selectedGenes$GenomicLocation,
                      str_extract, c("^chr([[:digit:]]+|X)(_[[:alnum:]]+_hap[[:digit:]]+)*",
                                     ":[[:digit:]]+", "[[:digit:]]+:[+-]")))
