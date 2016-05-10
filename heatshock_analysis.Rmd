@@ -1398,10 +1398,10 @@ exclChrom <- c("chrX", "chrY", "chrM")
 regs <- readr::read_tsv('data/upstream_regulators.tab', progres=FALSE)
 regs[[1]] <- stringr::str_extract(regs[[1]], '\\S+')
 regs[["FDR"]] <- p.adjust(regs[['P-value']], method='BH')
-regs <- dplyr::filter(regs, FDR <= 0.01, !`Upstream Regulator` %in% selectedGenes$SymbolReannotated, 
-                      `Upstream Regulator` %in% limmaTable$SymbolReannotated)
 selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
                                  !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
+regs <- dplyr::filter(regs, FDR <= 0.01, !`Upstream Regulator` %in% selectedGenes$SymbolReannotated, 
+                      `Upstream Regulator` %in% limmaTable$SymbolReannotated)
 selectedGenes <- rbind(selectedGenes, dplyr::filter(limmaTable, SymbolReannotated %in% regs[["Upstream Regulator"]]))
 selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation, EntrezReannotated, SymbolReannotated)
 
