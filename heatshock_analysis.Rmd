@@ -2513,19 +2513,19 @@ multiplot(fig1, fig2, cols=2)
 
 ```{r globalSNPGenes_fc, cache=FALSE}
 tab <- meGlobal$all$eqtls
-tab <- meGlobal$all$eqtls
 cut <- tab$FDR[5]
 n <- min(max(which(tab$FDR <= cut)), 20)
-tab <- head(tab, n)
+
 tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
 tab <- dplyr::rename(tab, Gene=SymbolReannotated)
 tab <- dplyr::select(tab, SNP=snps, Gene, NuID=gene, Statistic=statistic, `p-value`=pvalue, FDR, beta)
 set.caption(tabRef("globalSNPGenes_fc", "Associations between global response SNPs and gene level heat shock response."))
-pander(dplyr::select(tab, -NuID))
+pander(dplyr::select(head(tab, n), -NuID))
 ```
 
 ```{r globalSNPGenes_fcPlot, cache=FALSE, fig.cap=figRef("globalGenesFC", "Heat shock response by genotype.")}
 n <- sum(tab$FDR < 0.05)
+if(n < 2) n <- 2
 fig <- vector(mode="list", n)
 
 for(i in 1:n){
@@ -2533,7 +2533,7 @@ for(i in 1:n){
   gene <- as.character(tab$Gene[i])
   probe <- as.character(tab$NuID[i])
 
-  fit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covarFC))
+  fit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covar[[1]]))
   offset <- colSums(fit$coefficients[-(1:2)]*covar[[1]])
 
   plotData <- data.frame(genotype=geno$bed[snp,], fold_change=selectedFC[probe, ]-offset)
