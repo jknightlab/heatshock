@@ -1512,7 +1512,7 @@ or binding motifs (P < 0.05) in their promoter region.
 
 ```{r selectHeatShock}
 selSymbol <- dplyr::filter(r_gene, expr == "up", HSFpeak == 1 | pwm.p.value < 0.05)$SymbolReannotated
-selSymbol <- union(selSymbol, "CDKN1A", regs[['Upstream Regulator']])
+selSymbol <- union(selSymbol, c("CDKN1A", regs[['Upstream Regulator']]))
 selectedGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% selSymbol)
 probePos <- t(sapply(selectedGenes$GenomicLocation,
                      str_extract, c("^chr([[:digit:]]+|X)(_[[:alnum:]]+_hap[[:digit:]]+)*",
