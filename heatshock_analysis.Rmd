@@ -2513,6 +2513,7 @@ multiplot(fig1, fig2, cols=2)
 
 ```{r globalSNPGenes_fc, cache=FALSE}
 tab <- meGlobal$all$eqtls
+tab <- meGlobal$all$eqtls
 cut <- tab$FDR[5]
 n <- min(max(which(tab$FDR <= cut)), 20)
 tab <- head(tab, n)
@@ -2533,7 +2534,7 @@ for(i in 1:n){
   probe <- as.character(tab$NuID[i])
 
   fit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covarFC))
-  offset <- colSums(fit$coefficients[-(1:2)]*covarFC)
+  offset <- colSums(fit$coefficients[-(1:2)]*covar[[1]])
 
   plotData <- data.frame(genotype=geno$bed[snp,], fold_change=selectedFC[probe, ]-offset)
   fig[[i]] <- ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
@@ -2862,6 +2863,7 @@ snp <- as.character(meHSFstim$all$eqtls$snps[1])
 transFit <- lm(stimExpr[probe, ] ~ geno$bed[snp,] + t(covarHSFstim[[1]]))
 transOffset <- colSums(transFit$coefficients[-(1:2)]*covarHSFstim[[1]])
 
+plotData <- data.frame(genotype=geno$bed[snp, ], expression=stimExpr[probe, ] - transOffset)
 plotData <- data.frame(genotype=geno$bed[snp, ], expression=stimExpr[probe, ] - transOffset)
 plotData <- dplyr::filter(plotData, !is.na(genotype))
 plots[[2]] <- ggplot(plotData, aes(x=factor(genotype), y=expression)) +
