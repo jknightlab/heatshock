@@ -1004,6 +1004,23 @@ limmaTable <- limmaTable[order(limmaTable$P.Value),]
 write.table(limmaTable, file="/analysis/tmp/differential_expression.tab", row.names=FALSE, quote=FALSE, sep="\t")
 ```
 
+Gene N4BP2L2 is associated with two different probes that show evidence of differential expression. One appears to
+be significantly up regulated while the other is down regulated following heat shock (`r tabRef('N4BP2L2')`). We note that this is the
+only instance in which multiple probes for a differentially expressed gene provide conflicting evidence in this way.
+While it is possible that these probes measure two different transcripts that exhibit opposing responses to heat shock
+we chose to exclude these probes from further analysis to avoid confusion.
+
+```{r N4BP2L2Table}
+set.caption(tabRef('N4BP2L2Table'), "Probes for N4BP2L2")
+tab <- dplyr::filter(limmaTable, SymbolReannotated == "N4BP2L2")
+tab <- dplyr::select(tab, NuID,	SymbolReannotated,	logFC,	AveExpr,	t,	P.Value,	adj.P.Val,	B)
+pander(tab)
+```
+
+```{r exludeInconsistent}
+limmaTable <- dplyr::filter(limmaTable, SymbolReannotated != "N4BP2L2")
+```
+
 ## GO enrichment analysis
 
 To further investigate the patterns of differential expression a GO enrichment analysis
