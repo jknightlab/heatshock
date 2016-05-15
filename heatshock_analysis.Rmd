@@ -2522,7 +2522,7 @@ multiplot(fig1, fig2, fig3, fig4, layout=matrix(1:4, ncol=2, byrow=TRUE))
 global heat shock response. Note that the second one (`r dimnames(assoc$Results)[[1]][3]`)
 is located within a CTCF binding site immediately downstream of CDKN1A,
 an important regulator of cell cycle progression. This SNP is also found to be
-associated with the expession level of HSF1 in resting lymphocytes (`r tabRef(globalSNPGenes_basal)`
+associated with the expession level of HSF1 in resting lymphocytes (`r tabRef('globalSNPGenes_basal')`
 and `r figRef('globalSNPHSF1_basal')`)
 It may be interesting to note that
 allele frequencies vary markedly across populations. While the frequency of the
