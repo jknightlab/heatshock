@@ -2607,7 +2607,7 @@ snp <- as.character(tab$SNP[1])
 gene <- as.character(tab$Gene[1])
 probe <- as.character(tab$NuID[1])
 
-fit <- lm(phenoBasal[[1]][probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
+fit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
 offset <- colSums(fit$coefficients[-(1:2)]*covarBasal[[1]])
 plotData <- data.frame(genotype=geno$bed[snp,], expression=basalExpr[probe, ]-offset)
 ggplot(plotData, aes(x=factor(genotype), y=expression)) +
