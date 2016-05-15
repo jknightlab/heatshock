@@ -1728,6 +1728,16 @@ meGlobalBasal <- Matrix_eQTL_main(
     noFDRsaveMemory = FALSE)
 ```
 
+```{r globalEQTLout, include=FALSE, cache=FALSE}
+tab_basal <- read.table('tmp/eQTL_basal_global_analysis', header=TRUE)
+tab_basal <- dplyr::right_join(dplyr::select(limmaTable, NuID, SymbolReannotated), tab_basal, by=c(NuID='gene'))
+tab_stim <- read.table('tmp/eQTL_stim_global_analysis', header=TRUE)
+tab_stim <- dplyr::right_join(dplyr::select(limmaTable, NuID, SymbolReannotated), tab_stim, by=c(NuID='gene'))
+write.table(tab_basal, file='tmp/eQTL_basal_global_analysis', sep='\t', quote=FALSE, row.names=FALSE)
+write.table(tab_stim, file='tmp/eQTL_stim_global_analysis', sep='\t', quote=FALSE, row.names=FALSE)
+rm(tab_basal, tab_stim)
+system("tar -czf tmp/global_eqtl_analysis.tar.gz -C tmp eQTL_basal_global_analysis eQTL_stim_global_analysis")
+```
 ### Interpreting the PLS components
 Further considering the two PLS components it is apparent that the first
 component has a strong correspondence with the heat shock response, i.e. it
