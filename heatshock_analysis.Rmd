@@ -2598,7 +2598,7 @@ tab <- head(tab, n)
 tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
 tab <- dplyr::select(tab, -gene) %>% dplyr::rename(Gene=SymbolReannotated)
 tab <- dplyr::select(tab, SNP=snps, Gene, Statistic=statistic, `p-value`=pvalue, FDR, beta)
-set.caption(tabRef("globalSNPGenes_stim", "Associations between global response SNPs and gene expression in basal state."))
+set.caption(tabRef("globalSNPGenes_basal", "Associations between global response SNPs and gene expression in basal state."))
 pander(tab)
 ```
 
