@@ -2603,11 +2603,11 @@ pander(tab)
 ```
 
 ```{r globalSNPHSF1_basal, cache=FALSE, fig.cap=figRef('globalSNPHSP1_basal', paste0('Expression of ', tab[1,'Gene'], ' in the basal state by genotype for ', tab[1, 'SNP'], '.'))}
-snp <- as.character(tab$SNP[i])
-gene <- as.character(tab$Gene[i])
-probe <- as.character(tab$NuID[i])
+snp <- as.character(tab$SNP[1])
+gene <- as.character(tab$Gene[1])
+probe <- as.character(tab$NuID[1])
 
-fit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
+fit <- lm(phenoBasal[[1]][probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
 offset <- colSums(fit$coefficients[-(1:2)]*covarBasal[[1]])
 plotData <- data.frame(genotype=geno$bed[snp,], expression=basalExpr[probe, ]-offset)
 ggplot(plotData, aes(x=factor(genotype), y=expression)) +
