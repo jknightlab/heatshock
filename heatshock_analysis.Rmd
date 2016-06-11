@@ -1586,7 +1586,7 @@ write.table(basalExpr, file="tmp/selected_probes_basal_expr.tab", sep="\t", quot
 ```
 
 ```{r fc_pc}
-nPC <- 2
+nPC <- 1 
 if(nPC > 0){
   pca <- prcomp(t(selectedFC), center=TRUE, scale = TRUE)
   pc <- pca$x
@@ -2522,8 +2522,7 @@ multiplot(fig1, fig2, fig3, fig4, layout=matrix(1:4, ncol=2, byrow=TRUE))
 global heat shock response. Note that the second one (`r dimnames(assoc$Results)[[1]][3]`)
 is located within a CTCF binding site immediately downstream of CDKN1A,
 an important regulator of cell cycle progression. This SNP is also found to be
-associated with the expession level of HSF1 in resting lymphocytes (`r tabRef('globalSNPGenes_basal')`
-and `r figRef('globalSNPHSF1_basal')`)
+associated with the expession level of HSF1 in resting lymphocytes (`r tabRef('globalSNPGenes_basal')`)
 It may be interesting to note that
 allele frequencies vary markedly across populations. While the frequency of the
 ancestral T allele is 79% in the Yoruba 1000 genomes samples it is only observed with
@@ -2543,7 +2542,8 @@ multiplot(fig1, fig2, cols=2)
 
 ```{r globalSNPGenes_fc, cache=FALSE}
 tab <- meGlobal$all$eqtls
-cut <- tab$FDR[5]
+n <- max(sum(tab$FDR < 0.05), 5)
+cut <- tab$FDR[n]
 n <- min(max(which(tab$FDR <= cut)), 20)
 
 tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
@@ -2603,17 +2603,17 @@ pander(tab)
 ```
 
 ```{r globalSNPHSF1_basal, cache=FALSE, fig.cap=figRef('globalSNPHSP1_basal', paste0('Expression of ', tab[1,'Gene'], ' in the basal state by genotype for ', tab[1, 'SNP'], '.'))}
-snp <- as.character(tab$SNP[1])
-gene <- as.character(tab$Gene[1])
-probe <- as.character(tab$NuID[1])
+#snp <- as.character(tab$SNP[1])
+#gene <- as.character(tab$Gene[1])
+#probe <- as.character(tab$NuID[1])
 
-fit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
-offset <- colSums(fit$coefficients[-(1:2)]*covarBasal[[1]])
-plotData <- data.frame(genotype=geno$bed[snp,], expression=basalExpr[probe, ]-offset)
-ggplot(plotData, aes(x=factor(genotype), y=expression)) +
-    geom_point(position=position_jitter(width=0.1), size=2.5) +
-    geom_boxplot(alpha=0.4, outlier.colour="white", fill="grey") +
-    theme_bw() + xlab(snp) + ylab(paste(gene, "(log probe intensity)"))
+#fit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
+#offset <- colSums(fit$coefficients[-(1:2)]*covarBasal[[1]])
+#plotData <- data.frame(genotype=geno$bed[snp,], expression=basalExpr[probe, ]-offset)
+#ggplot(plotData, aes(x=factor(genotype), y=expression)) +
+#    geom_point(position=position_jitter(width=0.1), size=2.5) +
+#    geom_boxplot(alpha=0.4, outlier.colour="white", fill="grey") +
+#    theme_bw() + xlab(snp) + ylab(paste(gene, "(log probe intensity)"))
 ```
 
 
