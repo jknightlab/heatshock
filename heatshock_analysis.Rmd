@@ -1257,16 +1257,17 @@ for(g in unique(peaks2genes$cond2) ){
                                        data.frame(cond=g, exp="down",
                                                   genes=anno_genes[anno_genes %in% groupDown] ) )
         }
-        dat_up <- matrix(c(NofgroupUp, (totalNumberOfGenes - NofgroupUp),
-                           groupUp_in_anno_genes, groupUp_not_in_anno_genes), ncol=2 )
-        rst_up <- fisher.test(dat_up, alternative="less")
+        dat_up <- matrix(c(groupUp_in_anno_genes, groupUp_not_in_anno_genes, NofgroupUp, 
+                           totalNumberOfGenes - NofgroupUp), ncol=2, byrow=TRUE)
+        rst_up <- fisher.test(dat_up, alternative="greater")
 
-        dat_down <- matrix(c(NofgroupDown, (totalNumberOfGenes - NofgroupDown),
-                             groupDown_in_anno_genes, groupDown_not_in_anno_genes), ncol=2 )
-        rst_down <- fisher.test(dat_down, alternative="less")
+        dat_down <- matrix(c(groupDown_in_anno_genes, groupDown_not_in_anno_genes,
+                             NofgroupDown, totalNumberOfGenes - NofgroupDown), ncol=2 )
+        rst_down <- fisher.test(dat_down, alternative="greater")
 
 
-        hsfPval <- rbind(hsfPval, data.frame(cond=g, up=rst_up$p.value, down=rst_down$p.value,
+        hsfPval <- rbind(hsfPval, data.frame(cond=g, up=rst_up$p.value, down=rst_down$p.value, up.or=rst_up$estimate,
+                                             down.or=rst_down$estimate,
                                  sigGenes_up=groupUp_in_anno_genes, sigGenes_down=groupDown_in_anno_genes) )
 }
 
@@ -2366,8 +2367,8 @@ genes without any known heatshock association.
 condition <- str_replace(hsfPval$cond, "comb-C_", "basal ")
 condition <- str_replace(condition, "comb-HS_", "heat shock ")
 tab <- data.frame(Condition=condition,
-                  up=paste0(hsfPval$sigGenes_up, " (", format(hsfPval$up, digits=2),")"),
-                  down=paste0(hsfPval$sigGenes_down, " (", format(hsfPval$down, digits=2),")"))
+                  up=paste0(hsfPval$sigGenes_up, " (P=", format(hsfPval$up, digits=2),", OR=", format(hsfPval$up.or, digits=2), ")"),
+                  down=paste0(hsfPval$sigGenes_down, " (P=", format(hsfPval$down, digits=2),", OR=", format(hsfPval$down.or, digits=2),")"))
 tab$up <- str_replace(tab$up, fixed("e+00"), "")
 tab$down <- str_replace(tab$down, fixed("e+00"), "")
 tab$up <- sub("\\(([[:digit:]]\\.[[:digit:]])e(-[[:digit:]]+)\\)", "\\$(\\1 \\\\times 10^{\\2})\\$", tab$up)
