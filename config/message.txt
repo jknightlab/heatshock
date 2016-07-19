@@ -1,7 +1,0 @@
-Welcome to the heat shock analysis.
-Results of the analysis are available as a webpage from this container, 
-see XXX for details on how to access this page.
- 
-To detach from the container use 'ctrl-p ctrl-q'. The website will continue to be available.
-To re-attach to this container at a later date use 'docker attach $HOSTNAME'.
-
