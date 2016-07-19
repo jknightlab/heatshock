@@ -1004,6 +1004,23 @@ limmaTable <- limmaTable[order(limmaTable$P.Value),]
 write.table(limmaTable, file="/analysis/tmp/differential_expression.tab", row.names=FALSE, quote=FALSE, sep="\t")
 ```
 
+Gene N4BP2L2 is associated with two different probes that show evidence of differential expression. One appears to
+be significantly up regulated while the other is down regulated following heat shock (`r tabRef('N4BP2L2')`). We note that this is the
+only instance in which multiple probes for a differentially expressed gene provide conflicting evidence in this way.
+While it is possible that these probes measure two different transcripts that exhibit opposing responses to heat shock
+we chose to exclude these probes from further analysis to avoid confusion.
+
+```{r N4BP2L2Table}
+set.caption(tabRef('N4BP2L2Table'), "Probes for N4BP2L2")
+tab <- dplyr::filter(limmaTable, SymbolReannotated == "N4BP2L2")
+tab <- dplyr::select(tab, NuID,	SymbolReannotated,	logFC,	AveExpr,	t,	P.Value,	adj.P.Val,	B)
+pander(tab)
+```
+
+```{r exludeInconsistent}
+limmaTable <- dplyr::filter(limmaTable, SymbolReannotated != "N4BP2L2")
+```
+
 ## GO enrichment analysis
 
 To further investigate the patterns of differential expression a GO enrichment analysis
@@ -1240,16 +1257,17 @@ for(g in unique(peaks2genes$cond2) ){
                                        data.frame(cond=g, exp="down",
                                                   genes=anno_genes[anno_genes %in% groupDown] ) )
         }
-        dat_up <- matrix(c(NofgroupUp, (totalNumberOfGenes - NofgroupUp),
-                           groupUp_in_anno_genes, groupUp_not_in_anno_genes), ncol=2 )
-        rst_up <- fisher.test(dat_up, alternative="less")
+        dat_up <- matrix(c(groupUp_in_anno_genes, groupUp_not_in_anno_genes, NofgroupUp, 
+                           totalNumberOfGenes - NofgroupUp), ncol=2, byrow=TRUE)
+        rst_up <- fisher.test(dat_up, alternative="greater")
 
-        dat_down <- matrix(c(NofgroupDown, (totalNumberOfGenes - NofgroupDown),
-                             groupDown_in_anno_genes, groupDown_not_in_anno_genes), ncol=2 )
-        rst_down <- fisher.test(dat_down, alternative="less")
+        dat_down <- matrix(c(groupDown_in_anno_genes, groupDown_not_in_anno_genes,
+                             NofgroupDown, totalNumberOfGenes - NofgroupDown), ncol=2 )
+        rst_down <- fisher.test(dat_down, alternative="greater")
 
 
-        hsfPval <- rbind(hsfPval, data.frame(cond=g, up=rst_up$p.value, down=rst_down$p.value,
+        hsfPval <- rbind(hsfPval, data.frame(cond=g, up=rst_up$p.value, down=rst_down$p.value, up.or=rst_up$estimate,
+                                             down.or=rst_down$estimate,
                                  sigGenes_up=groupUp_in_anno_genes, sigGenes_down=groupDown_in_anno_genes) )
 }
 
@@ -1365,7 +1383,8 @@ the length and direction of the response vector, i.e. the vector between the bas
 and stimulated sample for each individual in the space spanned by the first two PLS
 components, together with the location of the basal sample in the same space as a
 multivariate phenotype. This was then tested for association with
-genotypes for SNPs close to differentially expressed genes using the *MultiPhen* R
+genotypes for SNPs close to differentially expressed genes and their upstream 
+regulators (identified via Ingenuity Pathway Analysis) using the *MultiPhen* R
 package [@OReilly12]. The GRCh37 coordinates
 for SNPs were obtained via the *SNPlocs.Hsapiens.dbSNP142.GRCh37*
 Bioconductor package [@Pages14] and gene coordinates via the
@@ -1394,8 +1413,14 @@ geno$bim <- geno$bim[order(geno$bim$chrom, geno$bim$loc),]
 cisWindow <- 1e4
 
 exclChrom <- c("chrX", "chrY", "chrM")
+regs <- readr::read_tsv('data/upstream_regulators.tab', progres=FALSE)
+regs[[1]] <- stringr::str_extract(regs[[1]], '\\S+')
+regs[["FDR"]] <- p.adjust(regs[['P-value']], method='BH')
 selectedGenes <- dplyr::filter(limmaTable, adj.P.Val < fdrCut & abs(logFC) > fcCut &
                                  !str_detect(GenomicLocation, paste(exclChrom, collapse="|")))
+regs <- dplyr::filter(regs, FDR <= 0.01, !`Upstream Regulator` %in% selectedGenes$SymbolReannotated, 
+                      `Upstream Regulator` %in% limmaTable$SymbolReannotated)
+selectedGenes <- rbind(selectedGenes, dplyr::filter(limmaTable, SymbolReannotated %in% regs[["Upstream Regulator"]]))
 selectedGenes <- dplyr::select(selectedGenes, ArrayAddress, NuID, GenomicLocation, EntrezReannotated, SymbolReannotated)
 
 selectedGenes$GenomicLocation <- str_extract(selectedGenes$GenomicLocation,
@@ -1505,7 +1530,7 @@ or binding motifs (P < 0.05) in their promoter region.
 
 ```{r selectHeatShock}
 selSymbol <- dplyr::filter(r_gene, expr == "up", HSFpeak == 1 | pwm.p.value < 0.05)$SymbolReannotated
-selSymbol <- union(selSymbol, "CDKN1A")
+selSymbol <- union(selSymbol, c("CDKN1A", regs[['Upstream Regulator']]))
 selectedGenes <- dplyr::filter(limmaTable, SymbolReannotated %in% selSymbol)
 probePos <- t(sapply(selectedGenes$GenomicLocation,
                      str_extract, c("^chr([[:digit:]]+|X)(_[[:alnum:]]+_hap[[:digit:]]+)*",
@@ -1562,7 +1587,7 @@ write.table(basalExpr, file="tmp/selected_probes_basal_expr.tab", sep="\t", quot
 ```
 
 ```{r fc_pc}
-nPC <- 2
+nPC <- 1 
 if(nPC > 0){
   pca <- prcomp(t(selectedFC), center=TRUE, scale = TRUE)
   pc <- pca$x
@@ -1704,6 +1729,16 @@ meGlobalBasal <- Matrix_eQTL_main(
     noFDRsaveMemory = FALSE)
 ```
 
+```{r globalEQTLout, include=FALSE, cache=FALSE}
+tab_basal <- read.table('tmp/eQTL_basal_global_analysis', header=TRUE)
+tab_basal <- dplyr::right_join(dplyr::select(limmaTable, NuID, SymbolReannotated), tab_basal, by=c(NuID='gene'))
+tab_stim <- read.table('tmp/eQTL_stim_global_analysis', header=TRUE)
+tab_stim <- dplyr::right_join(dplyr::select(limmaTable, NuID, SymbolReannotated), tab_stim, by=c(NuID='gene'))
+write.table(tab_basal, file='tmp/eQTL_basal_global_analysis', sep='\t', quote=FALSE, row.names=FALSE)
+write.table(tab_stim, file='tmp/eQTL_stim_global_analysis', sep='\t', quote=FALSE, row.names=FALSE)
+rm(tab_basal, tab_stim)
+system("tar -czf tmp/global_eqtl_analysis.tar.gz -C tmp eQTL_basal_global_analysis eQTL_stim_global_analysis")
+```
 ### Interpreting the PLS components
 Further considering the two PLS components it is apparent that the first
 component has a strong correspondence with the heat shock response, i.e. it
@@ -1779,7 +1814,7 @@ system("tar -czf tmp/topGO_pls_cluster.tar.gz -C tmp topGO_pls_cluster_upregulat
 Genes associated with the heat shock response, either
 through previous work or implicated by the analysis presented here, were
 selected for further analysis as above to determine genetic factors that modulate
-their response to the stimulus.
+their response to the stimulus. 
 
 For each of the `r nrow(selectedGenes)` probes the observed response to the
 stimulus (as measured by the log~2~fold change) is tested for association with
@@ -2332,8 +2367,8 @@ genes without any known heatshock association.
 condition <- str_replace(hsfPval$cond, "comb-C_", "basal ")
 condition <- str_replace(condition, "comb-HS_", "heat shock ")
 tab <- data.frame(Condition=condition,
-                  up=paste0(hsfPval$sigGenes_up, " (", format(hsfPval$up, digits=2),")"),
-                  down=paste0(hsfPval$sigGenes_down, " (", format(hsfPval$down, digits=2),")"))
+                  up=paste0(hsfPval$sigGenes_up, " (P=", format(hsfPval$up, digits=2),", OR=", format(hsfPval$up.or, digits=2), ")"),
+                  down=paste0(hsfPval$sigGenes_down, " (P=", format(hsfPval$down, digits=2),", OR=", format(hsfPval$down.or, digits=2),")"))
 tab$up <- str_replace(tab$up, fixed("e+00"), "")
 tab$down <- str_replace(tab$down, fixed("e+00"), "")
 tab$up <- sub("\\(([[:digit:]]\\.[[:digit:]])e(-[[:digit:]]+)\\)", "\\$(\\1 \\\\times 10^{\\2})\\$", tab$up)
@@ -2487,7 +2522,9 @@ multiplot(fig1, fig2, fig3, fig4, layout=matrix(1:4, ncol=2, byrow=TRUE))
 `r figRef("plsGeno")` shows two examples of genotypes associating with the
 global heat shock response. Note that the second one (`r dimnames(assoc$Results)[[1]][3]`)
 is located within a CTCF binding site immediately downstream of CDKN1A,
-an important regulator of cell cycle progression. It may also be interesting to note that
+an important regulator of cell cycle progression. This SNP is also found to be
+associated with the expession level of HSF1 in resting lymphocytes (`r tabRef('globalSNPGenes_basal')`)
+It may be interesting to note that
 allele frequencies vary markedly across populations. While the frequency of the
 ancestral T allele is 79% in the Yoruba 1000 genomes samples it is only observed with
 a frequency of 24% in European samples.
@@ -2506,18 +2543,20 @@ multiplot(fig1, fig2, cols=2)
 
 ```{r globalSNPGenes_fc, cache=FALSE}
 tab <- meGlobal$all$eqtls
-cut <- tab$FDR[5]
+n <- max(sum(tab$FDR < 0.05), 5)
+cut <- tab$FDR[n]
 n <- min(max(which(tab$FDR <= cut)), 20)
-tab <- head(tab, n)
+
 tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
 tab <- dplyr::rename(tab, Gene=SymbolReannotated)
 tab <- dplyr::select(tab, SNP=snps, Gene, NuID=gene, Statistic=statistic, `p-value`=pvalue, FDR, beta)
 set.caption(tabRef("globalSNPGenes_fc", "Associations between global response SNPs and gene level heat shock response."))
-pander(dplyr::select(tab, -NuID))
+pander(dplyr::select(head(tab, n), -NuID))
 ```
 
 ```{r globalSNPGenes_fcPlot, cache=FALSE, fig.cap=figRef("globalGenesFC", "Heat shock response by genotype.")}
 n <- sum(tab$FDR < 0.05)
+if(n < 2) n <- 2
 fig <- vector(mode="list", n)
 
 for(i in 1:n){
@@ -2560,9 +2599,24 @@ tab <- head(tab, n)
 tab <- dplyr::left_join(tab, dplyr::select(limmaTable, NuID, SymbolReannotated), by=c(gene="NuID"))
 tab <- dplyr::select(tab, -gene) %>% dplyr::rename(Gene=SymbolReannotated)
 tab <- dplyr::select(tab, SNP=snps, Gene, Statistic=statistic, `p-value`=pvalue, FDR, beta)
-set.caption(tabRef("globalSNPGenes_stim", "Associations between global response SNPs and gene expression in basal state."))
+set.caption(tabRef("globalSNPGenes_basal", "Associations between global response SNPs and gene expression in basal state."))
 pander(tab)
 ```
+
+```{r globalSNPHSF1_basal, cache=FALSE, fig.cap=figRef('globalSNPHSP1_basal', paste0('Expression of ', tab[1,'Gene'], ' in the basal state by genotype for ', tab[1, 'SNP'], '.'))}
+#snp <- as.character(tab$SNP[1])
+#gene <- as.character(tab$Gene[1])
+#probe <- as.character(tab$NuID[1])
+
+#fit <- lm(basalExpr[probe, ] ~ geno$bed[snp,] + t(covarBasal[[1]]))
+#offset <- colSums(fit$coefficients[-(1:2)]*covarBasal[[1]])
+#plotData <- data.frame(genotype=geno$bed[snp,], expression=basalExpr[probe, ]-offset)
+#ggplot(plotData, aes(x=factor(genotype), y=expression)) +
+#    geom_point(position=position_jitter(width=0.1), size=2.5) +
+#    geom_boxplot(alpha=0.4, outlier.colour="white", fill="grey") +
+#    theme_bw() + xlab(snp) + ylab(paste(gene, "(log probe intensity)"))
+```
+
 
 Noting that the minor allele frequency of rs12207548 varies considerably between populations we thought to investigate
 wether there is evidence of selection at this locus. To this end we calculated F~ST~ between the Yoruban and Central
@@ -2855,6 +2909,7 @@ snp <- as.character(meHSFstim$all$eqtls$snps[1])
 transFit <- lm(stimExpr[probe, ] ~ geno$bed[snp,] + t(covarHSFstim[[1]]))
 transOffset <- colSums(transFit$coefficients[-(1:2)]*covarHSFstim[[1]])
 
+plotData <- data.frame(genotype=geno$bed[snp, ], expression=stimExpr[probe, ] - transOffset)
 plotData <- data.frame(genotype=geno$bed[snp, ], expression=stimExpr[probe, ] - transOffset)
 plotData <- dplyr::filter(plotData, !is.na(genotype))
 plots[[2]] <- ggplot(plotData, aes(x=factor(genotype), y=expression)) +
