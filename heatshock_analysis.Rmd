@@ -1,5 +1,6 @@
 ---
-title: Genome-wide analysis of heat shock response
+title: Data analysis for *Characterisation of the global transcriptional response to heat shock and the 
+impact of individual genetic variation*
 author:
   - name: Peter Humburg
     affiliation: Wellcome Trust Centre for Human Genetics, University of Oxford, Roosevelt Dr., Oxford, OX3 7BN, UK
