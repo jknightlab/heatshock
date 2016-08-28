@@ -2219,46 +2219,6 @@ ggplot(tbl, aes(x=Expected, y=Significant)) +
     theme_bw()
 ```
 
-## Response QTL analysis
-
-```{r reQTLGeneTable, cache=FALSE}
-set.caption(tabRef("reQTLgenes", "List of genes with strongest evidence for response QTL."))
-nrows <- max(which(geneP$Gene.FDR <= max(0.05, geneP$Gene.FDR[1])))
-nrows <- min(max(nrows, 5), 20)
-pander(dplyr::select(geneP[1:nrows,], -NuID))
-```
-
-The association test designed to identify genetic modulators of gene expression response to
-heat shock only uncovered very limited evidence for the presence of such effects
-(`r tabRef("reQTLgenes")`). A closer inspection of the potential cis associations for
-the highest ranked gene (`r geneP$Symbol[1]`) suggests `r if(length(geneSNPcount)) geneSNPcount[1] else "no"`
-SNP`r if(!length(geneSNPcount) || geneSNPcount[1] != 1) "s" else ""`
-that may be of interest (`r tabRef("topGeneSNPs")`).
-
-```{r topGeneSNPs, cache=FALSE, eval=nrow(selGenes) > 0, include=nrow(selGenes) > 0}
-set.caption(tabRef("topGeneSNPs", paste("Possible Response QTL for", geneP$Symbol[1])))
-cut <- meGene[[1]]$cis$eqtls$FDR[5]
-n <- max(which(meGene[[1]]$cis$eqtls$FDR == cut))
-tab <- head(meGene[[1]]$cis$eqtls, max(geneSNPcount[1], n))
-tab$gene <- geneP$Symbol[1]
-pander(tab)
-```
-
-```{r topGeneSNPplot, cache=FALSE, eval=nrow(selGenes) > 0, include=nrow(selGenes) > 0, fig.cap=figRef("topGeneSNP", paste("Gene expression response to heat shock for", geneP$Symbol[1], "by genotype. Fold changes were corrected for the effect of covariates."))}
-snp <- as.character(meGene[[1]]$cis$eqtls$snps[1])
-gene <- geneP$Symbol[1]
-probe <- geneP$NuID[1]
-
-fit <- lm(selectedFC[probe, ] ~ geno$bed[snp,] + t(covar[[1]]))
-offset <- colSums(fit$coefficients[-(1:2)]*covar[[1]])
-
-plotData <- data.frame(genotype=geno$bed[snp,], fold_change=selectedFC[probe, ]-offset)
-ggplot(plotData, aes(x=factor(genotype), y=fold_change)) +
-  geom_point(position=position_jitter(width=0.1), size=2.5) +
-  geom_boxplot(alpha=0.4, outlier.colour="white", fill="grey") +
-  theme_bw() + xlab(snp) + ylab("log fold change")
-```
-
 # Appendix {-}
 
 ```{r bundlePlots, include=FALSE, cache=FALSE}
